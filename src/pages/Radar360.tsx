@@ -284,8 +284,12 @@ const Radar360 = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-br from-primary/90 to-copper-dark px-4 pt-8 pb-6 sm:px-6">
-        <div className="max-w-2xl mx-auto">
+      <div className="relative bg-gradient-to-br from-card to-secondary overflow-hidden px-4 pt-8 pb-6 sm:px-6">
+        {/* Decorative circle */}
+        <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/5" />
+        <ScanEye className="absolute top-5 right-5 w-10 h-10 text-white/15 rotate-12" />
+
+        <div className="relative max-w-2xl mx-auto z-10">
           <button
             onClick={() => navigate('/')}
             className="flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm mb-3"
