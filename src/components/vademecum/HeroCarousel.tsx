@@ -6,7 +6,7 @@ import { Bell } from 'lucide-react';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import { getNoticiasCache, prefetchNoticias, type Noticia } from '@/services/noticiasService';
 import { getLatestDayCount, getResenhaCache, prefetchResenha } from '@/services/atualizacaoService';
-import { cdnImg } from '@/lib/cdnImg';
+import { newsImg } from '@/lib/cdnImg';
 
 const HeroCarousel = () => {
   const navigate = useNavigate();
@@ -81,7 +81,7 @@ const HeroCarousel = () => {
               onClick={() => navigate('/noticias', { state: { noticiaId: noticia.id } })}
             >
               <img
-                src={cdnImg(noticia.imagem_url!, 800)}
+                src={newsImg(noticia.imagem_url!, 800)}
                 alt={noticia.titulo}
                 className="absolute inset-0 w-full h-full object-cover"
                 loading={index < 2 ? 'eager' : 'lazy'}

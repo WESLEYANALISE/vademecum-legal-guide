@@ -360,10 +360,17 @@ async function scrapeMigalhas(browserlessUrl: string): Promise<NewsItem[]> {
         } catch { /* use default */ }
       }
 
-      // Fetch article content using Browserless (Migalhas is Angular SPA, needs JS rendering)
-      let conteudo = '';
+      // Fetch article content directly (no Browserless needed)
       try {
-        const articleHtml = await fetchPage(browserlessUrl, link);
+        const artResp = await fetch(link, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "pt-BR,pt;q=0.9",
+          },
+        });
+        if (!artResp.ok) throw new Error(`HTTP ${artResp.status}`);
+        const articleHtml = await artResp.text();
 
         // Strategy 1: Extract from LEITURA embedded JSON
         const artScripts: string[] = [];
@@ -393,7 +400,7 @@ async function scrapeMigalhas(browserlessUrl: string): Promise<NewsItem[]> {
           } catch { /* skip */ }
         }
 
-        // Strategy 2: Extract rendered <p> from article containers
+        // Strategy 2: Extract <p> tags from article containers
         if (!conteudo || conteudo.length < 100) {
           const containers = [
             /<div[^>]*class="[^"]*leitura-corpo[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
@@ -418,19 +425,7 @@ async function scrapeMigalhas(browserlessUrl: string): Promise<NewsItem[]> {
           }
         }
 
-        // Strategy 3: All rendered <p> tags from page
-        if (!conteudo || conteudo.length < 100) {
-          const allParagraphs: string[] = [];
-          const pReg2 = /<p[^>]*>([\s\S]*?)<\/p>/gi;
-          let pm2;
-          while ((pm2 = pReg2.exec(articleHtml)) !== null) {
-            const text = decodeHtml(pm2[1]);
-            if (text.length > 50) allParagraphs.push(text);
-          }
-          if (allParagraphs.length > 0) conteudo = allParagraphs.join('\n\n');
-        }
-
-        // Strategy 4: Fallback og:description
+        // Strategy 3: og:description fallback
         if (!conteudo) {
           const ogDesc = articleHtml.match(/property="og:description"[^>]*content="([^"]+)"/i);
           if (ogDesc) conteudo = decodeHtml(ogDesc[1]);
