@@ -634,7 +634,10 @@ async function fetchAmazonCover(
     }),
   });
 
-  if (!extractRes.ok) return null;
+  if (!extractRes.ok) {
+    console.warn("Gemini title extraction failed:", extractRes.status);
+    return null;
+  }
   const extractData = await extractRes.json();
   let rawExtract = extractData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
   rawExtract = rawExtract.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
