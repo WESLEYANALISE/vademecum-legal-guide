@@ -74,10 +74,31 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Preload critical chunks in idle time
+if (typeof window !== 'undefined') {
+  const preloadChunks = () => {
+    import('./pages/CategoriaLegislacao.tsx');
+    import('./pages/Estudar.tsx');
+    import('./pages/Ferramentas.tsx');
+    import('./pages/Radar360.tsx');
+  };
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(preloadChunks);
+  } else {
+    setTimeout(preloadChunks, 1500);
+  }
+}
+
 function LazyFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    <div className="min-h-screen bg-background p-4 pt-16 space-y-4 animate-pulse">
+      <div className="h-8 w-48 rounded-md bg-muted" />
+      <div className="h-4 w-64 rounded bg-muted" />
+      <div className="space-y-3 mt-6">
+        {[1, 2, 3, 4, 5].map(i => (
+          <div key={i} className="h-20 rounded-xl bg-muted" />
+        ))}
+      </div>
     </div>
   );
 }

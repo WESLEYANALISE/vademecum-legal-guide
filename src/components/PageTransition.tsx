@@ -8,16 +8,14 @@ interface PageTransitionProps {
 const PageTransition = ({ children }: PageTransitionProps) => {
   return (
     <motion.div
-      initial={{ x: '100%' }}
-      animate={{ x: 0 }}
+      initial={{ opacity: 0.6, x: '3%' }}
+      animate={{ opacity: 1, x: 0 }}
       transition={{ 
-        type: 'spring', 
-        damping: 25, 
-        stiffness: 200,
-        mass: 0.8
+        type: 'tween', 
+        duration: 0.15,
+        ease: 'easeOut',
       }}
       className="min-h-screen"
-      style={{ willChange: 'transform' }}
     >
       {children}
     </motion.div>
