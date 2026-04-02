@@ -49,9 +49,8 @@ const ADMIN_FUNCTIONS = [
 ];
 
 const CONFIG_ITEMS = [
-  { id: 'personalizar', label: 'Personalizar Atalhos', icon: Settings, disabled: true },
-  { id: 'sobre', label: 'Sobre o App', icon: Info },
-  { id: 'ajuda', label: 'Ajuda', icon: HelpCircle },
+  { id: 'perfil', label: 'Perfil', icon: Settings, route: '/perfil' },
+  { id: 'sobre', label: 'Sobre o App', icon: Info, route: '/sobre' },
   { id: 'sair', label: 'Sair', icon: LogOut },
 ];
 
