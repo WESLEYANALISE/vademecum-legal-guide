@@ -27,41 +27,39 @@ const MENU_SECTIONS = [
     items: [
       { id: 'explicacao', label: 'Artigos e Análises', icon: FileText },
       { id: 'atualizacao', label: 'Notícias Jurídicas', icon: Newspaper },
-      { id: 'boletins', label: 'Boletins', icon: Rss },
       { id: 'novidades', label: 'Novidades', icon: Bell },
     ],
   },
   {
     title: 'Ferramentas',
     items: [
-      { id: 'camara-deputados', label: 'Câmara dos Deputados', icon: Building2 },
-      { id: 'explicacao-lei', label: 'Gerar Explicações (IA)', icon: Lightbulb },
-      { id: 'narracao', label: 'Narração de Artigos', icon: Mic },
       { id: 'dicionario', label: 'Dicionário Jurídico', icon: BookA },
-      { id: 'notificacao-push', label: 'Notificação Push', icon: BellRing },
-      { id: 'assistente-whatsapp', label: 'Assistente WhatsApp', icon: MessageCircle },
-      { id: 'gamificacao', label: 'Gamificação', icon: Gamepad2 },
       { id: 'mapa-mental', label: 'Mapa Mental', icon: Brain },
-    ],
-  },
-  {
-    title: 'Admin',
-    items: [
-      { id: 'simulado-admin', label: 'Simulado Admin', icon: ClipboardList },
-      { id: 'geracao-admin', label: 'Geração Admin', icon: ShieldCheck },
-      { id: 'admin-monitor', label: 'Monitoramento', icon: Activity },
     ],
   },
   {
     title: 'Configurações',
     items: [
-      { id: 'paleta-cores', label: 'Paleta de Cores', icon: Palette },
       { id: 'personalizar', label: 'Personalizar Atalhos', icon: Settings, disabled: true },
       { id: 'sobre', label: 'Sobre o App', icon: Info },
       { id: 'ajuda', label: 'Ajuda', icon: HelpCircle },
       { id: 'sair', label: 'Sair', icon: LogOut },
     ],
   },
+];
+
+const ADMIN_FUNCTIONS = [
+  { id: 'admin-monitor', label: 'Monitoramento', icon: Activity },
+  { id: 'geracao-admin', label: 'Geração Admin', icon: ShieldCheck },
+  { id: 'simulado-admin', label: 'Simulado Admin', icon: ClipboardList },
+  { id: 'gamificacao', label: 'Gamificação', icon: Gamepad2 },
+  { id: 'assistente-whatsapp', label: 'Assistente WhatsApp', icon: MessageCircle },
+  { id: 'notificacao-push', label: 'Notificação Push', icon: BellRing },
+  { id: 'narracao', label: 'Narração de Artigos', icon: Mic },
+  { id: 'explicacao-lei', label: 'Gerar Explicações (IA)', icon: Lightbulb },
+  { id: 'camara-deputados', label: 'Câmara dos Deputados', icon: Building2 },
+  { id: 'boletins', label: 'Boletins', icon: Rss },
+  { id: 'paleta-cores', label: 'Paleta de Cores', icon: Palette },
 ];
 
 const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
