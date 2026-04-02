@@ -77,7 +77,7 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  currentTheme: 'vinho-marfim',
+  currentTheme: 'obsidiana-purpura',
   setTheme: () => {},
   palettes: PALETTES,
 });
