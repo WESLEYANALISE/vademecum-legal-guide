@@ -42,9 +42,7 @@ const MENU_SECTIONS = [
   {
     title: 'Configurações',
     items: [
-      { id: 'personalizar', label: 'Personalizar Atalhos', icon: Settings, disabled: true },
       { id: 'sobre', label: 'Sobre o App', icon: Info },
-      { id: 'ajuda', label: 'Ajuda', icon: HelpCircle },
       { id: 'sair', label: 'Sair', icon: LogOut },
     ],
   },
