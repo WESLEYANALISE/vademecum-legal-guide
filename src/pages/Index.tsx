@@ -417,7 +417,7 @@ const Index = () => {
                         animate={{ x: [0, 6, 0] }}
                         transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
                       >
-                        <Search className="w-4 h-4 text-primary" />
+                        <ChevronRight className="w-5 h-5 text-primary" />
                       </motion.div>
                     </div>
                   </div>
