@@ -339,44 +339,47 @@ async function processPdfInBackground({
       })
       .eq("id", livroId);
 
-    console.log("Formatting markdown with Gemini...");
-    const totalPagesAll = estruturaLeitura.chapters.reduce(
-      (acc: number, ch: GeminiChapter) => acc + (ch.pages?.length || 0), 0
-    );
-    let pagesProcessed = 0;
+    console.log("Cleaning edge pages with Gemini (first/last 10)...");
 
-    await supabase
-      .from("biblioteca_livros")
-      .update({ status: "cleaning:0" })
-      .eq("id", livroId);
-
+    // Collect all pages flat
+    const allPagesFlat: { ci: number; pi: number; source_page: number; markdown: string }[] = [];
     for (let ci = 0; ci < estruturaLeitura.chapters.length; ci++) {
       const ch = estruturaLeitura.chapters[ci];
-      if (!ch.pages || ch.pages.length === 0) continue;
-
-      const BATCH_SIZE = 6;
-      const MAX_MD_CHARS = 6000;
-      const cleanedPages: { source_page: number; markdown: string }[] = [];
-
-      for (let bi = 0; bi < ch.pages.length; bi += BATCH_SIZE) {
-        const batch = ch.pages.slice(bi, bi + BATCH_SIZE).map((p) => ({
-          source_page: p.source_page,
-          markdown: p.markdown.slice(0, MAX_MD_CHARS),
-        }));
-        const cleaned = await cleanChapterMarkdown(geminiApiKey, batch);
-        cleanedPages.push(...cleaned);
-
-        pagesProcessed += batch.length;
-        const pct = totalPagesAll > 0
-          ? Math.min(Math.round((pagesProcessed / totalPagesAll) * 100), 99)
-          : 99;
-        await supabase
-          .from("biblioteca_livros")
-          .update({ status: `cleaning:${pct}` })
-          .eq("id", livroId);
+      if (!ch.pages) continue;
+      for (let pi = 0; pi < ch.pages.length; pi++) {
+        allPagesFlat.push({ ci, pi, source_page: ch.pages[pi].source_page, markdown: ch.pages[pi].markdown });
       }
+    }
 
-      estruturaLeitura.chapters[ci].pages = cleanedPages;
+    const EDGE = 10;
+    const firstEdge = allPagesFlat.filter((_, i) => i < EDGE);
+    const lastEdge = allPagesFlat.filter((_, i) => i >= allPagesFlat.length - EDGE && i >= EDGE);
+    const middlePages = allPagesFlat.filter((_, i) => i >= EDGE && i < allPagesFlat.length - EDGE);
+
+    await supabase.from("biblioteca_livros").update({ status: "cleaning:10" }).eq("id", livroId);
+
+    // Clean first 10 with AI
+    const cleanedFirst = await cleanEdgePages(geminiApiKey, firstEdge.map(p => ({ source_page: p.source_page, markdown: p.markdown })));
+    for (const cp of cleanedFirst) {
+      const entry = firstEdge.find(p => p.source_page === cp.source_page);
+      if (entry) estruturaLeitura.chapters[entry.ci].pages![entry.pi].markdown = cp.markdown;
+    }
+
+    // Normalize middle pages (deterministic only)
+    await supabase.from("biblioteca_livros").update({ status: "cleaning:50" }).eq("id", livroId);
+    for (const mp of middlePages) {
+      const normalized = normalizeMarkdownPages([{ source_page: mp.source_page, markdown: mp.markdown }]);
+      estruturaLeitura.chapters[mp.ci].pages![mp.pi].markdown = normalized[0].markdown;
+    }
+
+    // Clean last 10 with AI
+    await supabase.from("biblioteca_livros").update({ status: "cleaning:80" }).eq("id", livroId);
+    if (lastEdge.length > 0) {
+      const cleanedLast = await cleanEdgePages(geminiApiKey, lastEdge.map(p => ({ source_page: p.source_page, markdown: p.markdown })));
+      for (const cp of cleanedLast) {
+        const entry = lastEdge.find(p => p.source_page === cp.source_page);
+        if (entry) estruturaLeitura.chapters[entry.ci].pages![entry.pi].markdown = cp.markdown;
+      }
     }
 
     const { error: updateError } = await supabase
