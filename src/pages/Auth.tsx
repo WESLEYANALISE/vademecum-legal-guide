@@ -222,7 +222,7 @@ const Auth = () => {
       </motion.div>
 
       <p className="mt-10 text-[10px] font-body text-muted-foreground relative z-10">
-        Vade Mecum Comentado © 2026
+        Vacatio — Vade Mecum © 2026
       </p>
     </main>
   );
