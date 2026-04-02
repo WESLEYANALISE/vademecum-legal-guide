@@ -1,4 +1,5 @@
-import { X, Scale, FileText, Newspaper, BookOpen, Gavel, Landmark, Shield, ScrollText, Settings, Bell, Rss, Info, HelpCircle, Palette, LogOut, User, LifeBuoy, Lightbulb, Building2, BookA, BellRing, MessageCircle, Mic, Gamepad2, ShieldCheck, ClipboardList, Brain, Activity } from 'lucide-react';
+import { useState } from 'react';
+import { X, Scale, FileText, Newspaper, BookOpen, Gavel, Landmark, Shield, ScrollText, Settings, Bell, Rss, Info, HelpCircle, Palette, LogOut, User, LifeBuoy, Lightbulb, Building2, BookA, BellRing, MessageCircle, Mic, Gamepad2, ShieldCheck, ClipboardList, Brain, Activity, ChevronDown, Lock } from 'lucide-react';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,35 +28,19 @@ const MENU_SECTIONS = [
     items: [
       { id: 'explicacao', label: 'Artigos e Análises', icon: FileText },
       { id: 'atualizacao', label: 'Notícias Jurídicas', icon: Newspaper },
-      { id: 'boletins', label: 'Boletins', icon: Rss },
       { id: 'novidades', label: 'Novidades', icon: Bell },
     ],
   },
   {
     title: 'Ferramentas',
     items: [
-      { id: 'camara-deputados', label: 'Câmara dos Deputados', icon: Building2 },
-      { id: 'explicacao-lei', label: 'Gerar Explicações (IA)', icon: Lightbulb },
-      { id: 'narracao', label: 'Narração de Artigos', icon: Mic },
       { id: 'dicionario', label: 'Dicionário Jurídico', icon: BookA },
-      { id: 'notificacao-push', label: 'Notificação Push', icon: BellRing },
-      { id: 'assistente-whatsapp', label: 'Assistente WhatsApp', icon: MessageCircle },
-      { id: 'gamificacao', label: 'Gamificação', icon: Gamepad2 },
       { id: 'mapa-mental', label: 'Mapa Mental', icon: Brain },
-    ],
-  },
-  {
-    title: 'Admin',
-    items: [
-      { id: 'simulado-admin', label: 'Simulado Admin', icon: ClipboardList },
-      { id: 'geracao-admin', label: 'Geração Admin', icon: ShieldCheck },
-      { id: 'admin-monitor', label: 'Monitoramento', icon: Activity },
     ],
   },
   {
     title: 'Configurações',
     items: [
-      { id: 'paleta-cores', label: 'Paleta de Cores', icon: Palette },
       { id: 'personalizar', label: 'Personalizar Atalhos', icon: Settings, disabled: true },
       { id: 'sobre', label: 'Sobre o App', icon: Info },
       { id: 'ajuda', label: 'Ajuda', icon: HelpCircle },
@@ -64,9 +49,24 @@ const MENU_SECTIONS = [
   },
 ];
 
+const ADMIN_FUNCTIONS = [
+  { id: 'admin-monitor', label: 'Monitoramento', icon: Activity },
+  { id: 'geracao-admin', label: 'Geração Admin', icon: ShieldCheck },
+  { id: 'simulado-admin', label: 'Simulado Admin', icon: ClipboardList },
+  { id: 'gamificacao', label: 'Gamificação', icon: Gamepad2 },
+  { id: 'assistente-whatsapp', label: 'Assistente WhatsApp', icon: MessageCircle },
+  { id: 'notificacao-push', label: 'Notificação Push', icon: BellRing },
+  { id: 'narracao', label: 'Narração de Artigos', icon: Mic },
+  { id: 'explicacao-lei', label: 'Gerar Explicações (IA)', icon: Lightbulb },
+  { id: 'camara-deputados', label: 'Câmara dos Deputados', icon: Building2 },
+  { id: 'boletins', label: 'Boletins', icon: Rss },
+  { id: 'paleta-cores', label: 'Paleta de Cores', icon: Palette },
+];
+
 const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
+  const [adminOpen, setAdminOpen] = useState(false);
 
   const handleItemClick = async (id: string) => {
     if (id === 'sair') {
@@ -184,6 +184,35 @@ const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
                   })}
                 </div>
               ))}
+
+              {/* Funções Admin - collapsible */}
+              <div className="mb-3">
+                <button
+                  onClick={() => setAdminOpen(!adminOpen)}
+                  className="w-full flex items-center gap-3.5 px-5 py-3 text-foreground/80 hover:bg-secondary hover:text-foreground transition-colors"
+                >
+                  <Lock className="w-5 h-5 text-primary/70" />
+                  <span className="font-body text-[15px] font-semibold">Funções Admin</span>
+                  <ChevronDown className={`w-4 h-4 ml-auto text-muted-foreground transition-transform ${adminOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {adminOpen && (
+                  <div className="bg-secondary/30">
+                    {ADMIN_FUNCTIONS.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => handleItemClick(item.id)}
+                          className="w-full flex items-center gap-3.5 px-7 py-2.5 text-foreground/80 hover:bg-secondary hover:text-foreground transition-colors"
+                        >
+                          <Icon className="w-4.5 h-4.5 text-primary/70" />
+                          <span className="font-body text-[14px]">{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Footer */}
