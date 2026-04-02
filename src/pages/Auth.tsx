@@ -37,10 +37,29 @@ const Auth = () => {
 
     try {
       if (mode === 'forgot') {
-        const { error } = await resetPassword(email);
-        if (error) throw error;
-        toast.success('Email de recuperação enviado! Verifique sua caixa de entrada.');
-        setMode('login');
+        if (forgotStep === 'email') {
+          const { error } = await resetPassword(email);
+          if (error) throw error;
+          toast.success('Código enviado! Verifique seu email.');
+          setForgotStep('code');
+        } else if (forgotStep === 'code') {
+          const { error } = await supabase.auth.verifyOtp({
+            email,
+            token: otpCode,
+            type: 'recovery',
+          });
+          if (error) throw error;
+          toast.success('Código verificado! Defina sua nova senha.');
+          setForgotStep('newpass');
+        } else if (forgotStep === 'newpass') {
+          const { error } = await supabase.auth.updateUser({ password: newPassword });
+          if (error) throw error;
+          toast.success('Senha atualizada com sucesso!');
+          setMode('login');
+          setForgotStep('email');
+          setOtpCode('');
+          setNewPassword('');
+        }
       } else if (mode === 'login') {
         const { error } = await signIn(email, password);
         if (error) throw error;
