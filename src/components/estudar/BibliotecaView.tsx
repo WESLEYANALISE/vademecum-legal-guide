@@ -88,9 +88,9 @@ export default function BibliotecaView({ onBack }: BibliotecaViewProps) {
           console.log('Auto-resuming stalled book:', book.id);
           try {
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session) continue;
+            if (!session?.access_token) continue;
             const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-            await fetch(
+            const res = await fetch(
               `https://${projectId}.supabase.co/functions/v1/processar-pdf`,
               {
                 method: 'POST',
@@ -101,9 +101,14 @@ export default function BibliotecaView({ onBack }: BibliotecaViewProps) {
                 body: JSON.stringify({ action: 'resume', livro_id: book.id }),
               }
             );
-            lastStatusRef.current[book.id] = { status: '', since: now };
-          } catch (e) {
-            console.warn('Resume failed:', e);
+            if (res.ok) {
+              lastStatusRef.current[book.id] = { status: '', since: now };
+            } else {
+              // Book may have been deleted or session expired — stop retrying
+              delete lastStatusRef.current[book.id];
+            }
+          } catch {
+            // Network error — ignore silently
           }
         } else if (!prev || prev.status !== book.status) {
           lastStatusRef.current[book.id] = { status: book.status, since: now };
