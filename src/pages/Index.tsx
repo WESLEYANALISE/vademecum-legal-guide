@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Scale, Radar, Brain, GraduationCap, BookOpen, Wrench, Timer, BookOpenText, ScanEye, Sparkles, ChevronRight } from 'lucide-react';
+import { Search, Scale, Radar, Brain, GraduationCap, BookOpen, Wrench, Timer, BookOpenText, ScanEye, Sparkles, ArrowRight } from 'lucide-react';
 import heroImage from '@/assets/hero-vademecum.jpg';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import camaraHero from '@/assets/radar/camara-hero.jpg';
