@@ -214,6 +214,7 @@ const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
                   </div>
                 )}
               </div>
+              )}
             </div>
 
             {/* Footer */}
