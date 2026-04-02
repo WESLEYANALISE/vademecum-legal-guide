@@ -785,7 +785,7 @@ const CategoriaLegislacao = () => {
                   </motion.button>
                 ))}
                 {filteredSumulas.length === 0 && !loadingSumulas && (
-                  <p className="text-center text-muted-foreground py-8">Nenhuma súmula encontrada.</p>
+                  <p className="text-center text-muted-foreground py-8">Nenhuma jurisprudência encontrada.</p>
                 )}
               </div>
             )}
