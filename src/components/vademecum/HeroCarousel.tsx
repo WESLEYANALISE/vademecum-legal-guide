@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, BookOpen, StickyNote, MessageCircle, Radio, Mic, Brain, Sparkles } from 'lucide-react';
+import { Search, BookOpen, StickyNote, MessageCircle, Radio, Mic, Brain, Sparkles, Bell } from 'lucide-react';
 import heroImage from '@/assets/hero-vademecum.jpg';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import camaraHero from '@/assets/radar/camara-hero.jpg';
 import senadoHero from '@/assets/radar/senado-hero.jpg';
 import { getNoticiasCache, type Noticia } from '@/services/noticiasService';
+import { getLatestDayCount, getResenhaCache, prefetchResenha } from '@/services/atualizacaoService';
 import { cdnImg } from '@/lib/cdnImg';
 
 interface Slide {
@@ -71,6 +73,7 @@ const FEATURE_SLIDES: Omit<Slide, 'type'>[] = [
 ];
 
 const HeroCarousel = () => {
+  const navigate = useNavigate();
   const autoplayPlugin = useRef(
     Autoplay({ delay: 5000, stopOnInteraction: true, stopOnMouseEnter: true })
   );
@@ -82,6 +85,17 @@ const HeroCarousel = () => {
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [slides, setSlides] = useState<Slide[]>([]);
+  const [badgeCount, setBadgeCount] = useState(0);
+
+  // Novidades badge
+  useEffect(() => {
+    const cached = getResenhaCache();
+    if (cached) {
+      setBadgeCount(getLatestDayCount());
+    } else {
+      prefetchResenha().then(() => setBadgeCount(getLatestDayCount()));
+    }
+  }, []);
 
   // Build slides with news injected
   useEffect(() => {
@@ -92,7 +106,6 @@ const HeroCarousel = () => {
     let featureIdx = 0;
 
     for (let i = 0; i < 10; i++) {
-      // Insert news at positions 4 and 8
       if ((i === 4 || i === 8) && cached && cached.length > 0) {
         const newsIdx = i === 4 ? 0 : Math.min(1, cached.length - 1);
         const n = cached[newsIdx];
@@ -214,6 +227,19 @@ const HeroCarousel = () => {
           <p className="font-display text-[10px] text-white/60">Vade Mecum 2026</p>
         </div>
       </div>
+
+      {/* Novidades button — top right */}
+      <button
+        onClick={() => { setBadgeCount(0); navigate('/novidades'); }}
+        className="absolute top-3 right-4 z-20 w-9 h-9 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center border border-white/10 hover:bg-black/50 transition-colors"
+      >
+        <Bell className="w-[18px] h-[18px] text-white" />
+        {badgeCount > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center px-1">
+            {badgeCount > 99 ? '99+' : badgeCount}
+          </span>
+        )}
+      </button>
 
       {/* Dots */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
