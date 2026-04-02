@@ -6,49 +6,49 @@
 
 @layer base {
   :root {
-    --background: 220 12% 12%;
-    --foreground: 45 15% 95%;
+    --background: 340 55% 12%;
+    --foreground: 40 15% 95%;
 
-    --card: 220 10% 16%;
-    --card-foreground: 45 15% 95%;
+    --card: 340 50% 16%;
+    --card-foreground: 40 15% 95%;
 
-    --popover: 220 10% 16%;
-    --popover-foreground: 45 15% 95%;
+    --popover: 340 50% 16%;
+    --popover-foreground: 40 15% 95%;
 
-    --primary: 45 80% 40%;
-    --primary-foreground: 220 12% 10%;
-    --primary-light: 45 90% 65%;
+    --primary: 42 75% 55%;
+    --primary-foreground: 340 55% 10%;
+    --primary-light: 42 80% 65%;
 
-    --secondary: 220 8% 21%;
-    --secondary-foreground: 45 10% 90%;
+    --secondary: 340 40% 21%;
+    --secondary-foreground: 40 10% 90%;
 
-    --muted: 220 8% 18%;
-    --muted-foreground: 220 8% 55%;
+    --muted: 340 40% 18%;
+    --muted-foreground: 340 30% 55%;
 
-    --accent: 42 75% 50%;
-    --accent-foreground: 220 12% 10%;
+    --accent: 42 70% 50%;
+    --accent-foreground: 340 55% 10%;
 
     --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 8% 24%;
-    --input: 220 8% 24%;
-    --ring: 45 85% 55%;
+    --border: 340 35% 24%;
+    --input: 340 35% 24%;
+    --ring: 42 75% 55%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 220 12% 12%;
-    --sidebar-foreground: 45 10% 90%;
-    --sidebar-primary: 45 85% 55%;
-    --sidebar-primary-foreground: 220 12% 10%;
-    --sidebar-accent: 220 8% 18%;
-    --sidebar-accent-foreground: 45 10% 90%;
-    --sidebar-border: 220 8% 24%;
-    --sidebar-ring: 45 85% 55%;
+    --sidebar-background: 340 55% 12%;
+    --sidebar-foreground: 40 10% 90%;
+    --sidebar-primary: 42 75% 55%;
+    --sidebar-primary-foreground: 340 55% 10%;
+    --sidebar-accent: 340 40% 18%;
+    --sidebar-accent-foreground: 40 10% 90%;
+    --sidebar-border: 340 35% 24%;
+    --sidebar-ring: 42 75% 55%;
 
-    --copper: 45 85% 55%;
-    --copper-light: 45 75% 65%;
-    --copper-dark: 45 60% 38%;
+    --copper: 42 75% 55%;
+    --copper-light: 42 65% 65%;
+    --copper-dark: 42 55% 38%;
     --signature: 0 70% 68%;
   }
 }
