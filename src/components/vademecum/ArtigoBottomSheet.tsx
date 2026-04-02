@@ -1547,7 +1547,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
 
         {/* Bottom nav bar — only visible on "artigo" tab */}
         {activeTab === 'artigo' && (
-        <div className="shrink-0 border-t border-amber-400/30 bg-amber-400/10 backdrop-blur-sm px-2 pb-[env(safe-area-inset-bottom)]">
+        <div className="shrink-0 mt-auto border-t border-amber-400/30 bg-amber-400/10 backdrop-blur-sm px-2 pb-[env(safe-area-inset-bottom)]">
           <div className="grid grid-cols-5 h-16 sm:h-[72px] items-end">
             <button
               onClick={() => setShowEstudarSheet(true)}
