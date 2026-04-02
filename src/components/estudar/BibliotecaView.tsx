@@ -188,6 +188,40 @@ export default function BibliotecaView({ onBack }: BibliotecaViewProps) {
     toast.info('Reprocessamento ainda não implementado no servidor');
   };
 
+  const [fetchingCover, setFetchingCover] = useState<string | null>(null);
+
+  const handleFetchCover = async (livroId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFetchingCover(livroId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) { toast.error('Faça login'); return; }
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/processar-pdf`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ action: 'fetch_cover', livro_id: livroId }),
+        }
+      );
+      const data = await res.json();
+      if (res.ok && data.capa_url) {
+        setLivros(prev => prev.map(l => l.id === livroId ? { ...l, capa_url: data.capa_url } : l));
+        toast.success('Capa encontrada!');
+      } else {
+        toast.error('Capa não encontrada na Google Books');
+      }
+    } catch {
+      toast.error('Erro ao buscar capa');
+    } finally {
+      setFetchingCover(null);
+    }
+  };
+
   const handleUpdateBookmark = async (livroId: string, pagina: number) => {
     await supabase
       .from('biblioteca_livros')
