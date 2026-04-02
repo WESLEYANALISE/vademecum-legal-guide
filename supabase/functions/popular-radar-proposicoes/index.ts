@@ -418,9 +418,9 @@ Deno.serve(async (req) => {
       return !existing || !existing.headline || !existing.analise
     })
     .sort((a, b) => (b.ano || 0) - (a.ano || 0) || (b.numero || 0) - (a.numero || 0))
-    .slice(0, fullSync ? 20 : 5) // Limit per run to avoid timeout
+    .slice(0, fullSync ? 20 : 15) // Limit per run to avoid timeout
 
-    console.log(`PLs needing headline/analysis: ${needGeneration.length} (capped at ${fullSync ? 20 : 5})`)
+    console.log(`PLs needing headline/analysis: ${needGeneration.length} (capped at ${fullSync ? 20 : 15})`)
 
     // Process in batches of 5 with 2s delay
     const genBatchSize = 5
