@@ -935,8 +935,8 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
         transition={{ type: 'spring', damping: 28, stiffness: 300 }}
         className={
           isDesktop
-            ? "fixed z-50 bottom-0 top-[5%] left-0 right-0 mx-auto bg-card border border-border rounded-t-2xl flex flex-col w-[800px] shadow-2xl"
-            : "fixed inset-x-0 bottom-0 top-8 z-50 rounded-t-3xl bg-card border-t border-border flex flex-col"
+            ? "fixed z-50 bottom-0 top-[5%] left-0 right-0 mx-auto bg-card border border-border rounded-t-2xl relative flex flex-col w-[800px] shadow-2xl"
+            : "fixed inset-x-0 bottom-0 top-8 z-50 rounded-t-3xl bg-card border-t border-border relative flex flex-col"
         }
       >
         <div className="flex justify-center pt-3 pb-1">
@@ -1110,7 +1110,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
           )}
 
 
-          <TabsContent value="artigo" className="flex-1 min-h-0 overflow-y-auto px-5 pb-24 pt-4 relative">
+          <TabsContent value="artigo" className="flex-1 min-h-0 overflow-y-auto px-5 pb-28 pt-4 relative">
             {/* Brasão watermark fixo */}
             <div className="sticky top-1/2 -translate-y-1/2 left-0 right-0 flex items-center justify-center pointer-events-none z-0" style={{ height: 0 }}>
               <img src={brasaoImg} alt="" className="w-48 h-48 opacity-[0.04] object-contain" />
@@ -1486,7 +1486,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
         </Tabs>
 
         {/* Floating FABs — Grifo Mágico + Font size */}
-        <div className={`fixed ${activeTab === 'artigo' ? 'bottom-24' : 'bottom-6'} right-5 z-[60] flex flex-col items-end gap-2`}>
+        <div className={`absolute ${activeTab === 'artigo' ? 'bottom-24' : 'bottom-6'} right-5 z-[60] flex flex-col items-end gap-2`}>
           <AnimatePresence>
             {showFontControls && (
               <motion.div
@@ -1546,8 +1546,8 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
         </div>
 
         {/* Bottom nav bar — only visible on "artigo" tab */}
-        {activeTab === 'artigo' && (
-        <div className="fixed inset-x-0 bottom-0 z-[55] border-t border-amber-400/30 bg-card/95 backdrop-blur-md px-2 pb-[env(safe-area-inset-bottom)]" style={isDesktop ? { maxWidth: 800, left: '50%', transform: 'translateX(-50%)' } : undefined}>
+        {(activeTab ?? 'artigo') === 'artigo' && (
+        <div className="absolute inset-x-0 bottom-0 z-[55] border-t border-amber-400/30 bg-card/95 backdrop-blur-md px-2 pb-[env(safe-area-inset-bottom)] rounded-t-2xl">
           <div className="grid grid-cols-5 h-16 sm:h-[72px] items-end">
             <button
               onClick={() => setShowEstudarSheet(true)}
