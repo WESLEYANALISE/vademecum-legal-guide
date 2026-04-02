@@ -43,6 +43,28 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Check if this is a resume request (JSON body)
+    const contentType = req.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const body = await req.json();
+      if (body.action === "resume" && body.livro_id) {
+        // Resume cleaning from where it stopped
+        // @ts-ignore
+        EdgeRuntime.waitUntil(
+          resumeCleaning({
+            supabaseUrl,
+            supabaseServiceKey,
+            geminiApiKey,
+            livroId: body.livro_id,
+          })
+        );
+        return new Response(
+          JSON.stringify({ success: true, message: "Retomando processamento" }),
+          { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const titulo = (formData.get("titulo") as string) || "Sem título";
@@ -556,7 +578,7 @@ Retorne APENAS um JSON válido: array de objetos com "source_page" (número) e "
 PÁGINAS:
 ${pagesText}`;
 
-  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
   try {
     const response = await fetch(geminiUrl, {
@@ -575,7 +597,109 @@ ${pagesText}`;
     if (!response.ok) {
       console.error("Gemini clean error:", await response.text());
       return normalizedPages;
+}
+
+// ── Resume cleaning for interrupted processing ─────────────────────
+
+interface ResumeCleaningParams {
+  supabaseUrl: string;
+  supabaseServiceKey: string;
+  geminiApiKey: string;
+  livroId: string;
+}
+
+async function resumeCleaning({
+  supabaseUrl,
+  supabaseServiceKey,
+  geminiApiKey,
+  livroId,
+}: ResumeCleaningParams) {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  try {
+    const { data: livro } = await supabase
+      .from("biblioteca_livros")
+      .select("status, estrutura_leitura")
+      .eq("id", livroId)
+      .single();
+
+    if (!livro || !livro.status.startsWith("cleaning:")) {
+      console.log("Resume: book not in cleaning state, skipping");
+      return;
     }
+
+    const estrutura = livro.estrutura_leitura as EstruturaLeitura;
+    if (!estrutura?.chapters) {
+      console.error("Resume: no chapters found");
+      await markBookAsError(supabase, livroId, "Estrutura de capítulos não encontrada para retomar");
+      return;
+    }
+
+    console.log(`Resuming cleaning for book ${livroId}...`);
+
+    // Detect which chapters still need cleaning by checking if pages have raw OCR markers
+    const totalPagesAll = estrutura.chapters.reduce(
+      (acc: number, ch: GeminiChapter) => acc + (ch.pages?.length || 0), 0
+    );
+    let pagesProcessed = 0;
+    let pagesAlreadyClean = 0;
+
+    for (let ci = 0; ci < estrutura.chapters.length; ci++) {
+      const ch = estrutura.chapters[ci];
+      if (!ch.pages || ch.pages.length === 0) continue;
+
+      // Check if this chapter looks already cleaned (has markdown headings like ## or **bold**)
+      const looksClean = ch.pages.some(p =>
+        p.markdown && (p.markdown.includes("## ") || p.markdown.includes("### "))
+      );
+
+      if (looksClean) {
+        pagesAlreadyClean += ch.pages.length;
+        pagesProcessed += ch.pages.length;
+        continue;
+      }
+
+      const BATCH_SIZE = 6;
+      const MAX_MD_CHARS = 6000;
+      const cleanedPages: { source_page: number; markdown: string }[] = [];
+
+      for (let bi = 0; bi < ch.pages.length; bi += BATCH_SIZE) {
+        const batch = ch.pages.slice(bi, bi + BATCH_SIZE).map((p) => ({
+          source_page: p.source_page,
+          markdown: p.markdown.slice(0, MAX_MD_CHARS),
+        }));
+        const cleaned = await cleanChapterMarkdown(geminiApiKey, batch);
+        cleanedPages.push(...cleaned);
+
+        pagesProcessed += batch.length;
+        const pct = totalPagesAll > 0
+          ? Math.min(Math.round((pagesProcessed / totalPagesAll) * 100), 99)
+          : 99;
+        await supabase
+          .from("biblioteca_livros")
+          .update({ status: `cleaning:${pct}` })
+          .eq("id", livroId);
+      }
+
+      estrutura.chapters[ci].pages = cleanedPages;
+    }
+
+    console.log(`Resume complete: ${pagesAlreadyClean} already clean, ${pagesProcessed - pagesAlreadyClean} newly cleaned`);
+
+    await supabase
+      .from("biblioteca_livros")
+      .update({
+        estrutura_leitura: estrutura,
+        versao_processamento: 2,
+        status: "ready",
+      })
+      .eq("id", livroId);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.error("Resume cleaning error:", errorMessage);
+    await markBookAsError(supabase, livroId, errorMessage);
+  }
+}
 
     const data = await response.json();
     let rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";

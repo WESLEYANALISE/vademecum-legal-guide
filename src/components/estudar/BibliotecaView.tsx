@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ArrowLeft, BookOpen, Upload, Loader2, Trash2, Clock, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,14 +64,52 @@ export default function BibliotecaView({ onBack }: BibliotecaViewProps) {
     fetchLivros();
   }, [fetchLivros]);
 
-  // Poll for processing books
+  // Poll for processing books + auto-resume stalled cleaning
+  const lastStatusRef = useRef<Record<string, { status: string; since: number }>>({});
+
   useEffect(() => {
     const processingBooks = livros.filter(l => {
       const { baseStatus } = parseStatus(l.status);
       return ['ocr', 'structuring', 'cleaning', 'processing'].includes(baseStatus);
     });
     if (processingBooks.length === 0) return;
-    const interval = setInterval(fetchLivros, 3000);
+
+    const interval = setInterval(async () => {
+      await fetchLivros();
+
+      // Check for stalled cleaning (same status for 30+ seconds)
+      for (const book of processingBooks) {
+        if (!book.status.startsWith('cleaning:')) continue;
+        const prev = lastStatusRef.current[book.id];
+        const now = Date.now();
+
+        if (prev && prev.status === book.status && (now - prev.since) > 30000) {
+          // Stalled — trigger resume
+          console.log('Auto-resuming stalled book:', book.id);
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) continue;
+            const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+            await fetch(
+              `https://${projectId}.supabase.co/functions/v1/processar-pdf`,
+              {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${session.access_token}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ action: 'resume', livro_id: book.id }),
+              }
+            );
+            lastStatusRef.current[book.id] = { status: '', since: now };
+          } catch (e) {
+            console.warn('Resume failed:', e);
+          }
+        } else if (!prev || prev.status !== book.status) {
+          lastStatusRef.current[book.id] = { status: book.status, since: now };
+        }
+      }
+    }, 3000);
     return () => clearInterval(interval);
   }, [livros, fetchLivros]);
 
