@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ScrollText, FileText, Scale, Landmark, Shield, ChevronLeft, ChevronRight, Gavel, Newspaper } from 'lucide-react';
+import { ScrollText, FileText, Scale, Landmark, Shield, ChevronLeft, ChevronRight, Gavel, Newspaper, BookMarked, HeartPulse } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getNoticiasCache, prefetchNoticias, type Noticia } from '@/services/noticiasService';
