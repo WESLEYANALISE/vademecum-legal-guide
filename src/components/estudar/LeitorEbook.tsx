@@ -19,6 +19,8 @@ interface Chapter {
 interface EstruturaLeitura {
   version: number;
   title: string;
+  content_start_page?: number;
+  skip_pages?: number[];
   chapters: Chapter[];
 }
 
@@ -54,10 +56,11 @@ interface DisplayPage {
 const FONT_SIZES = [14, 16, 18, 20, 22];
 
 export default function LeitorEbook({ livro, onBack, onUpdateBookmark }: LeitorEbookProps) {
-  const [currentPage, setCurrentPage] = useState(livro.ultima_pagina || 0);
+  const [currentPage, setCurrentPage] = useState(0); // will be set after displayPages are built
   const [fontSize, setFontSize] = useState(2);
   const [direction, setDirection] = useState(0);
   const [tocOpen, setTocOpen] = useState(false);
+  const [initialPageSet, setInitialPageSet] = useState(false);
   const bookmarkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -80,10 +83,12 @@ export default function LeitorEbook({ livro, onBack, onUpdateBookmark }: LeitorE
         });
         tocItems.push({ title: chapter.title, level: 1, pageIndex: dp.length - 1 });
 
-        // Content pages for this chapter
+        // Content pages for this chapter (skip empty/cleared pages)
         if (chapter.pages && chapter.pages.length > 0) {
           for (const p of chapter.pages) {
-            dp.push({ type: 'content', markdown: p.markdown, sourcePage: p.source_page });
+            if (p.markdown && p.markdown.trim().length > 0) {
+              dp.push({ type: 'content', markdown: p.markdown, sourcePage: p.source_page });
+            }
           }
         }
       }
@@ -100,6 +105,30 @@ export default function LeitorEbook({ livro, onBack, onUpdateBookmark }: LeitorE
 
     return { displayPages: dp, toc: tocItems };
   }, [pages, estrutura]);
+
+  // Set initial page: bookmark > content_start_page > 0
+  useEffect(() => {
+    if (initialPageSet || displayPages.length === 0) return;
+    setInitialPageSet(true);
+
+    // If user has a saved bookmark, use it
+    if (livro.ultima_pagina && livro.ultima_pagina > 0) {
+      setCurrentPage(Math.min(livro.ultima_pagina, displayPages.length - 1));
+      return;
+    }
+
+    // First time reading: jump to content_start_page
+    const contentStart = estrutura?.content_start_page;
+    if (contentStart && contentStart > 1) {
+      const targetIdx = displayPages.findIndex(
+        dp => dp.sourcePage !== undefined && dp.sourcePage >= contentStart
+      );
+      if (targetIdx > 0) {
+        setCurrentPage(targetIdx);
+        return;
+      }
+    }
+  }, [displayPages, initialPageSet, livro.ultima_pagina, estrutura]);
 
   const totalPages = displayPages.length;
 

@@ -187,11 +187,18 @@ Deno.serve(async (req) => {
       await supabase.from("biblioteca_imagens").insert(imagensToInsert);
     }
 
-    // Extract cover from first page image
+    // Extract cover: try Amazon first, fallback to first page image
     let capaUrl: string | null = null;
-    const firstPageImages = imagensToInsert.filter(img => img.pagina === 1);
-    if (firstPageImages.length > 0) {
-      capaUrl = firstPageImages[0].url;
+    try {
+      capaUrl = await fetchAmazonCover(geminiApiKey, conteudo, supabase, user.id, livro.id);
+    } catch (e) {
+      console.warn("Amazon cover fetch failed, using first page image:", e);
+    }
+    if (!capaUrl) {
+      const firstPageImages = imagensToInsert.filter(img => img.pagina === 1);
+      if (firstPageImages.length > 0) {
+        capaUrl = firstPageImages[0].url;
+      }
     }
 
     // Save raw OCR content
@@ -294,6 +301,8 @@ interface GeminiChapter {
 interface EstruturaLeitura {
   version: number;
   title: string;
+  content_start_page?: number;
+  skip_pages?: number[];
   chapters: GeminiChapter[];
 }
 
@@ -325,6 +334,7 @@ TAREFA:
 2. Use o sumário como referência principal para identificar os capítulos E subcapítulos/seções
 3. Confirme onde cada capítulo/seção realmente começa no conteúdo
 4. Organize TODAS as ${totalPages} páginas em capítulos, sem pular nenhuma
+5. Identifique páginas DESCARTÁVEIS e a página onde o conteúdo principal começa
 
 REGRAS IMPORTANTES:
 - TODAS as páginas de 1 a ${totalPages} devem estar cobertas (sem buracos nem sobreposições)
@@ -336,10 +346,27 @@ REGRAS IMPORTANTES:
 - NÃO reescreva o conteúdo, apenas organize
 - Se não encontrar sumário, divida por títulos/headings visíveis no texto (incluindo subtítulos em negrito ou caixa alta)
 
+PÁGINAS DESCARTÁVEIS (skip_pages):
+Marque como descartáveis páginas que contêm APENAS:
+- Avisos de copyright/direitos autorais
+- Avisos contra pirataria
+- Página em branco ou quase vazia
+- Folha de rosto repetida
+- Ficha catalográfica / CIP
+- Biografia do autor (na contracapa ou páginas iniciais)
+- Agradecimentos
+- Dedicatórias
+
+NÃO marque como descartáveis: sumário, prefácio, introdução, apresentação, capítulos reais.
+
+CONTENT_START_PAGE: número da página onde começa o primeiro conteúdo real do livro (após sumário, dedicatórias, etc). Geralmente é o primeiro capítulo ou a introdução.
+
 Retorne APENAS um JSON válido com esta estrutura:
 {
   "version": 2,
   "title": "Título do livro",
+  "content_start_page": 15,
+  "skip_pages": [1, 2, 3, 4],
   "chapters": [
     {
       "title": "Nome do capítulo",
@@ -379,7 +406,7 @@ ${pagesPayload}`;
   rawText = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
 
   try {
-    const parsed = JSON.parse(rawText) as EstruturaLeitura;
+    const parsed = JSON.parse(rawText) as EstruturaLeitura & { skip_pages?: number[]; content_start_page?: number };
 
     // Validate: all pages covered
     if (!parsed.chapters || parsed.chapters.length === 0) {
@@ -387,17 +414,25 @@ ${pagesPayload}`;
       return buildFallbackStructure(conteudo, totalPages);
     }
 
-    // Populate pages within each chapter
+    const skipSet = new Set(parsed.skip_pages || []);
+    console.log(`Gemini skip_pages: ${parsed.skip_pages?.length || 0}, content_start_page: ${parsed.content_start_page || 'N/A'}`);
+
+    // Populate pages within each chapter, clearing skipped pages
     const result: EstruturaLeitura = {
       version: 2,
       title: parsed.title || "Livro",
+      content_start_page: parsed.content_start_page,
+      skip_pages: parsed.skip_pages,
       chapters: parsed.chapters.map(ch => ({
         title: ch.title,
         start_source_page: ch.start_source_page,
         end_source_page: ch.end_source_page,
         pages: conteudo
           .filter(p => p.pagina >= ch.start_source_page && p.pagina <= ch.end_source_page)
-          .map(p => ({ source_page: p.pagina, markdown: p.markdown })),
+          .map(p => ({
+            source_page: p.pagina,
+            markdown: skipSet.has(p.pagina) ? '' : p.markdown,
+          })),
       })),
     };
 
@@ -525,4 +560,115 @@ function buildFallbackStructure(
       pages: conteudo.map(p => ({ source_page: p.pagina, markdown: p.markdown })),
     }],
   };
+}
+
+// ── Amazon Cover Fetch ──────────────────────────────────────────────
+
+async function fetchAmazonCover(
+  geminiApiKey: string,
+  conteudo: { pagina: number; markdown: string }[],
+  supabase: any,
+  userId: string,
+  livroId: string
+): Promise<string | null> {
+  // 1. Use Gemini to extract exact title + author from first pages
+  const firstPages = conteudo.slice(0, 5).map(p => p.markdown).join("\n\n");
+  const extractPrompt = `Extraia o TÍTULO EXATO e o AUTOR do livro a partir destas primeiras páginas de OCR. Retorne JSON: {"title":"...","author":"..."}. Se não encontrar autor, retorne author como string vazia.\n\nPÁGINAS:\n${firstPages.slice(0, 3000)}`;
+
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+  const extractRes = await fetch(geminiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: extractPrompt }] }],
+      generationConfig: { responseMimeType: "application/json", maxOutputTokens: 256 },
+    }),
+  });
+
+  if (!extractRes.ok) return null;
+  const extractData = await extractRes.json();
+  let rawExtract = extractData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  rawExtract = rawExtract.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+
+  let bookTitle = "";
+  let bookAuthor = "";
+  try {
+    const info = JSON.parse(rawExtract);
+    bookTitle = info.title || "";
+    bookAuthor = info.author || "";
+  } catch {
+    return null;
+  }
+
+  if (!bookTitle) return null;
+  console.log(`Amazon cover search: "${bookTitle}" by "${bookAuthor}"`);
+
+  // 2. Search Amazon.com.br
+  const query = encodeURIComponent(`${bookTitle} ${bookAuthor}`.trim());
+  const amazonUrl = `https://www.amazon.com.br/s?k=${query}&i=stripbooks`;
+
+  const amazonRes = await fetch(amazonUrl, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+      "Accept": "text/html,application/xhtml+xml",
+    },
+  });
+
+  if (!amazonRes.ok) {
+    console.warn("Amazon search failed:", amazonRes.status);
+    return null;
+  }
+
+  const html = await amazonRes.text();
+
+  // 3. Extract first product image (s-image class)
+  const imgMatch = html.match(/class="s-image"[^>]*src="([^"]+)"/);
+  if (!imgMatch?.[1]) {
+    // Try alternative pattern
+    const altMatch = html.match(/src="(https:\/\/m\.media-amazon\.com\/images\/[^"]+)"/);
+    if (!altMatch?.[1]) {
+      console.warn("No Amazon cover image found");
+      return null;
+    }
+    return await downloadAndUploadCover(altMatch[1], supabase, userId, livroId);
+  }
+
+  return await downloadAndUploadCover(imgMatch[1], supabase, userId, livroId);
+}
+
+async function downloadAndUploadCover(
+  imageUrl: string,
+  supabase: any,
+  userId: string,
+  livroId: string
+): Promise<string | null> {
+  try {
+    // Get higher resolution version (replace size in Amazon URL)
+    const hiResUrl = imageUrl.replace(/\._[^.]+_\./, "._SL500_.");
+
+    const imgRes = await fetch(hiResUrl);
+    if (!imgRes.ok) return null;
+
+    const imgBuffer = await imgRes.arrayBuffer();
+    const contentType = imgRes.headers.get("content-type") || "image/jpeg";
+    const ext = contentType.includes("png") ? "png" : "jpg";
+    const coverPath = `${userId}/${livroId}/cover.${ext}`;
+
+    const { error: uploadErr } = await supabase.storage
+      .from("biblioteca")
+      .upload(coverPath, imgBuffer, { contentType, upsert: true });
+
+    if (uploadErr) {
+      console.warn("Cover upload failed:", uploadErr);
+      return null;
+    }
+
+    const { data } = supabase.storage.from("biblioteca").getPublicUrl(coverPath);
+    console.log("Amazon cover uploaded:", data.publicUrl);
+    return data.publicUrl;
+  } catch (e) {
+    console.warn("Cover download error:", e);
+    return null;
+  }
 }
