@@ -557,9 +557,9 @@ ${pagesPayload}`;
   }
 }
 
-// ── Gemini markdown cleaning ────────────────────────────────────────
+// ── Gemini edge-page cleaning (first/last pages only) ───────────────
 
-async function cleanChapterMarkdown(
+async function cleanEdgePages(
   apiKey: string,
   pages: { source_page: number; markdown: string }[]
 ): Promise<{ source_page: number; markdown: string }[]> {
@@ -569,31 +569,27 @@ async function cleanChapterMarkdown(
     .map((p) => `--- Página ${p.source_page} ---\n${p.markdown}`)
     .join("\n\n");
 
-  const prompt = `Você é um editor profissional de livros. Recebeu páginas de um livro extraídas por OCR que precisam de formatação hierárquica rica em Markdown.
+  const prompt = `Você é um editor de livros. Recebeu páginas iniciais ou finais de um livro extraídas por OCR.
 
-TAREFA: Leia cada página cuidadosamente e reformate com hierarquia visual clara.
+TAREFA: Identifique e REMOVA conteúdo irrelevante como:
+- Páginas de copyright, aviso legal, ficha catalográfica
+- Biografia do autor, "sobre o autor"
+- Avisos sobre pirataria, reprodução proibida
+- Páginas em branco ou com apenas números
+- Propagandas, "outros livros do autor"
+- Agradecimentos, dedicatórias (a menos que sejam substanciais)
+- Referências bibliográficas genéricas nas últimas páginas
 
-FORMATAÇÃO OBRIGATÓRIA:
-- Use ## para títulos de capítulo e seções principais
-- Use ### para subtítulos e subseções
-- Use **negrito** para: termos importantes, conceitos-chave, nomes próprios, nomes de autores, e qualquer texto que esteja em CAIXA ALTA no original
-- Use listas numeradas (1. 2. 3.) quando houver enumerações no texto
-- Use listas com marcadores (- item) quando houver itens sem ordem
-- Separe parágrafos com uma linha em branco entre eles
-- Citações devem usar > (blockquote)
+MANTER intacto:
+- Sumário / índice (formatar cada entrada em sua linha)
+- Prefácio, introdução, apresentação (são conteúdo real)
+- Todo o conteúdo principal do livro
+- Notas de rodapé relevantes ao conteúdo
 
-LIMPEZA:
-- Remova números de página soltos (ex: "1.", "23", "— 5 —")
-- Em sumário/índice: cada entrada em sua própria linha, nunca marcadores soltos
-- Junte palavras hifenizadas por quebra de linha (ex: "consti-tuição" → "constituição")
-- Corrija espaçamentos irregulares do OCR
+Para páginas que devem ser REMOVIDAS: retorne com markdown vazio "".
+Para páginas que devem ser MANTIDAS: formate com ## para títulos, ### subtítulos, **negrito** para termos importantes.
 
-PROIBIÇÕES:
-- NÃO invente, resuma ou altere o conteúdo textual
-- NÃO remova nem altere imagens: mantenha ![...](...) intactas
-- NÃO adicione conteúdo que não existe no original
-
-Retorne APENAS um JSON válido: array de objetos com "source_page" (número) e "markdown" (string formatada).
+Retorne APENAS um JSON válido: array de objetos com "source_page" (número) e "markdown" (string, vazia se removida).
 
 PÁGINAS:
 ${pagesText}`;
