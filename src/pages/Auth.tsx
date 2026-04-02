@@ -58,18 +58,22 @@ const Auth = () => {
   };
 
   return (
-    <main className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+    <main className="min-h-screen relative flex flex-col items-center justify-center px-6 overflow-hidden">
+      {/* Themis Background */}
+      <div className="absolute inset-0 z-0">
+        <img src={themisBg} alt="" className="w-full h-full object-cover opacity-25" />
+        <div className="absolute inset-0 bg-background/80" />
+      </div>
+
       {/* Branding */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center mb-8"
+        className="flex flex-col items-center mb-8 relative z-10"
       >
-        <div className="w-16 h-16 rounded-2xl bg-primary/15 flex items-center justify-center mb-4 shadow-lg">
-          <Scale className="w-8 h-8 text-primary" />
-        </div>
-        <h1 className="font-display text-2xl font-bold text-foreground">Vade Mecum</h1>
-        <p className="text-sm font-body text-muted-foreground mt-1">Comentado 2026</p>
+        <img src={logoVacatio} alt="Vacatio" className="w-16 h-16 rounded-2xl mb-4 shadow-lg object-cover" />
+        <h1 className="font-display text-2xl font-bold text-foreground">Vacatio</h1>
+        <p className="text-sm font-body text-muted-foreground mt-1">Vade Mecum 2026</p>
       </motion.div>
 
       {/* Card */}
