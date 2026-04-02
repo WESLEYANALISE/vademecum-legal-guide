@@ -224,21 +224,59 @@ const Index = () => {
                 {activeTab === 'legislacao' && (
                   <>
                     <motion.div className="mb-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02, type: 'spring', stiffness: 260, damping: 24 }}>
-                      <div
-                        className="relative flex items-center h-11 cursor-pointer"
-                        onClick={() => setSearchOpen(true)}
-                      >
-                        <div className="absolute left-0 z-10 w-11 h-11 rounded-full border-2 border-primary/40 overflow-hidden shadow-md shrink-0">
-                          <img src={vacatioLogo} alt="Vacatio" className="w-full h-full object-cover" />
+                      <div className="flex items-center gap-4">
+                        {/* Search bar */}
+                        <div
+                          className="relative flex items-center h-11 cursor-pointer flex-1"
+                          onClick={() => setSearchOpen(true)}
+                        >
+                          <div className="absolute left-0 z-10 w-11 h-11 rounded-full border-2 border-primary/40 overflow-hidden shadow-md shrink-0">
+                            <img src={vacatioLogo} alt="Vacatio" className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 flex items-center h-10 ml-8 pl-6 pr-11 rounded-full bg-secondary/80 border border-border/60 shadow-sm">
+                            <span className="text-muted-foreground text-sm font-body truncate">
+                              {typingHint}<span className="animate-pulse">|</span>
+                            </span>
+                          </div>
+                          <button className="absolute right-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-md">
+                            <Search className="w-4 h-4 text-primary-foreground" />
+                          </button>
                         </div>
-                        <div className="flex-1 flex items-center h-10 ml-8 pl-6 pr-11 rounded-full bg-secondary/80 border border-border/60 shadow-sm">
-                          <span className="text-muted-foreground text-sm font-body truncate">
-                            {typingHint}<span className="animate-pulse">|</span>
-                          </span>
+                        {/* Radar 360 bar */}
+                        <div
+                          className="relative flex items-center h-11 cursor-pointer w-[280px] rounded-full bg-primary shadow-md shadow-primary/25 overflow-hidden shrink-0"
+                          onClick={() => { navigate('/radar-360'); localStorage.setItem(RADAR_SEEN_KEY, String(Date.now())); setRadarBadge(0); }}
+                        >
+                          <div className="absolute inset-0 pointer-events-none z-10">
+                            <div
+                              className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-20deg]"
+                              style={{ animation: 'shinePratique 3s ease-in-out infinite' }}
+                            />
+                          </div>
+                          {radarBadge > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 z-20 min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground flex items-center justify-center shadow-md animate-pulse">
+                              {radarBadge}
+                            </span>
+                          )}
+                          <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-card border-2 border-primary z-10">
+                            <iframe
+                              src="https://lottie.host/embed/3b2d7321-76b2-43fb-9eb0-5b564b42750f/D6XzVc9mGe.lottie"
+                              className="w-9 h-9 border-0 pointer-events-none scale-125"
+                              title="Radar"
+                            />
+                          </div>
+                          <div className="flex-1 flex items-center justify-between pl-3 pr-3 relative z-10">
+                            <span className="text-primary-foreground text-[15px] font-display font-semibold tracking-wide italic">
+                              Radar de Leis 360°
+                            </span>
+                            <motion.div
+                              animate={{ x: [0, 5, 0] }}
+                              transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
+                            >
+                              <ArrowRight className="w-5 h-5 text-primary-foreground" strokeWidth={2.5} />
+                            </motion.div>
+                          </div>
                         </div>
-                        <button className="absolute right-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-md">
-                          <Search className="w-4 h-4 text-primary-foreground" />
-                        </button>
                       </div>
                     </motion.div>
                     <motion.div className="mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, type: 'spring', stiffness: 260, damping: 24 }}>
