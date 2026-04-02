@@ -1,66 +1,65 @@
 
 
-## Plano: Adicionar categorias "Leis Especiais" e "Previdenciário"
+## Diagnóstico Completo do Projeto
 
-### Resumo
-Criar dois novos tipos de legislação (`lei-especial` e `previdenciario`) no catálogo, adicionar as 20 leis faltantes + leis previdenciárias, e atualizar todos os pontos da UI que listam categorias.
+### Problemas Encontrados
 
-### Novas leis a cadastrar
+---
 
-**Leis Especiais (20 leis):**
+#### 1. CRÍTICO — Prefetch tentando buscar 18 tabelas inexistentes
 
-| Lei | Sigla | Tabela |
-|-----|-------|--------|
-| Lei de Execução Penal (7.210/84) | LEP | LEP_EXECUCAO_PENAL |
-| Maria da Penha (11.340/06) | LMP | LMP_MARIA_PENHA |
-| Lei de Drogas (11.343/06) | LD | LD_LEI_DROGAS |
-| Organização Criminosa (12.850/13) | LOC | LOC_ORGANIZACAO_CRIMINOSA |
-| Abuso de Autoridade (13.869/19) | LAA | LAA_ABUSO_AUTORIDADE |
-| Interceptação Telefônica (9.296/96) | LIT | LIT_INTERCEPTACAO_TELEFONICA |
-| Servidores Federais (8.112/90) | L8112 | L8112_SERVIDORES_FEDERAIS |
-| Improbidade Administrativa (8.429/92) | LIA | LIA_IMPROBIDADE_ADMINISTRATIVA |
-| Nova Lei de Licitações (14.133/21) | NLL | NLL_LICITACOES |
-| Mandado de Segurança (12.016/09) | LMS | LMS_MANDADO_SEGURANCA |
-| Ação Civil Pública (7.347/85) | LACP | LACP_ACAO_CIVIL_PUBLICA |
-| Juizados Especiais (9.099/95) | LJE | LJE_JUIZADOS_ESPECIAIS |
-| LGPD (13.709/18) | LGPD | LGPD_PROTECAO_DADOS |
-| Marco Civil da Internet (12.965/14) | MCI | MCI_MARCO_CIVIL_INTERNET |
-| Lei de Falências (11.101/05) | LF | LF_FALENCIAS |
-| Lei de Arbitragem (9.307/96) | LA | LA_ARBITRAGEM |
-| Lei do Inquilinato (8.245/91) | LI | LI_INQUILINATO |
-| Lei de Registros Públicos (6.015/73) | LRP | LRP_REGISTROS_PUBLICOS |
-| LOMAN (LC 35/79) | LOMAN | LOMAN_LEI_ORGANICA_MAGISTRATURA |
-| Lei Antiterrorismo (13.260/16) | LAT | LAT_ANTITERRORISMO |
+O `prefetchAllArtigos()` executa automaticamente 500ms após o carregamento da página e tenta buscar dados de **todas as 65+ leis** do catálogo. Das 23 leis novas adicionadas, apenas **5 tabelas existem** no banco (LEP, LMP, LD, LOC, LAA). As outras 18 geram requisições HTTP que retornam erro 404/400, desperdiçando banda e poluindo logs.
 
-**Previdenciário (leis do direito previdenciário):**
+**Tabelas que NÃO existem ainda:**
+LIT, L8112, LIA, NLL, LMS, LACP, LJE, LGPD, MCI, LF, LA, LI, LRP, LOMAN, LAT, LBPS, LCSS, LPC
 
-| Lei | Sigla | Tabela |
-|-----|-------|--------|
-| Lei de Benefícios da Previdência (8.213/91) | LBPS | LBPS_BENEFICIOS_PREVIDENCIA |
-| Lei do Custeio da Seguridade (8.212/91) | LCSS | LCSS_CUSTEIO_SEGURIDADE |
-| Lei da Previdência Complementar (LC 109/01) | LPC | LPC_PREVIDENCIA_COMPLEMENTAR |
+**Correção:** Criar as 18 tabelas faltantes via migration + scraping, OU filtrar o prefetch para ignorar tabelas que ainda não foram populadas.
 
-### Arquivos a modificar
+---
 
-1. **`src/data/leisCatalog.ts`** — Adicionar as 23 novas leis com `tipo: 'lei-especial'` ou `tipo: 'previdenciario'`
+#### 2. MODERADO — `buscar_artigos_global` (RPC) não inclui as novas tabelas
 
-2. **`src/services/legislacaoService.ts`** — Adicionar `'lei-especial'` e `'previdenciario'` ao array de `getTodosOsTipos()`
+A função SQL `buscar_artigos_global` tem um array hardcoded `all_tables` que lista apenas as tabelas originais (CF88, CP, CC, etc.). As 23 novas leis (lei-especial + previdenciário) **nunca aparecem nos resultados de busca global**.
 
-3. **`src/components/vademecum/CategoriasGrid.tsx`** — Adicionar dois novos cards:
-   - Leis Especiais (ícone `BookMarked`, gradiente roxo/índigo)
-   - Previdenciário (ícone `HeartPulse`, gradiente teal)
+**Correção:** Atualizar a função SQL para incluir as novas tabelas no array.
 
-4. **`src/pages/CategoriaLegislacao.tsx`** — Adicionar entradas em `TIPO_CONFIG` para os dois novos tipos (renderizam como lista de leis, igual códigos/estatutos)
+---
 
-5. **`src/components/vademecum/DesktopSidebar.tsx`** — Adicionar os dois tipos ao menu lateral desktop
+#### 3. MENOR — Warning de `ref` no `Skeleton` dentro de `RadarLegislacaoContent`
 
-6. **`src/components/vademecum/LegislacaoTab.tsx`** — Adicionar labels para os novos tipos
+O componente `Skeleton` é um function component simples (sem `forwardRef`). Algo no `RadarLegislacaoContent` está passando um `ref` para ele, causando o warning repetido no console. Não quebra funcionalidade, mas polui os logs.
 
-7. **`src/pages/ExplicacaoLei.tsx`** e **`src/pages/NarracaoLei.tsx`** — Adicionar grupos para as novas categorias
+**Correção:** Adicionar `React.forwardRef` ao `Skeleton` component.
 
-8. **`src/services/explicacaoWorker.ts`** — Incluir os novos tipos no filtro de leis
+---
 
-### Observações
-- As tabelas no Supabase (ex: `LEP_EXECUCAO_PENAL`) ainda não existem — serão criadas depois via migration + scraping do Planalto. Por enquanto, o catálogo ficará registrado e os cards aparecerão na UI, mas sem artigos até popular os dados.
-- Nenhuma lógica especial é necessária para esses tipos (não são como `lei-ordinaria` que filtra por ano) — funcionam como `codigo`/`estatuto`, listando as leis do catálogo.
+#### 4. MODERADO — `RadarLegislacaoContent` não referencia as novas leis especiais
+
+O mapa `LEI_REFS` em `RadarLegislacaoContent.tsx` (que mapeia leis para termos de busca no Radar) não inclui nenhuma das 23 novas leis. PLs que mencionem Maria da Penha, LGPD, Lei de Drogas, etc. não serão detectados como relevantes.
+
+**Correção:** Adicionar entradas para as novas leis no `LEI_REFS`.
+
+---
+
+#### 5. PERFORMANCE — Prefetch agressivo com 65+ leis simultâneas
+
+O prefetch usa concurrency 4, mas agora o catálogo tem ~65 leis. São 65 requisições HTTP de até 2000 linhas cada, disparadas 500ms após o login. Isso pode sobrecarregar a rede, especialmente em conexões móveis.
+
+**Correção:** Priorizar as leis mais usadas (CF, CP, CC, CPC, CPP, CLT, CDC) e postergar as demais. Ou usar um prefetch sob demanda.
+
+---
+
+### Plano de Correção
+
+| Passo | Arquivo | Ação |
+|-------|---------|------|
+| 1 | Migration SQL | Criar as 18 tabelas faltantes (LIT, L8112, LIA, NLL, LMS, LACP, LJE, LGPD, MCI, LF, LA, LI, LRP, LOMAN, LAT, LBPS, LCSS, LPC) com RLS |
+| 2 | Edge Function `scrape-legislacao` | Invocar scraping para cada uma das 18 leis |
+| 3 | Migration SQL | Atualizar `buscar_artigos_global` para incluir as novas tabelas |
+| 4 | `src/components/ui/skeleton.tsx` | Adicionar `React.forwardRef` |
+| 5 | `RadarLegislacaoContent.tsx` | Adicionar as novas leis ao `LEI_REFS` |
+| 6 | `src/services/legislacaoService.ts` | Otimizar prefetch: priorizar top 10 leis, postergar o resto |
+
+### Observação
+O passo 1+2 é o mais trabalhoso (criar 18 tabelas + scraping). Recomendo fazer em lotes de 5, como fizemos antes.
 
