@@ -83,10 +83,12 @@ export default function LeitorEbook({ livro, onBack, onUpdateBookmark }: LeitorE
         });
         tocItems.push({ title: chapter.title, level: 1, pageIndex: dp.length - 1 });
 
-        // Content pages for this chapter
+        // Content pages for this chapter (skip empty/cleared pages)
         if (chapter.pages && chapter.pages.length > 0) {
           for (const p of chapter.pages) {
-            dp.push({ type: 'content', markdown: p.markdown, sourcePage: p.source_page });
+            if (p.markdown && p.markdown.trim().length > 0) {
+              dp.push({ type: 'content', markdown: p.markdown, sourcePage: p.source_page });
+            }
           }
         }
       }
