@@ -934,7 +934,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
 
         <div className="px-5 pb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="font-display text-xl text-primary-light font-bold">
+            <h3 className="font-display text-xl font-bold" style={{ color: 'hsl(45, 65%, 62%)' }}>
               {artigo.numero}
             </h3>
             {onlineCount > 1 && (
