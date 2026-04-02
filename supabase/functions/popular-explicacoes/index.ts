@@ -29,16 +29,25 @@ async function callGemini(apiKey: string, prompt: string, systemPrompt: string):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           system_instruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ parts: [{ text: prompt }] }],
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
         }),
         signal: AbortSignal.timeout(30000),
       }
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`Gemini HTTP ${res.status}: ${errText.slice(0, 200)}`);
+      return null;
+    }
     const json = await res.json();
-    return json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
-  } catch {
+    const text = json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (!text) {
+      console.warn(`Gemini empty candidate: ${JSON.stringify(json).slice(0, 200)}`);
+    }
+    return text || null;
+  } catch (e: any) {
+    console.error(`Gemini fetch error: ${e.message}`);
     return null;
   }
 }
