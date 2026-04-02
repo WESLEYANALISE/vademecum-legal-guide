@@ -507,7 +507,7 @@ Retorne APENAS um JSON válido: array de objetos com "source_page" (número) e "
 PÁGINAS:
 ${pagesText}`;
 
-  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
   try {
     const response = await fetch(geminiUrl, {
@@ -575,7 +575,7 @@ async function fetchAmazonCover(
   const firstPages = conteudo.slice(0, 5).map(p => p.markdown).join("\n\n");
   const extractPrompt = `Extraia o TÍTULO EXATO e o AUTOR do livro a partir destas primeiras páginas de OCR. Retorne JSON: {"title":"...","author":"..."}. Se não encontrar autor, retorne author como string vazia.\n\nPÁGINAS:\n${firstPages.slice(0, 3000)}`;
 
-  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
   const extractRes = await fetch(geminiUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
