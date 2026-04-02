@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Eye, EyeOff, Star, Highlighter, Copy, Plus, Minus, Type, MessageSquare, ChevronUp, ChevronDown, ChevronRight, ExternalLink, Volume2, Pause, Target, StickyNote, MessageCircle, Loader2, Share2, Network, BookOpen, Layers, Sparkles, GraduationCap, Play } from 'lucide-react';
 import AnotacoesSheet from './AnotacoesSheet';
@@ -916,7 +917,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
 
   const commentsWithText = highlights.filter(h => h.comment && h.comment.trim().length > 0);
 
-  return (
+  const sheetContent = (
     <>
     <AnimatePresence>
       <motion.div
@@ -925,7 +926,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-50 bg-black/60"
+        className="fixed inset-0 z-[120] bg-black/60"
         onClick={onClose}
       />
 
@@ -937,8 +938,8 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
         transition={{ type: 'spring', damping: 28, stiffness: 300 }}
         className={
           isDesktop
-            ? "fixed z-[60] bottom-0 top-[5%] left-0 right-0 mx-auto bg-card border border-border rounded-t-2xl relative flex flex-col w-[800px] shadow-2xl"
-            : "fixed inset-x-0 bottom-0 top-8 z-[60] rounded-t-3xl bg-card border-t border-border relative flex flex-col"
+            ? "fixed z-[130] bottom-0 top-[5%] left-0 right-0 mx-auto bg-card border border-border rounded-t-2xl relative flex flex-col w-[800px] shadow-2xl"
+            : "fixed inset-x-0 bottom-0 top-8 z-[130] rounded-t-3xl bg-card border-t border-border relative flex flex-col"
         }
       >
         <div className="flex justify-center pt-3 pb-1">
@@ -1839,6 +1840,8 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
     )}
     </>
   );
+
+  return typeof document === 'undefined' ? sheetContent : createPortal(sheetContent, document.body);
 };
 
 export default ArtigoBottomSheet;
