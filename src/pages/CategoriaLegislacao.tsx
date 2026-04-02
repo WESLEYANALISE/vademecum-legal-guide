@@ -1584,7 +1584,9 @@ const CategoriaLegislacao = () => {
           </div>
         ) : (
           <div className="grid gap-3 lg:grid-cols-2">
-            {filteredLeis.map((lei, i) => (
+            {filteredLeis.map((lei, i) => {
+              const iconColor = (lei as any).iconColor || 'hsl(var(--primary))';
+              return (
               <motion.button
                 key={lei.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -1597,47 +1599,37 @@ const CategoriaLegislacao = () => {
                   setSelectedTabelaNome((lei as any).tabela_nome || null);
                   setSearchQuery('');
                 }}
-                className="w-full text-left rounded-xl p-4 h-20 transition-all group flex items-center overflow-hidden relative bg-card hover:bg-secondary/60 border border-border/50"
+                className="w-full text-left rounded-xl p-4 min-h-[80px] transition-all group flex items-center overflow-hidden relative bg-card hover:bg-secondary/60 border border-border/50"
                 style={{
                   borderLeftWidth: '3px',
-                  borderLeftColor: (lei as any).iconColor || 'hsl(var(--primary))',
+                  borderLeftColor: iconColor,
                 }}
               >
-                {/* Background watermark icon */}
-                {(() => {
-                  const WatermarkIcon = LEI_ICON_MAP[lei.sigla] || BookOpen;
-                  const iconColor = (lei as any).iconColor || 'hsl(var(--primary))';
-                  return (
-                    <WatermarkIcon
-                      className="absolute right-3 bottom-1 w-14 h-14 pointer-events-none"
-                      style={{ color: iconColor, opacity: 0.1 }}
-                    />
-                  );
-                })()}
+                {/* Background watermark */}
+                <Scale
+                  className="absolute right-3 bottom-1 w-14 h-14 pointer-events-none"
+                  style={{ color: iconColor, opacity: 0.08 }}
+                />
                 <div className="flex items-center justify-between w-full relative z-10">
                   <div className="flex items-center gap-4">
                     <div
                       className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: `${(lei as any).iconColor || 'hsl(var(--primary))'}20` }}
+                      style={{ backgroundColor: `${iconColor}25` }}
                     >
-                      {(() => {
-                        const iconColor = (lei as any).iconColor || 'hsl(var(--primary))';
-                        const IconComp = LEI_ICON_MAP[lei.sigla] || BookOpen;
-                        return <IconComp className="w-5 h-5" style={{ color: iconColor }} />;
-                      })()}
+                      <Scale className="w-5 h-5" style={{ color: iconColor }} />
                     </div>
-                    <div>
-                      <h3 className="font-display text-lg text-foreground group-hover:text-primary transition-colors leading-tight">
-                        {lei.sigla}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-display text-[15px] text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-2 font-bold">
+                        {lei.nome}
                       </h3>
-                      <p className="text-muted-foreground text-sm">{lei.nome}</p>
-                      <p className="text-muted-foreground/60 text-[10px] font-semibold tracking-wider mt-0.5">2026</p>
+                      <p className="text-muted-foreground text-xs mt-0.5">{lei.descricao}</p>
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0 ml-2" />
                 </div>
               </motion.button>
-            ))}
+              );
+            })}
             {filteredLeis.length === 0 && (
               <p className="text-center text-muted-foreground py-8">Nenhuma legislação encontrada.</p>
             )}
