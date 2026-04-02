@@ -535,7 +535,7 @@ ${pagesPayload}`;
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
         responseMimeType: "application/json",
-        maxOutputTokens: 8192,
+        maxOutputTokens: 16384,
       },
     }),
   });
