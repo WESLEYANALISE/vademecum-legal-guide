@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Scale, Radar, Brain, GraduationCap, BookOpen, Wrench, Timer, BookOpenText, ScanEye, Sparkles, ChevronRight } from 'lucide-react';
+import { Search, Scale, Radar, Brain, GraduationCap, BookOpen, Wrench, Timer, BookOpenText, ScanEye, Sparkles, ArrowRight } from 'lucide-react';
 import heroImage from '@/assets/hero-vademecum.jpg';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import camaraHero from '@/assets/radar/camara-hero.jpg';
@@ -395,29 +395,29 @@ const Index = () => {
                 <motion.div className="py-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, type: 'spring', stiffness: 260, damping: 24 }}>
                   <AtalhosCarousel onSelect={handleAtalhoSelect} onPersonalizarOpen={setPersonalizarOpen} />
                 </motion.div>
-                <motion.div className="py-4" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 24 }}>
+                <motion.div className="py-4 flex justify-center" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 24 }}>
                   <div
-                    className="relative flex items-center h-14 cursor-pointer"
+                    className="relative flex items-center h-12 cursor-pointer w-[280px]"
                     onClick={() => navigate('/radar-360')}
                   >
-                    {/* Lottie icon à esquerda */}
-                    <div className="absolute left-0 z-10 w-14 h-14 rounded-full border-2 border-primary/40 overflow-hidden shadow-lg shrink-0 bg-card flex items-center justify-center">
+                    {/* Lottie icon à esquerda — com glow */}
+                    <div className="absolute left-0 z-10 w-12 h-12 rounded-full border-2 border-primary shadow-[0_0_12px_2px_hsl(var(--primary)/0.5)] overflow-hidden shrink-0 bg-card flex items-center justify-center">
                       <iframe
                         src="https://lottie.host/embed/3b2d7321-76b2-43fb-9eb0-5b564b42750f/D6XzVc9mGe.lottie"
-                        className="w-10 h-10 border-0 pointer-events-none"
+                        className="w-9 h-9 border-0 pointer-events-none scale-125"
                         title="Radar"
                       />
                     </div>
-                    {/* Radar de Leis 360 */}
-                    <div className="flex-1 flex items-center justify-between h-11 ml-10 pl-8 pr-4 rounded-full bg-secondary/80 border border-border/60 shadow-sm">
-                      <span className="text-foreground text-sm font-display font-semibold">
+                    {/* Radar de Leis 360 — fundo amarelo */}
+                    <div className="flex-1 flex items-center justify-between h-10 ml-8 pl-7 pr-3 rounded-full bg-primary shadow-md">
+                      <span className="text-primary-foreground text-sm font-display font-bold">
                         Radar de Leis 360
                       </span>
                       <motion.div
-                        animate={{ x: [0, 6, 0] }}
-                        transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+                        animate={{ x: [0, 5, 0] }}
+                        transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
                       >
-                        <ChevronRight className="w-5 h-5 text-primary" />
+                        <ArrowRight className="w-5 h-5 text-primary-foreground" strokeWidth={2.5} />
                       </motion.div>
                     </div>
                   </div>
