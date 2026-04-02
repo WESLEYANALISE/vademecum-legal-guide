@@ -56,10 +56,11 @@ interface DisplayPage {
 const FONT_SIZES = [14, 16, 18, 20, 22];
 
 export default function LeitorEbook({ livro, onBack, onUpdateBookmark }: LeitorEbookProps) {
-  const [currentPage, setCurrentPage] = useState(livro.ultima_pagina || 0);
+  const [currentPage, setCurrentPage] = useState(0); // will be set after displayPages are built
   const [fontSize, setFontSize] = useState(2);
   const [direction, setDirection] = useState(0);
   const [tocOpen, setTocOpen] = useState(false);
+  const [initialPageSet, setInitialPageSet] = useState(false);
   const bookmarkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
