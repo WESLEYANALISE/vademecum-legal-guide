@@ -12,7 +12,7 @@ export async function getLeisPorTipo(tipo: string) {
 }
 
 export function getTodosOsTipos(): string[] {
-  return ['constituicao', 'codigo', 'estatuto', 'lei-ordinaria', 'decreto', 'sumula'];
+  return ['constituicao', 'codigo', 'estatuto', 'lei-especial', 'previdenciario', 'lei-ordinaria', 'decreto', 'sumula'];
 }
 
 // In-memory cache

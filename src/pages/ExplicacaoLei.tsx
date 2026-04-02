@@ -22,6 +22,8 @@ const GROUPS = [
   { label: 'Constituição', tipo: 'constituicao' },
   { label: 'Códigos', tipo: 'codigo' },
   { label: 'Estatutos', tipo: 'estatuto' },
+  { label: 'Leis Especiais', tipo: 'lei-especial' },
+  { label: 'Previdenciário', tipo: 'previdenciario' },
 ];
 
 export default function ExplicacaoLei() {

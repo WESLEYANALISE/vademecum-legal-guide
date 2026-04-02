@@ -22,6 +22,8 @@ const GROUPS = [
   { label: 'Constituição', tipo: 'constituicao' },
   { label: 'Códigos', tipo: 'codigo' },
   { label: 'Estatutos', tipo: 'estatuto' },
+  { label: 'Leis Especiais', tipo: 'lei-especial' },
+  { label: 'Previdenciário', tipo: 'previdenciario' },
 ];
 
 type NarracaoCache = Record<string, string>; // artigo_numero -> audio_url

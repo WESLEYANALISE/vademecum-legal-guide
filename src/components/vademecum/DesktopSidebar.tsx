@@ -18,6 +18,8 @@ const CATEGORIAS = [
   { id: 'lei-ordinaria', label: 'Leis Ordinárias', icon: FileText },
   { id: 'decreto', label: 'Decretos', icon: ScrollText },
   { id: 'sumula', label: 'Súmulas', icon: Gavel },
+  { id: 'lei-especial', label: 'Leis Especiais', icon: BookMarked },
+  { id: 'previdenciario', label: 'Previdenciário', icon: HeartPulse },
 ];
 
 const CONTEUDO_ITEMS = [

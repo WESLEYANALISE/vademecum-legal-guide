@@ -20,6 +20,8 @@ const CATEGORIAS: Categoria[] = [
   { id: 'lei-ordinaria', label: 'Leis Ordinárias', sublabel: 'Legislação', icon: FileText, bg: 'bg-gradient-to-br from-violet-600/90 to-violet-800/70' },
   { id: 'decreto', label: 'Decretos', sublabel: 'Regulamentos', icon: ScrollText, bg: 'bg-gradient-to-br from-orange-600/90 to-orange-800/70' },
   { id: 'sumula', label: 'Súmulas', sublabel: 'STF e STJ', icon: Gavel, bg: 'bg-gradient-to-br from-pink-600/90 to-pink-800/70' },
+  { id: 'lei-especial', label: 'Leis Especiais', sublabel: 'Penais, Civis...', icon: BookMarked, bg: 'bg-gradient-to-br from-indigo-600/90 to-indigo-800/70' },
+  { id: 'previdenciario', label: 'Previdenciário', sublabel: 'Benefícios, Custeio', icon: HeartPulse, bg: 'bg-gradient-to-br from-teal-600/90 to-teal-800/70' },
 ];
 
 
