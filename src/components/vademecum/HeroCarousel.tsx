@@ -81,7 +81,7 @@ const HeroCarousel = () => {
               onClick={() => navigate('/noticias', { state: { noticiaId: noticia.id } })}
             >
               <img
-                src={cdnImg(noticia.imagem_url!, 800)}
+                src={newsImg(noticia.imagem_url!, 800)}
                 alt={noticia.titulo}
                 className="absolute inset-0 w-full h-full object-cover"
                 loading={index < 2 ? 'eager' : 'lazy'}

@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { getNoticiasCache, prefetchNoticias, type Noticia } from '@/services/noticiasService';
-import { cdnImg } from '@/lib/cdnImg';
+import { newsImg } from '@/lib/cdnImg';
 
 function formatDateParts(dateStr: string) {
   const d = new Date(dateStr);
