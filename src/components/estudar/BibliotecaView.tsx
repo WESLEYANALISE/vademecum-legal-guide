@@ -185,7 +185,32 @@ export default function BibliotecaView({ onBack }: BibliotecaViewProps) {
   };
 
   const handleReprocess = async (livroId: string) => {
-    toast.info('Reprocessamento ainda não implementado no servidor');
+    toast.info('Reindexando capítulos...');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) { toast.error('Faça login'); return; }
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/processar-pdf`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ action: 'restructure', livro_id: livroId }),
+        }
+      );
+      if (res.ok) {
+        toast.success('Reindexação iniciada!');
+        fetchLivros();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Erro ao reindexar');
+      }
+    } catch {
+      toast.error('Erro ao reindexar');
+    }
   };
 
   const [fetchingCover, setFetchingCover] = useState<string | null>(null);
