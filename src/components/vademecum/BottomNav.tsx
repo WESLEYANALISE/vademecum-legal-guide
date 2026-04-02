@@ -43,7 +43,13 @@ const BottomNav = ({ onSearchClick, onAssistenteClick, onMenuClick }: BottomNavP
                       style={{ animation: 'shinePratique 3s ease-in-out infinite' }}
                     />
                   </div>
-                  <Icon className="w-6 h-6 text-accent-foreground relative z-10" />
+                  <motion.div
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ repeat: Infinity, duration: 4, ease: 'linear' }}
+                    className="relative z-10"
+                  >
+                    <Icon className="w-6 h-6 text-accent-foreground" />
+                  </motion.div>
                 </motion.div>
                 <span className="font-body text-[11px] text-foreground font-semibold">{item.label}</span>
               </button>
