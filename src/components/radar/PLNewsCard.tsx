@@ -1,5 +1,5 @@
-import { Scale } from 'lucide-react';
 import { ChevronRight } from 'lucide-react';
+import camaraPlenario from '@/assets/radar/camara-plenario.jpg';
 
 interface PLNewsCardProps {
   pl: {
@@ -26,9 +26,7 @@ const PLNewsCard = ({ pl, onVerAnalise }: PLNewsCardProps) => {
         {pl.autorFoto ? (
           <img src={pl.autorFoto} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-            <Scale className="w-4 h-4 text-primary/50" />
-          </div>
+          <img src={camaraPlenario} alt="Câmara dos Deputados" className="w-full h-full object-cover" loading="lazy" />
         )}
       </div>
 
