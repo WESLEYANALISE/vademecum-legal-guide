@@ -35,7 +35,7 @@ const BottomNav = ({ onSearchClick, onAssistenteClick, onMenuClick }: BottomNavP
               >
                 <motion.div
                   whileTap={{ scale: 0.9 }}
-                  className="w-14 h-14 rounded-full bg-[hsl(48,95%,54%)] flex items-center justify-center shadow-lg shadow-[hsl(48,95%,54%)/0.35] border-4 border-card relative overflow-hidden"
+                  className="w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/35 border-4 border-card relative overflow-hidden"
                 >
                   <div className="absolute inset-0 pointer-events-none">
                     <div
