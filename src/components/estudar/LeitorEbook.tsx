@@ -104,6 +104,30 @@ export default function LeitorEbook({ livro, onBack, onUpdateBookmark }: LeitorE
     return { displayPages: dp, toc: tocItems };
   }, [pages, estrutura]);
 
+  // Set initial page: bookmark > content_start_page > 0
+  useEffect(() => {
+    if (initialPageSet || displayPages.length === 0) return;
+    setInitialPageSet(true);
+
+    // If user has a saved bookmark, use it
+    if (livro.ultima_pagina && livro.ultima_pagina > 0) {
+      setCurrentPage(Math.min(livro.ultima_pagina, displayPages.length - 1));
+      return;
+    }
+
+    // First time reading: jump to content_start_page
+    const contentStart = estrutura?.content_start_page;
+    if (contentStart && contentStart > 1) {
+      const targetIdx = displayPages.findIndex(
+        dp => dp.sourcePage !== undefined && dp.sourcePage >= contentStart
+      );
+      if (targetIdx > 0) {
+        setCurrentPage(targetIdx);
+        return;
+      }
+    }
+  }, [displayPages, initialPageSet, livro.ultima_pagina, estrutura]);
+
   const totalPages = displayPages.length;
 
   const saveBookmark = useCallback(
