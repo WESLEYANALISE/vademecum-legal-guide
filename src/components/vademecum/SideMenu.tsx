@@ -108,6 +108,7 @@ const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Usuário';
   const userEmail = user?.email || '';
+  const isAdmin = userEmail === 'wn7corporation@gmail.com';
 
   return (
     <AnimatePresence>
