@@ -561,3 +561,114 @@ function buildFallbackStructure(
     }],
   };
 }
+
+// ── Amazon Cover Fetch ──────────────────────────────────────────────
+
+async function fetchAmazonCover(
+  geminiApiKey: string,
+  conteudo: { pagina: number; markdown: string }[],
+  supabase: any,
+  userId: string,
+  livroId: string
+): Promise<string | null> {
+  // 1. Use Gemini to extract exact title + author from first pages
+  const firstPages = conteudo.slice(0, 5).map(p => p.markdown).join("\n\n");
+  const extractPrompt = `Extraia o TÍTULO EXATO e o AUTOR do livro a partir destas primeiras páginas de OCR. Retorne JSON: {"title":"...","author":"..."}. Se não encontrar autor, retorne author como string vazia.\n\nPÁGINAS:\n${firstPages.slice(0, 3000)}`;
+
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+  const extractRes = await fetch(geminiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: extractPrompt }] }],
+      generationConfig: { responseMimeType: "application/json", maxOutputTokens: 256 },
+    }),
+  });
+
+  if (!extractRes.ok) return null;
+  const extractData = await extractRes.json();
+  let rawExtract = extractData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  rawExtract = rawExtract.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+
+  let bookTitle = "";
+  let bookAuthor = "";
+  try {
+    const info = JSON.parse(rawExtract);
+    bookTitle = info.title || "";
+    bookAuthor = info.author || "";
+  } catch {
+    return null;
+  }
+
+  if (!bookTitle) return null;
+  console.log(`Amazon cover search: "${bookTitle}" by "${bookAuthor}"`);
+
+  // 2. Search Amazon.com.br
+  const query = encodeURIComponent(`${bookTitle} ${bookAuthor}`.trim());
+  const amazonUrl = `https://www.amazon.com.br/s?k=${query}&i=stripbooks`;
+
+  const amazonRes = await fetch(amazonUrl, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+      "Accept": "text/html,application/xhtml+xml",
+    },
+  });
+
+  if (!amazonRes.ok) {
+    console.warn("Amazon search failed:", amazonRes.status);
+    return null;
+  }
+
+  const html = await amazonRes.text();
+
+  // 3. Extract first product image (s-image class)
+  const imgMatch = html.match(/class="s-image"[^>]*src="([^"]+)"/);
+  if (!imgMatch?.[1]) {
+    // Try alternative pattern
+    const altMatch = html.match(/src="(https:\/\/m\.media-amazon\.com\/images\/[^"]+)"/);
+    if (!altMatch?.[1]) {
+      console.warn("No Amazon cover image found");
+      return null;
+    }
+    return await downloadAndUploadCover(altMatch[1], supabase, userId, livroId);
+  }
+
+  return await downloadAndUploadCover(imgMatch[1], supabase, userId, livroId);
+}
+
+async function downloadAndUploadCover(
+  imageUrl: string,
+  supabase: any,
+  userId: string,
+  livroId: string
+): Promise<string | null> {
+  try {
+    // Get higher resolution version (replace size in Amazon URL)
+    const hiResUrl = imageUrl.replace(/\._[^.]+_\./, "._SL500_.");
+
+    const imgRes = await fetch(hiResUrl);
+    if (!imgRes.ok) return null;
+
+    const imgBuffer = await imgRes.arrayBuffer();
+    const contentType = imgRes.headers.get("content-type") || "image/jpeg";
+    const ext = contentType.includes("png") ? "png" : "jpg";
+    const coverPath = `${userId}/${livroId}/cover.${ext}`;
+
+    const { error: uploadErr } = await supabase.storage
+      .from("biblioteca")
+      .upload(coverPath, imgBuffer, { contentType, upsert: true });
+
+    if (uploadErr) {
+      console.warn("Cover upload failed:", uploadErr);
+      return null;
+    }
+
+    const { data } = supabase.storage.from("biblioteca").getPublicUrl(coverPath);
+    console.log("Amazon cover uploaded:", data.publicUrl);
+    return data.publicUrl;
+  } catch (e) {
+    console.warn("Cover download error:", e);
+    return null;
+  }
+}
