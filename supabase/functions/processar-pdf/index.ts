@@ -463,10 +463,11 @@ async function structureWithGemini(
 
   let pagesPayload: string;
   if (isLargeBook) {
-    const summaries = conteudo.map(p =>
-      `--- Página ${p.pagina} ---\n${p.markdown.slice(0, 200)}`
-    ).join("\n\n");
-    pagesPayload = summaries;
+    pagesPayload = conteudo.map(p => {
+      const isInitial = p.pagina <= 15;
+      const text = isInitial ? p.markdown : p.markdown.slice(0, 500);
+      return `--- Página ${p.pagina} ---\n${text}`;
+    }).join("\n\n");
   } else {
     pagesPayload = conteudo.map(p =>
       `--- Página ${p.pagina} ---\n${p.markdown}`
