@@ -79,6 +79,16 @@ const Index = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [assistenteOpen, setAssistenteOpen] = useState(false);
   const [personalizarOpen, setPersonalizarOpen] = useState(false);
+  const [radarBadge, setRadarBadge] = useState(0);
+
+  useEffect(() => {
+    const cached = getResenhaCache();
+    if (cached) {
+      setRadarBadge(getLatestDayCount());
+    } else {
+      prefetchResenha().then(() => setRadarBadge(getLatestDayCount()));
+    }
+  }, []);
   const [timerOpen, setTimerOpen] = useState(false);
   const [typingHint, setTypingHint] = useState('');
   const [radarBadge, setRadarBadge] = useState(0);
