@@ -13,7 +13,9 @@ const ALL_LAWS = (() => {
   const constituicao = catalog.filter(l => l.tipo === 'constituicao');
   const codigos = catalog.filter(l => l.tipo === 'codigo');
   const estatutos = catalog.filter(l => l.tipo === 'estatuto');
-  return [...constituicao, ...codigos, ...estatutos];
+  const leisEspeciais = catalog.filter(l => l.tipo === 'lei-especial');
+  const previdenciario = catalog.filter(l => l.tipo === 'previdenciario');
+  return [...constituicao, ...codigos, ...estatutos, ...leisEspeciais, ...previdenciario];
 })();
 
 const GROUPS = [
