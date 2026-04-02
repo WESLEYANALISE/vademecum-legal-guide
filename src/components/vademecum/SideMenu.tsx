@@ -92,6 +92,8 @@ const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
       'gamificacao': '/gamificacao',
       'mapa-mental': '/mapa-mental',
       'simulado-admin': '/simulado-admin',
+      'sobre': '/sobre',
+      'perfil': '/perfil',
       'geracao-admin': '/geracao-admin',
       'admin-monitor': '/admin-monitor',
     };
