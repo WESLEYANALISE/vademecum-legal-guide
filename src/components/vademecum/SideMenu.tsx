@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { X, Scale, FileText, Newspaper, BookOpen, Gavel, Landmark, Shield, ScrollText, Settings, Bell, Rss, Info, HelpCircle, Palette, LogOut, User, LifeBuoy, Lightbulb, Building2, BookA, BellRing, MessageCircle, Mic, Gamepad2, ShieldCheck, ClipboardList, Brain, Activity, ChevronDown, Lock } from 'lucide-react';
+import { X, Scale, FileText, Newspaper, BookOpen, Gavel, Landmark, Shield, ScrollText, Settings, Bell, Rss, Info, Palette, LogOut, User, LifeBuoy, Lightbulb, Building2, BookA, BellRing, MessageCircle, Mic, Gamepad2, ShieldCheck, ClipboardList, Brain, Activity, ChevronDown, Lock } from 'lucide-react';
+import SuporteSheet from './SuporteSheet';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
