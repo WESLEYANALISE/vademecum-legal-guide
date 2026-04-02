@@ -142,6 +142,8 @@ function AnimatedRoutes() {
           <Route path="/geracao-admin" element={<ProtectedRoute><PageTransition><GeracaoAdmin /></PageTransition></ProtectedRoute>} />
           <Route path="/mapa-mental" element={<ProtectedRoute><PageTransition><MapaMentalGrafo /></PageTransition></ProtectedRoute>} />
           <Route path="/admin-monitor" element={<ProtectedRoute><PageTransition><AdminMonitor /></PageTransition></ProtectedRoute>} />
+          <Route path="/perfil" element={<ProtectedRoute><PageTransition><Perfil /></PageTransition></ProtectedRoute>} />
+          <Route path="/sobre" element={<ProtectedRoute><PageTransition><SobreApp /></PageTransition></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

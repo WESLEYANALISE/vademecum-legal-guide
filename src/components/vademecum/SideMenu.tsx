@@ -227,6 +227,7 @@ const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
               </p>
             </div>
           </motion.aside>
+          <SuporteSheet open={suporteOpen} onClose={() => setSuporteOpen(false)} />
         </>
       )}
     </AnimatePresence>
