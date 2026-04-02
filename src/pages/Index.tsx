@@ -414,7 +414,7 @@ const Index = () => {
                       </span>
                     )}
                     {/* Lottie icon dentro da barra */}
-                    <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-card border-2 border-[hsl(48,95%,54%)] z-10">
+                    <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-card border-2 border-primary z-10">
                       <iframe
                         src="https://lottie.host/embed/3b2d7321-76b2-43fb-9eb0-5b564b42750f/D6XzVc9mGe.lottie"
                         className="w-9 h-9 border-0 pointer-events-none scale-125"
