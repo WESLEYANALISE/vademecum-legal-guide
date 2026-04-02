@@ -397,19 +397,18 @@ const Index = () => {
                 </motion.div>
                 <motion.div className="py-4 flex justify-center" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 24 }}>
                   <div
-                    className="relative flex items-center h-12 cursor-pointer w-[280px]"
+                    className="relative flex items-center h-11 cursor-pointer w-[280px] rounded-full bg-[hsl(48,95%,54%)] shadow-md shadow-[hsl(48,95%,54%)/0.25]"
                     onClick={() => navigate('/radar-360')}
                   >
-                    {/* Lottie icon à esquerda — com glow */}
-                    <div className="absolute left-0 z-10 w-12 h-12 rounded-full border-2 border-primary shadow-[0_0_12px_2px_hsl(var(--primary)/0.5)] overflow-hidden shrink-0 bg-card flex items-center justify-center">
+                    {/* Lottie icon dentro da barra */}
+                    <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-card border-2 border-[hsl(48,95%,54%)]">
                       <iframe
                         src="https://lottie.host/embed/3b2d7321-76b2-43fb-9eb0-5b564b42750f/D6XzVc9mGe.lottie"
                         className="w-9 h-9 border-0 pointer-events-none scale-125"
                         title="Radar"
                       />
                     </div>
-                    {/* Radar de Leis 360 — fundo amarelo */}
-                    <div className="flex-1 flex items-center justify-between h-10 ml-8 pl-7 pr-3 rounded-full bg-[hsl(48_95%_54%)] shadow-md shadow-[hsl(48_95%_54%)/0.25]">
+                    <div className="flex-1 flex items-center justify-between pl-3 pr-3">
                       <span className="text-primary-foreground text-[13px] font-display font-semibold tracking-wide italic">
                         Radar de Leis 360
                       </span>
