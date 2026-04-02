@@ -33,7 +33,7 @@ function normalizeDateToISO(dateStr: string): string {
     abril:"04",maio:"05",junho:"06",julho:"07",
     agosto:"08",setembro:"09",outubro:"10",novembro:"11",dezembro:"12",
   };
-  const m = dateStr.match(/(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})/i);
+  const m = dateStr.match(/(\d{1,2})[ºª°]?\s+de\s+(\w+)\s+de\s+(\d{4})/i);
   if (!m) return "";
   return `${m[3]}-${meses[m[2].toLowerCase()]||"01"}-${m[1].padStart(2,"0")}`;
 }
