@@ -117,10 +117,10 @@ export default function BibliotecaView({ onBack }: BibliotecaViewProps) {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erro ao processar PDF');
+        throw new Error(result.error || 'Erro ao iniciar processamento do PDF');
       }
 
-      toast.success(`PDF processado: ${result.total_paginas} páginas, ${result.capitulos || 0} capítulos`);
+      toast.success(result.message || 'PDF enviado. O processamento começou em segundo plano.');
       fetchLivros();
     } catch (err: any) {
       toast.error(err.message || 'Erro ao enviar PDF');

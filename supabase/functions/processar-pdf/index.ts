@@ -54,7 +54,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 1. Upload PDF to Storage
     const fileExt = file.name.split(".").pop() || "pdf";
     const filePath = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
     const fileBuffer = await file.arrayBuffer();
@@ -74,7 +73,6 @@ Deno.serve(async (req) => {
     const { data: publicUrlData } = supabase.storage.from("biblioteca").getPublicUrl(filePath);
     const pdfPublicUrl = publicUrlData.publicUrl;
 
-    // 2. Create book record with "processing" status
     const { data: livro, error: insertError } = await supabase
       .from("biblioteca_livros")
       .insert({
@@ -96,7 +94,81 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 3. Call Mistral OCR API
+    // @ts-ignore
+    EdgeRuntime.waitUntil(
+      processPdfInBackground({
+        supabaseUrl,
+        supabaseServiceKey,
+        mistralApiKey,
+        geminiApiKey,
+        pdfPublicUrl,
+        userId: user.id,
+        livroId: livro.id,
+      })
+    );
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        livro_id: livro.id,
+        status: "processing",
+        message: "Processamento iniciado",
+      }),
+      { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    return new Response(
+      JSON.stringify({ error: "Erro interno", details: String(err) }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
+
+interface ProcessPdfInBackgroundParams {
+  supabaseUrl: string;
+  supabaseServiceKey: string;
+  mistralApiKey: string;
+  geminiApiKey: string;
+  pdfPublicUrl: string;
+  userId: string;
+  livroId: string;
+}
+
+async function markBookAsError(supabase: any, livroId: string, message: string) {
+  await supabase
+    .from("biblioteca_livros")
+    .update({ status: "error", erro_detalhe: message.slice(0, 500) })
+    .eq("id", livroId);
+}
+
+function buildOcrErrorMessage(errText: string) {
+  let userMessage = `OCR: ${errText.slice(0, 500)}`;
+
+  try {
+    const errJson = JSON.parse(errText);
+    if (errJson.type === "document_parser_too_many_pages" || String(errJson.code) === "3730") {
+      userMessage = "O PDF tem mais de 1000 páginas, que é o limite máximo do OCR. Tente dividir o PDF em partes menores.";
+    }
+  } catch (_) {
+    // ignore parse error
+  }
+
+  return userMessage;
+}
+
+async function processPdfInBackground({
+  supabaseUrl,
+  supabaseServiceKey,
+  mistralApiKey,
+  geminiApiKey,
+  pdfPublicUrl,
+  userId,
+  livroId,
+}: ProcessPdfInBackgroundParams) {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  try {
     console.log("Calling Mistral OCR for:", pdfPublicUrl);
     const ocrResponse = await fetch("https://api.mistral.ai/v1/ocr", {
       method: "POST",
@@ -114,30 +186,13 @@ Deno.serve(async (req) => {
     if (!ocrResponse.ok) {
       const errText = await ocrResponse.text();
       console.error("Mistral OCR error:", errText);
-
-      // Check for too many pages error
-      let userMessage = `OCR: ${errText.slice(0, 500)}`;
-      try {
-        const errJson = JSON.parse(errText);
-        if (errJson.type === "document_parser_too_many_pages" || errJson.code === "3730") {
-          userMessage = `O PDF tem mais de 1000 páginas, que é o limite máximo do OCR. Tente dividir o PDF em partes menores.`;
-        }
-      } catch (_) { /* ignore parse error */ }
-
-      await supabase
-        .from("biblioteca_livros")
-        .update({ status: "error", erro_detalhe: userMessage })
-        .eq("id", livro.id);
-      return new Response(
-        JSON.stringify({ error: userMessage }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      await markBookAsError(supabase, livroId, buildOcrErrorMessage(errText));
+      return;
     }
 
     const ocrData = await ocrResponse.json();
     const ocrPages = ocrData.pages || [];
 
-    // 4. Process pages: extract text and images
     const conteudo: { pagina: number; markdown: string }[] = [];
     const imagensToInsert: { livro_id: string; pagina: number; url: string; alt_text: string }[] = [];
 
@@ -149,7 +204,7 @@ Deno.serve(async (req) => {
         for (const img of page.images) {
           if (img.image_base64) {
             const imgId = crypto.randomUUID();
-            const imgPath = `${user.id}/${livro.id}/img_${i}_${imgId}.png`;
+            const imgPath = `${userId}/${livroId}/img_${i}_${imgId}.png`;
             const base64Data = img.image_base64.replace(/^data:image\/\w+;base64,/, "");
             const binaryStr = atob(base64Data);
             const bytes = new Uint8Array(binaryStr.length);
@@ -170,7 +225,7 @@ Deno.serve(async (req) => {
                 );
               }
               imagensToInsert.push({
-                livro_id: livro.id,
+                livro_id: livroId,
                 pagina: i + 1,
                 url: imgUrlData.publicUrl,
                 alt_text: img.id || `Imagem página ${i + 1}`,
@@ -179,29 +234,28 @@ Deno.serve(async (req) => {
           }
         }
       }
+
       conteudo.push({ pagina: i + 1, markdown: normalizeOcrMarkdown(markdown) });
     }
 
-    // Save images metadata
     if (imagensToInsert.length > 0) {
       await supabase.from("biblioteca_imagens").insert(imagensToInsert);
     }
 
-    // Extract cover: try Amazon first, fallback to first page image
     let capaUrl: string | null = null;
     try {
-      capaUrl = await fetchAmazonCover(geminiApiKey, conteudo, supabase, user.id, livro.id);
+      capaUrl = await fetchAmazonCover(geminiApiKey, conteudo, supabase, userId, livroId);
     } catch (e) {
       console.warn("Amazon cover fetch failed, using first page image:", e);
     }
+
     if (!capaUrl) {
-      const firstPageImages = imagensToInsert.filter(img => img.pagina === 1);
+      const firstPageImages = imagensToInsert.filter((img) => img.pagina === 1);
       if (firstPageImages.length > 0) {
         capaUrl = firstPageImages[0].url;
       }
     }
 
-    // Save raw OCR content
     await supabase
       .from("biblioteca_livros")
       .update({
@@ -210,13 +264,19 @@ Deno.serve(async (req) => {
         status: "structuring",
         ...(capaUrl ? { capa_url: capaUrl } : {}),
       })
-      .eq("id", livro.id);
+      .eq("id", livroId);
 
-    // 5. Call Gemini to structure chapters
     console.log("Calling Gemini to structure chapters...");
-    let estruturaLeitura = await structureWithGemini(geminiApiKey, conteudo, ocrPages.length);
+    const estruturaLeitura = await structureWithGemini(geminiApiKey, conteudo, ocrPages.length);
 
-    // 5b. Clean/format markdown chapter by chapter with progress
+    await supabase
+      .from("biblioteca_livros")
+      .update({
+        estrutura_leitura: estruturaLeitura,
+        total_paginas: ocrPages.length,
+      })
+      .eq("id", livroId);
+
     console.log("Formatting markdown with Gemini...");
     const totalPagesAll = estruturaLeitura.chapters.reduce(
       (acc: number, ch: GeminiChapter) => acc + (ch.pages?.length || 0), 0
@@ -226,7 +286,7 @@ Deno.serve(async (req) => {
     await supabase
       .from("biblioteca_livros")
       .update({ status: "cleaning:0" })
-      .eq("id", livro.id);
+      .eq("id", livroId);
 
     for (let ci = 0; ci < estruturaLeitura.chapters.length; ci++) {
       const ch = estruturaLeitura.chapters[ci];
@@ -237,26 +297,26 @@ Deno.serve(async (req) => {
       const cleanedPages: { source_page: number; markdown: string }[] = [];
 
       for (let bi = 0; bi < ch.pages.length; bi += BATCH_SIZE) {
-        const batch = ch.pages.slice(bi, bi + BATCH_SIZE).map(p => ({
+        const batch = ch.pages.slice(bi, bi + BATCH_SIZE).map((p) => ({
           source_page: p.source_page,
           markdown: p.markdown.slice(0, MAX_MD_CHARS),
         }));
         const cleaned = await cleanChapterMarkdown(geminiApiKey, batch);
         cleanedPages.push(...cleaned);
 
-        // Update progress
         pagesProcessed += batch.length;
-        const pct = Math.min(Math.round((pagesProcessed / totalPagesAll) * 100), 99);
+        const pct = totalPagesAll > 0
+          ? Math.min(Math.round((pagesProcessed / totalPagesAll) * 100), 99)
+          : 99;
         await supabase
           .from("biblioteca_livros")
           .update({ status: `cleaning:${pct}` })
-          .eq("id", livro.id);
+          .eq("id", livroId);
       }
 
       estruturaLeitura.chapters[ci].pages = cleanedPages;
     }
 
-    // 6. Save structured content
     const { error: updateError } = await supabase
       .from("biblioteca_livros")
       .update({
@@ -265,29 +325,18 @@ Deno.serve(async (req) => {
         total_paginas: ocrPages.length,
         status: "ready",
       })
-      .eq("id", livro.id);
+      .eq("id", livroId);
 
     if (updateError) {
       console.error("Update error:", updateError);
+      await markBookAsError(supabase, livroId, updateError.message);
     }
-
-    return new Response(
-      JSON.stringify({
-        livro_id: livro.id,
-        total_paginas: ocrPages.length,
-        capitulos: estruturaLeitura?.chapters?.length || 0,
-        imagens_extraidas: imagensToInsert.length,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
   } catch (err) {
-    console.error("Unexpected error:", err);
-    return new Response(
-      JSON.stringify({ error: "Erro interno", details: String(err) }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.error("Background processing error:", errorMessage);
+    await markBookAsError(supabase, livroId, errorMessage);
   }
-});
+}
 
 // ── Gemini structuring ──────────────────────────────────────────────
 
@@ -585,7 +634,10 @@ async function fetchAmazonCover(
     }),
   });
 
-  if (!extractRes.ok) return null;
+  if (!extractRes.ok) {
+    console.warn("Gemini title extraction failed:", extractRes.status);
+    return null;
+  }
   const extractData = await extractRes.json();
   let rawExtract = extractData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
   rawExtract = rawExtract.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
@@ -621,6 +673,7 @@ async function fetchAmazonCover(
   }
 
   const html = await amazonRes.text();
+  console.log(`Amazon search response size: ${html.length}`);
 
   // 3. Extract first product image (s-image class)
   const imgMatch = html.match(/class="s-image"[^>]*src="([^"]+)"/);
