@@ -453,8 +453,8 @@ const Index = () => {
         </AnimatePresence>
       </main>
 
-      {/* Bottom Nav - visible on all tabs */}
-      {!personalizarOpen && (
+      {/* Bottom Nav - hidden on radar/noticias(aprender) tabs */}
+      {!personalizarOpen && activeTab !== 'radar' && activeTab !== 'noticias' && (
         <BottomNav
           onSearchClick={() => setSearchOpen(true)}
           onAssistenteClick={() => setAssistenteOpen(true)}
