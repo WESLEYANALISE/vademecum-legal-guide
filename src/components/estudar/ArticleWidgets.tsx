@@ -93,9 +93,11 @@ export const CalloutBox = ({ type, title, children }: { type: string; title?: st
 };
 
 /* ─── FlowChart ─── */
-export const FlowChartWidget = ({ steps }: { steps: string[] }) => (
+export const FlowChartWidget = ({ steps }: { steps: string[] }) => {
+  const safeSteps = Array.isArray(steps) ? steps : [];
+  return (
   <div className="my-6 flex flex-col items-center gap-0">
-    {steps.map((step, i) => (
+    {safeSteps.map((step, i) => (
       <motion.div
         key={i}
         initial={{ opacity: 0, y: 8 }}
