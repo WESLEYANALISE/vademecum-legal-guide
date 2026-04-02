@@ -44,8 +44,12 @@ const BottomNav = ({ onSearchClick, onAssistenteClick, onMenuClick }: BottomNavP
                     />
                   </div>
                   <motion.div
-                    animate={{ rotate: [0, 360] }}
-                    transition={{ repeat: Infinity, duration: 4, ease: 'linear' }}
+                    animate={{ 
+                      x: [0, 3, -2, 2, 0],
+                      y: [0, -2, 1, -1, 0],
+                      rotate: [0, 10, -8, 5, 0]
+                    }}
+                    transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut', repeatDelay: 1.5 }}
                     className="relative z-10"
                   >
                     <Icon className="w-6 h-6 text-accent-foreground" />
