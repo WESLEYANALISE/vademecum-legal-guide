@@ -406,7 +406,7 @@ ${pagesPayload}`;
   rawText = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
 
   try {
-    const parsed = JSON.parse(rawText) as EstruturaLeitura;
+    const parsed = JSON.parse(rawText) as EstruturaLeitura & { skip_pages?: number[]; content_start_page?: number };
 
     // Validate: all pages covered
     if (!parsed.chapters || parsed.chapters.length === 0) {
@@ -414,17 +414,25 @@ ${pagesPayload}`;
       return buildFallbackStructure(conteudo, totalPages);
     }
 
-    // Populate pages within each chapter
+    const skipSet = new Set(parsed.skip_pages || []);
+    console.log(`Gemini skip_pages: ${parsed.skip_pages?.length || 0}, content_start_page: ${parsed.content_start_page || 'N/A'}`);
+
+    // Populate pages within each chapter, clearing skipped pages
     const result: EstruturaLeitura = {
       version: 2,
       title: parsed.title || "Livro",
+      content_start_page: parsed.content_start_page,
+      skip_pages: parsed.skip_pages,
       chapters: parsed.chapters.map(ch => ({
         title: ch.title,
         start_source_page: ch.start_source_page,
         end_source_page: ch.end_source_page,
         pages: conteudo
           .filter(p => p.pagina >= ch.start_source_page && p.pagina <= ch.end_source_page)
-          .map(p => ({ source_page: p.pagina, markdown: p.markdown })),
+          .map(p => ({
+            source_page: p.pagina,
+            markdown: skipSet.has(p.pagina) ? '' : p.markdown,
+          })),
       })),
     };
 
