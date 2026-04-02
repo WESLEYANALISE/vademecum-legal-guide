@@ -12,18 +12,22 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const browserlessKey = Deno.env.get("BROWSERLESS_API_KEY");
-    if (!browserlessKey) {
-      return new Response(
-        JSON.stringify({ error: "BROWSERLESS_API_KEY não configurada" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const browserlessUrl = `https://production-sfo.browserless.io/content?token=${browserlessKey}`;
+
+    // Check for fill_empty mode
+    let mode = "scrape";
+    try {
+      const body = await req.json();
+      if (body?.mode === "fill_empty") mode = "fill_empty";
+    } catch { /* no body = default scrape */ }
+
+    if (mode === "fill_empty") {
+      return await handleFillEmpty(supabase);
+    }
+
+    const browserlessUrl = '';  // Not used anymore for Migalhas
 
     // ── 1. Scrape Câmara ──
     console.log("Scraping Câmara dos Deputados...");
@@ -68,6 +72,123 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+// ════════════════════════════════════════
+// Fill empty content for existing news
+// ════════════════════════════════════════
+
+async function handleFillEmpty(supabase: any) {
+  const { data: emptyNews, error } = await supabase
+    .from('noticias_camara')
+    .select('id, link, categoria')
+    .or('conteudo.is.null,conteudo.eq.')
+    .limit(50);
+
+  if (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  if (!emptyNews || emptyNews.length === 0) {
+    return new Response(JSON.stringify({ success: true, message: "No empty news to fill", filled: 0 }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  console.log(`fill_empty: ${emptyNews.length} notícias sem conteúdo`);
+  let filled = 0;
+  const headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "pt-BR,pt;q=0.9",
+  };
+
+  for (const item of emptyNews) {
+    try {
+      const resp = await fetch(item.link, { headers });
+      if (!resp.ok) { console.error(`HTTP ${resp.status} for ${item.link}`); continue; }
+      const html = await resp.text();
+      let conteudo = '';
+
+      if (item.link.includes('migalhas.com.br')) {
+        conteudo = extractMigalhasContent(html);
+      } else if (item.link.includes('camara.leg.br')) {
+        conteudo = parseCamaraArticleContent(html);
+      } else {
+        // Generic: extract paragraphs
+        const pReg = /<p[^>]*>([\s\S]*?)<\/p>/gi;
+        const paragraphs: string[] = [];
+        let m;
+        while ((m = pReg.exec(html)) !== null) {
+          const text = decodeHtml(m[1]);
+          if (text.length > 30) paragraphs.push(text);
+        }
+        conteudo = paragraphs.join('\n\n');
+      }
+
+      if (conteudo && conteudo.length > 50) {
+        const { error: upErr } = await supabase
+          .from('noticias_camara')
+          .update({ conteudo })
+          .eq('id', item.id);
+        if (!upErr) filled++;
+        else console.error(`Update error for ${item.id}:`, upErr.message);
+      }
+    } catch (e) {
+      console.error(`fill_empty error for ${item.link}:`, e);
+    }
+    await new Promise(r => setTimeout(r, 400));
+  }
+
+  console.log(`fill_empty done: ${filled}/${emptyNews.length} filled`);
+  return new Response(JSON.stringify({ success: true, total_empty: emptyNews.length, filled }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function extractMigalhasContent(html: string): string {
+  // Strategy 1: LEITURA embedded JSON
+  const artScriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+  let m;
+  while ((m = artScriptRegex.exec(html)) !== null) {
+    if (m[1].includes('LEITURA') && m[1].includes('&q;')) {
+      const decoded = m[1].replace(/&q;/g, '"');
+      try {
+        const data = JSON.parse(decoded);
+        for (const key of Object.keys(data)) {
+          if (!key.includes('LEITURA')) continue;
+          const d = data[key]?.Data;
+          if (d?.body) return decodeHtml(d.body);
+          if (d?.content) return decodeHtml(d.content);
+        }
+      } catch { /* skip */ }
+    }
+  }
+  // Strategy 2: HTML containers
+  const containers = [
+    /<div[^>]*class="[^"]*leitura-corpo[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<article[^>]*>([\s\S]*?)<\/article>/i,
+    /<main[^>]*>([\s\S]*?)<\/main>/i,
+  ];
+  for (const pat of containers) {
+    const cm = html.match(pat);
+    if (cm) {
+      const paragraphs: string[] = [];
+      const pReg = /<p[^>]*>([\s\S]*?)<\/p>/gi;
+      let pm;
+      while ((pm = pReg.exec(cm[1])) !== null) {
+        const text = decodeHtml(pm[1]);
+        if (text.length > 30) paragraphs.push(text);
+      }
+      if (paragraphs.length > 0) return paragraphs.join('\n\n');
+    }
+  }
+  // Strategy 3: og:description
+  const ogDesc = html.match(/property="og:description"[^>]*content="([^"]+)"/i);
+  if (ogDesc) return decodeHtml(ogDesc[1]);
+  return '';
+}
 
 // ════════════════════════════════════════
 // Shared helpers

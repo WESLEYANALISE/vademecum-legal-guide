@@ -1,7 +1,7 @@
-export const cdnImg = (url: string, w = 640) => {
+/** Image proxy — bypasses broken TinyPNG Edge Function, goes direct to wsrv.nl */
+export const cdnImg = (url: string, w = 800) => {
   if (!url) return '';
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  return `https://${projectId}.supabase.co/functions/v1/otimizar-imagem?url=${encodeURIComponent(url)}&w=${w}`;
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=${w}&q=80&output=webp`;
 };
 
 /** Direct image proxy for news — bypasses Edge Function for instant loading */
