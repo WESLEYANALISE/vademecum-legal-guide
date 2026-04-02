@@ -1,53 +1,49 @@
 
 
-## Plano: Corrigir Busca de Capa da Amazon + Modelo Gemini Deprecado
+## Plano: Buscar Capa para Livros Já Processados
 
-### Problemas Encontrados
+### Situação Atual
+- O código de busca de capa via Google Books API já existe e funciona (testei: a API retorna a capa corretamente para "O Caso dos Exploradores de Cavernas")
+- O problema: a busca falhou silenciosamente durante o processamento original (provavelmente o título OCR com "11." no início confundiu o Gemini, ou timeout)
+- O livro está com `capa_url: null` e `status: ready`
 
-1. **Modelo `gemini-2.0-flash` deprecado**: A função `cleanChapterMarkdown` (linha 581) ainda usa `gemini-2.0-flash`, que retorna erro 404. Todas as limpezas de markdown falham silenciosamente e o livro fica com texto OCR bruto.
+### Solução: Duas Mudanças
 
-2. **Código quebrado**: A função `cleanChapterMarkdown` está com a estrutura quebrada — o bloco `resumeCleaning` foi inserido no meio dela (entre linhas 600-702), partindo o corpo da função em dois pedaços desconectados.
+**1. Nova action `fetch_cover` na Edge Function `processar-pdf`**
 
-3. **Amazon bloqueia scraping**: O fetch direto para `amazon.com.br` de uma Edge Function retorna CAPTCHA/página de bloqueio, impossibilitando extrair a imagem de capa.
+Adicionar um handler para `body.action === "fetch_cover"` que:
+- Busca o livro pelo ID
+- Usa o `titulo` já limpo do banco (sem precisar de Gemini)
+- Pesquisa direto na Google Books API com o título
+- Baixa a capa e salva no Storage
+- Atualiza `capa_url` no banco
 
-### Solução
+Isso é mais simples e robusto que re-executar o Gemini, pois o título já está limpo no banco.
 
-#### 1. Corrigir modelo Gemini
-- Trocar `gemini-2.0-flash` por `gemini-2.5-flash` na função `cleanChapterMarkdown`
+**2. Botão "Buscar capa" na BibliotecaView**
 
-#### 2. Corrigir estrutura do código
-- Reorganizar o arquivo para que `cleanChapterMarkdown` tenha seu corpo completo e fechado corretamente, seguido de `resumeCleaning` como função separada
-
-#### 3. Buscar capa via Google Books API (gratuita, sem bloqueio)
-- Substituir o scraping da Amazon pela **Google Books API** que é gratuita, sem autenticação, e retorna capas em alta resolução
-- Endpoint: `https://www.googleapis.com/books/v1/volumes?q={titulo}+inauthor:{autor}&langRestrict=pt&maxResults=1`
-- Extrair `volumeInfo.imageLinks.thumbnail` e trocar `zoom=1` por `zoom=2` para resolução maior
-- Baixar a imagem e salvar no bucket `biblioteca` como antes
-
-### Alterações
-
-| # | Arquivo | Mudança |
-|---|---------|---------|
-| 1 | `supabase/functions/processar-pdf/index.ts` | Corrigir estrutura quebrada do código; trocar modelo para `gemini-2.5-flash` em `cleanChapterMarkdown`; substituir scraping Amazon por Google Books API em `fetchAmazonCover` |
+Para livros com `capa_url === null`, mostrar um ícone/botão clicável no lugar do ícone genérico de livro. Ao clicar:
+- Chama `processar-pdf` com `{ action: "fetch_cover", livro_id: ... }`
+- Mostra loading
+- Atualiza a lista ao concluir
 
 ### Detalhes Técnicos
 
-**Google Books API (sem chave necessária):**
+**Edge Function** — novo bloco no handler JSON:
 ```text
-GET https://www.googleapis.com/books/v1/volumes?q=O+Caso+dos+Exploradores+de+Cavernas&langRestrict=pt&maxResults=1
-
-Resposta → items[0].volumeInfo.imageLinks.thumbnail
-→ URL da capa em ~128px
-→ Trocar "zoom=1" por "zoom=2" para ~256px
-→ Download → upload bucket → capa_url
+if (body.action === "fetch_cover") {
+  // Busca titulo do banco
+  // Limpa prefixos numéricos ("11. " → "")
+  // Separa titulo e autor pelo " -- "
+  // Google Books API direto (sem Gemini)
+  // downloadAndUploadCover() (já existe)
+  // UPDATE capa_url
+}
 ```
 
-**Estrutura corrigida:**
-```text
-cleanChapterMarkdown() { ... return completo }
-resumeCleaning() { ... }
-buildFallbackStructure() { ... }
-fetchAmazonCover() → renomear para fetchBookCover() usando Google Books
-downloadAndUploadCover() { ... }
-```
+**Frontend** — no card do livro, quando `!livro.capa_url`:
+- Ícone de câmera/imagem clicável
+- Ao clicar → fetch → refetch lista
+
+**Também**: corrigir o `fetchBookCover` original para limpar prefixos numéricos do título antes de buscar (previne falhas futuras).
 
