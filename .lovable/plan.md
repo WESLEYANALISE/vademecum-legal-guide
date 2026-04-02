@@ -1,70 +1,56 @@
 
+## Plano: Pré-gerar todo conteúdo IA via Cron Jobs (carregamento instantâneo)
 
-## Análise de Performance: Transições Lentas e Carregamento
+### Problema Atual
+Quando o usuário clica num PL, a análise é gerada **on-demand** — chamando a edge function `assistente-juridica` no momento do clique. O cron `popular-radar-proposicoes` já gera headlines + análises, mas apenas **5 por execução** (a cada 3h). Com centenas de PLs, muitos ficam sem análise pré-gerada.
 
-### Problemas Identificados
+O mesmo acontece em outras áreas: explicações de artigos, mapas mentais, perguntas sugeridas — todos gerados sob demanda pelo `explicacaoWorker` (que roda manualmente no painel admin).
 
-#### 1. `PageTransition` com `initial={{ x: '100%' }}` bloqueia conteúdo
-A animação slide-in do Framer Motion começa com o conteúdo 100% fora da tela. A spring animation com `mass: 0.8` leva ~400-500ms para completar. Durante esse tempo, o conteúdo é invisível — dando sensação de "travamento".
+### Solução: Pipeline de pré-geração em background
 
-#### 2. `lazy()` + `Suspense` exibe spinner antes de cada página
-Todas as páginas (exceto Index/Auth) usam `lazy()`. Na primeira visita, o JS precisa ser baixado antes de renderizar. O `LazyFallback` mostra um spinner Loader2, criando um "flash de carregamento" perceptível.
+#### 1. Aumentar o cap de geração no cron de proposições
+**Arquivo:** `supabase/functions/popular-radar-proposicoes/index.ts`
+- Aumentar o limite de `5` para `15` por execução incremental (linha 421)
+- Adicionar um **segundo cron job dedicado** só para headlines/análises (`only_headlines: true`) que roda a cada 1h, processando 20 PLs por vez
+- Resultado: ~480 PLs/dia processados automaticamente
 
-#### 3. Carregamento de artigos em cascata (waterfall)
-Ao selecionar uma lei em CategoriaLegislacao:
-1. O JS do chunk é baixado (lazy) → spinner
-2. PageTransition anima → invisível por ~400ms  
-3. `getCachedArtigos()` verifica cache → se vazio, `fetchArtigosInstant()` faz request HTTP → outro spinner
-4. Depois `fetchArtigosPaginado()` busca o restante
+#### 2. Criar edge function `popular-explicacoes` para pré-gerar explicações de artigos
+**Novo arquivo:** `supabase/functions/popular-explicacoes/index.ts`
+- Recebe parâmetro `tabela` (ex: `CF88_CONSTITUICAO_FEDERAL`)
+- Busca artigos que **não têm** cache em `artigo_ai_cache` para os modos: `explicacao`, `exemplo`, `termos`, `sugerir_perguntas`
+- Gera em lotes de 5 com delay de 2s, limitado a 10 artigos por execução
+- Cron jobs escalonados para cada lei principal (CF88, CP, CC, CPC, CPP, CLT, CDC, CTN, ECA, CTB)
 
-São 3 etapas sequenciais antes do usuário ver conteúdo.
+#### 3. Criar edge function `popular-explicacoes-resenha` para pré-gerar explicações das Leis do Dia
+**Arquivo:** Já existe parcialmente em `popular-texto-resenha` — expandir para gerar explicação IA automaticamente junto com o texto completo (já faz isso, mas verificar se está no cron)
 
-#### 4. Prefetch agressivo mas não direcionado
-O `prefetchAllArtigos()` busca 65+ tabelas em paralelo, mas sem priorizar a tabela que o usuário vai acessar. Se o cache já estiver populado, o acesso é instantâneo. Se não, o usuário espera.
+#### 4. Ajustar o frontend para exibir conteúdo cached instantaneamente
+**Arquivo:** `src/components/radar/PLAnaliseSheet.tsx`
+- Se a análise já existe no cache, mostrar imediatamente sem skeleton/spinner
+- Só mostrar loading se realmente precisar gerar
 
----
+#### 5. Novos cron jobs
+**Migration SQL** — Adicionar:
+- `popular-pl-headlines-1h`: a cada 1h, gera headlines + análises para 20 PLs pendentes
+- `popular-explicacoes-cf88`: diário, pré-gera explicações da CF88
+- `popular-explicacoes-codigos`: diário, pré-gera explicações dos códigos principais
+- `popular-pl-backfill-authors`: a cada 6h, preenche autores faltantes
 
-### Plano de Correção
+#### 6. Registrar tudo no Monitoramento
+**Arquivo:** `supabase/functions/admin-monitor/index.ts`
+- Adicionar as novas functions na lista de `edgeFunctions`
 
-#### Etapa 1: Eliminar a animação bloqueante do PageTransition
-- Trocar `initial={{ x: '100%' }}` por `initial={{ opacity: 0.6, x: '3%' }}` — um micro-slide de 3% com fade
-- Reduzir a duração para ~150ms com `type: 'tween'` em vez de spring
-- O conteúdo fica visível quase imediatamente
-
-#### Etapa 2: Preload dos chunks mais usados
-- Adicionar `<link rel="modulepreload">` para CategoriaLegislacao no `index.html`, ou
-- Usar `import()` eager no `Index.tsx` quando o usuário está na home (preload em idle):
-  ```ts
-  requestIdleCallback(() => import('./pages/CategoriaLegislacao.tsx'));
-  ```
-- Isso elimina o tempo de download do chunk quando o usuário navega
-
-#### Etapa 3: Skeleton instantâneo em vez de spinner
-- No `LazyFallback`, substituir o spinner por um skeleton layout que imita a estrutura da página de legislação (header + cards)
-- Cria a percepção de que a página já carregou
-
-#### Etapa 4: Prefetch inteligente baseado em navegação
-- Quando o usuário está na home, já iniciar o prefetch da tabela mais provável (CF88, CP, CC)
-- Quando estiver em `/legislacao/codigo`, prefetchar todas as tabelas daquele tipo específico com prioridade máxima
-- Usar `navigator.connection` para ajustar concorrência (2 em 3G, 6 em Wi-Fi)
-
-#### Etapa 5: Índice do banco — verificar se as tabelas têm índice em `ordem_numero`
-- Criar migration SQL adicionando `CREATE INDEX IF NOT EXISTS` em `ordem_numero` para as tabelas de artigos mais usadas
-- Isso acelera as queries `ORDER BY ordem_numero ASC` que são feitas em cada fetch
-
----
-
-### Arquivos a Editar
+### Arquivos a Editar/Criar
 
 | # | Arquivo | Mudança |
 |---|---------|---------|
-| 1 | `src/components/PageTransition.tsx` | Micro-slide + fade rápido (~150ms) |
-| 2 | `src/App.tsx` | Preload dos chunks críticos com `requestIdleCallback`; skeleton no LazyFallback |
-| 3 | `src/pages/Index.tsx` | Prefetch direcionado dos chunks de legislação |
-| 4 | `src/services/legislacaoService.ts` | Priorizar prefetch por tipo da categoria atual |
-| 5 | Migration SQL | Índices em `ordem_numero` nas top 10 tabelas |
+| 1 | `supabase/functions/popular-radar-proposicoes/index.ts` | Aumentar cap de 5→15 no incremental |
+| 2 | `supabase/functions/popular-explicacoes/index.ts` | **Novo** — pré-gera explicação/exemplo/termos/perguntas por lei |
+| 3 | `supabase/functions/admin-monitor/index.ts` | Registrar nova function |
+| 4 | `src/components/radar/PLAnaliseSheet.tsx` | Exibir cache instantâneo sem skeleton desnecessário |
+| 5 | Migration SQL | 3 novos cron jobs |
 
 ### Resultado Esperado
-- Transição de página: de ~500ms para ~150ms percebidos
-- Primeira visita a uma lei: de spinner + slide para skeleton instantâneo com conteúdo em ~200ms (se cache hit) ou ~500ms (se fetch necessário, mas com skeleton visível)
-
+- PLs: análise e headline já prontas quando o usuário clicar — carregamento instantâneo
+- Artigos de lei: explicações, exemplos e termos pré-gerados para as 10 leis mais acessadas
+- Monitoramento: todas as functions listadas no painel admin
