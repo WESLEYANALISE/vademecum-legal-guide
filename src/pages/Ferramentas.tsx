@@ -12,36 +12,42 @@ const TOOLS = [
     label: 'Pomodoro',
     desc: 'Timer de estudo com técnica Pomodoro',
     icon: Timer,
+    gradient: 'from-rose-500 to-pink-600',
   },
   {
     id: 'dicionario',
     label: 'Dicionário Jurídico',
     desc: 'Consulte termos e conceitos do Direito',
     icon: BookOpenText,
+    gradient: 'from-amber-500 to-orange-600',
   },
   {
     id: 'radar360',
     label: 'Radar 360',
     desc: 'Alterações recentes e projetos de lei',
     icon: ScanEye,
+    gradient: 'from-cyan-500 to-blue-600',
   },
   {
     id: 'assistente',
     label: 'Assistente Evelyn',
     desc: 'IA jurídica para tirar dúvidas',
     icon: Sparkles,
+    gradient: 'from-violet-500 to-purple-600',
   },
   {
     id: 'gamificacao',
     label: 'Gamificação',
     desc: 'Jogos educativos com artigos de lei',
     icon: Gamepad2,
+    gradient: 'from-emerald-500 to-green-600',
   },
   {
     id: 'resumos',
     label: 'Resumos',
     desc: 'Resumos Cornell e Feynman de artigos',
     icon: FileText,
+    gradient: 'from-sky-500 to-indigo-600',
   },
 ];
 
@@ -113,8 +119,8 @@ const Ferramentas = () => {
                 onClick={() => handleToolClick(tool.id)}
                 className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:border-primary/40 transition-all group"
               >
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0 shadow-md">
-                  <Icon className="w-5 h-5 text-primary-foreground" />
+                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center shrink-0 shadow-md`}>
+                  <Icon className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="font-display text-sm font-bold text-foreground group-hover:text-primary transition-colors">
