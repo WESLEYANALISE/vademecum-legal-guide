@@ -600,41 +600,61 @@ ${pagesText}`;
 
   const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-  try {
-    const response = await fetch(geminiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          maxOutputTokens: 8192,
-          temperature: 0.1,
-        },
-      }),
-    });
+  const MAX_RETRIES = 2;
 
-    if (!response.ok) {
-      console.error("Gemini clean error:", await response.text());
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(geminiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            maxOutputTokens: 65536,
+            temperature: 0.1,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Gemini clean error:", await response.text());
+        return normalizedPages;
+      }
+
+      const data = await response.json();
+      let rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      rawText = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+
+      // Try to salvage truncated JSON arrays
+      if (!rawText.endsWith("]")) {
+        const lastComplete = rawText.lastIndexOf("},");
+        if (lastComplete > 0) {
+          rawText = rawText.slice(0, lastComplete + 1) + "]";
+          console.warn(`Salvaged truncated JSON on attempt ${attempt + 1}`);
+        }
+      }
+
+      const parsed = JSON.parse(rawText) as { source_page: number; markdown: string }[];
+
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        console.warn("Gemini clean returned empty, using originals");
+        return normalizedPages;
+      }
+
+      return mergeCleanedPages(normalizedPages, parsed);
+    } catch (err) {
+      console.error(`cleanChapterMarkdown error (attempt ${attempt + 1}):`, err);
+      if (attempt < MAX_RETRIES) {
+        await new Promise(r => setTimeout(r, 1000));
+        continue;
+      }
+      // After all retries, return normalized pages (deterministic cleanup only)
       return normalizedPages;
     }
-
-    const data = await response.json();
-    let rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    rawText = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
-
-    const parsed = JSON.parse(rawText) as { source_page: number; markdown: string }[];
-
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      console.warn("Gemini clean returned empty, using originals");
-      return normalizedPages;
-    }
-
-    return mergeCleanedPages(normalizedPages, parsed);
-  } catch (err) {
-    console.error("cleanChapterMarkdown error:", err);
-    return normalizedPages;
   }
+
+  return normalizedPages;
 }
 
 // ── Resume cleaning for interrupted processing ──────────────────────
