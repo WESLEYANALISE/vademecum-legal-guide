@@ -29,16 +29,14 @@ const CONTEUDO_ITEMS = [
   { id: 'novidades', label: 'Novidades', icon: Bell, route: '/novidades' },
 ];
 
-const FERRAMENTAS_ITEMS = [
-  { id: 'dicionario', label: 'Dicionário Jurídico', icon: BookA },
-  { id: 'mapa-mental', label: 'Mapa Mental', icon: Brain, route: '/mapa-mental' },
-];
 
 const ADMIN_FUNCTIONS = [
   { id: 'admin-monitor', label: 'Monitoramento', icon: Activity, route: '/admin-monitor' },
   { id: 'geracao-admin', label: 'Geração Admin', icon: ShieldCheck, route: '/geracao-admin' },
   { id: 'simulado-admin', label: 'Simulado Admin', icon: ClipboardList, route: '/simulado-admin' },
   { id: 'gamificacao', label: 'Gamificação', icon: Gamepad2, route: '/gamificacao' },
+  { id: 'mapa-mental', label: 'Mapa Mental', icon: Brain, route: '/mapa-mental' },
+  { id: 'dicionario', label: 'Dicionário Jurídico', icon: BookA },
   { id: 'assistente-whatsapp', label: 'Assistente WhatsApp', icon: MessageCircle },
   { id: 'notificacao-push', label: 'Notificação Push', icon: BellRing },
   { id: 'narracao', label: 'Narração de Artigos', icon: Mic, route: '/narracao' },
@@ -190,8 +188,6 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
         {/* Conteúdo */}
         {renderSection('Conteúdo', CONTEUDO_ITEMS)}
 
-        {/* Ferramentas */}
-        {renderSection('Ferramentas', FERRAMENTAS_ITEMS)}
 
         {/* Funções Admin - only for admin */}
         {isAdmin && (
