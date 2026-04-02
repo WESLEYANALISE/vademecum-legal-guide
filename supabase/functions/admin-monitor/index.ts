@@ -157,12 +157,12 @@ Deno.serve(async (req) => {
       "assistente-juridica", "buscar-videoaulas", "gerar-artigo-educacional",
       "gerar-estudo", "gerar-jogo", "gerar-resumo", "narrar-artigo",
       "otimizar-imagem", "popular-constituicao-estadual", "popular-decretos",
-      "popular-legislacao", "popular-leis-ordinarias", "popular-radar-deputados",
-      "popular-radar-proposicoes", "popular-radar-ranking", "popular-radar-senadores",
-      "popular-radar-votacoes", "popular-sumulas", "popular-texto-decretos",
-      "popular-texto-leis", "popular-texto-resenha", "processar-pdf",
-      "processar-simulado", "scrape-inteiro-teor", "scrape-legislacao",
-      "scrape-noticias", "scrape-resenha-diaria", "admin-monitor",
+      "popular-explicacoes", "popular-legislacao", "popular-leis-ordinarias",
+      "popular-radar-deputados", "popular-radar-proposicoes", "popular-radar-ranking",
+      "popular-radar-senadores", "popular-radar-votacoes", "popular-sumulas",
+      "popular-texto-decretos", "popular-texto-leis", "popular-texto-resenha",
+      "processar-pdf", "processar-simulado", "scrape-inteiro-teor",
+      "scrape-legislacao", "scrape-noticias", "scrape-resenha-diaria", "admin-monitor",
     ];
 
     return new Response(

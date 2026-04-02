@@ -25,6 +25,7 @@ const PLAnaliseSheet = ({ pl, onClose }: PLAnaliseSheetProps) => {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      setLoading(true);
       const a = await getOrGenerateAnalise({
         id: pl.id,
         ementa: pl.ementa,
