@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ArrowLeft, BookOpen, Upload, Loader2, Trash2, Clock, RefreshCw } from 'lucide-react';
+import { ArrowLeft, BookOpen, Upload, Loader2, Trash2, Clock, RefreshCw, ImagePlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';

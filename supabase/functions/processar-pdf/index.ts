@@ -62,6 +62,55 @@ Deno.serve(async (req) => {
           { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+
+      if (body.action === "fetch_cover" && body.livro_id) {
+        const { data: book, error: bookErr } = await supabase
+          .from("biblioteca_livros")
+          .select("titulo, autor, user_id")
+          .eq("id", body.livro_id)
+          .single();
+        if (bookErr || !book) {
+          return new Response(JSON.stringify({ error: "Livro não encontrado" }), {
+            status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        // Clean title: remove numeric prefixes like "11. " or "1 - "
+        const cleanTitle = (book.titulo || "").replace(/^\d+[\s.\-–—:]+/, "").trim();
+        const author = book.autor || "";
+        const query = encodeURIComponent(
+          author ? `${cleanTitle} inauthor:${author}` : cleanTitle
+        );
+        const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=${query}&langRestrict=pt&maxResults=3`;
+        console.log(`fetch_cover: searching "${cleanTitle}" by "${author}"`);
+
+        let coverUrl: string | null = null;
+        try {
+          const gbRes = await fetch(gbUrl);
+          if (gbRes.ok) {
+            const gbData = await gbRes.json();
+            for (const item of (gbData.items || [])) {
+              const thumb = item.volumeInfo?.imageLinks?.thumbnail;
+              if (thumb) {
+                const hiRes = thumb.replace("zoom=1", "zoom=2").replace("&edge=curl", "").replace("http://", "https://");
+                coverUrl = await downloadAndUploadCover(hiRes, supabase, book.user_id, body.livro_id);
+                if (coverUrl) break;
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("fetch_cover Google Books error:", e);
+        }
+
+        if (coverUrl) {
+          await supabase.from("biblioteca_livros").update({ capa_url: coverUrl }).eq("id", body.livro_id);
+          return new Response(JSON.stringify({ success: true, capa_url: coverUrl }), {
+            status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        return new Response(JSON.stringify({ error: "Capa não encontrada" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const formData = await req.formData();
