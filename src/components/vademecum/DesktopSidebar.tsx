@@ -191,7 +191,8 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
         {/* Ferramentas */}
         {renderSection('Ferramentas', FERRAMENTAS_ITEMS)}
 
-        {/* Funções Admin - collapsible */}
+        {/* Funções Admin - only for admin */}
+        {isAdmin && (
         <div className="py-2 border-t border-border">
           <button
             onClick={() => setAdminOpen(!adminOpen)}
