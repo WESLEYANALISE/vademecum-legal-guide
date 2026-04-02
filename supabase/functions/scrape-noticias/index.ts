@@ -121,9 +121,16 @@ interface NewsItem {
   data_publicacao: string;
 }
 
-async function scrapeCamara(browserlessUrl: string): Promise<NewsItem[]> {
+async function scrapeCamara(_browserlessUrl: string): Promise<NewsItem[]> {
   try {
-    const listHtml = await fetchPage(browserlessUrl, "https://www.camara.leg.br/noticias");
+    const headers = {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Language": "pt-BR,pt;q=0.9",
+    };
+    const resp = await fetch("https://www.camara.leg.br/noticias", { headers });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const listHtml = await resp.text();
     const newsItems = parseCamaraList(listHtml);
     if (newsItems.length === 0) return [];
 
@@ -133,10 +140,11 @@ async function scrapeCamara(browserlessUrl: string): Promise<NewsItem[]> {
     for (let i = 0; i < limit; i++) {
       const item = newsItems[i];
       try {
-        const articleHtml = await fetchPage(browserlessUrl, item.link);
-        const conteudo = parseCamaraArticleContent(articleHtml);
-        const dataPublicacao = parseCamaraArticleDate(articleHtml);
-        const imagemUrl = item.imagemUrl || parseCamaraArticleImage(articleHtml);
+        const artResp = await fetch(item.link, { headers });
+        const articleHtml = artResp.ok ? await artResp.text() : '';
+        const conteudo = articleHtml ? parseCamaraArticleContent(articleHtml) : '';
+        const dataPublicacao = articleHtml ? parseCamaraArticleDate(articleHtml) : null;
+        const imagemUrl = item.imagemUrl || (articleHtml ? parseCamaraArticleImage(articleHtml) : '');
 
         results.push({
           titulo: item.titulo,
@@ -159,7 +167,7 @@ async function scrapeCamara(browserlessUrl: string): Promise<NewsItem[]> {
           data_publicacao: new Date().toISOString(),
         });
       }
-      if (i < limit - 1) await new Promise(r => setTimeout(r, 500));
+      if (i < limit - 1) await new Promise(r => setTimeout(r, 300));
     }
     return results;
   } catch (err) {
