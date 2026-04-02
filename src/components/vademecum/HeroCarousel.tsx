@@ -4,6 +4,7 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { Bell } from 'lucide-react';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
+import heroVademecum from '@/assets/hero-vademecum.webp';
 import { getNoticiasCache, prefetchNoticias, type Noticia } from '@/services/noticiasService';
 import { getLatestDayCount, getResenhaCache, prefetchResenha } from '@/services/atualizacaoService';
 import { newsImg } from '@/lib/cdnImg';
