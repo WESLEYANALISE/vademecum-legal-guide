@@ -684,50 +684,52 @@ async function resumeCleaning({
 
     console.log(`Resuming cleaning for book ${livroId}...`);
 
-    const totalPagesAll = estrutura.chapters.reduce(
-      (acc: number, ch: GeminiChapter) => acc + (ch.pages?.length || 0), 0
-    );
-    let pagesProcessed = 0;
-    let pagesAlreadyClean = 0;
-
+    // Collect ALL pages across chapters with their chapter index
+    const allPages: { ci: number; pi: number; source_page: number; markdown: string }[] = [];
     for (let ci = 0; ci < estrutura.chapters.length; ci++) {
       const ch = estrutura.chapters[ci];
-      if (!ch.pages || ch.pages.length === 0) continue;
-
-      // Check if pages already have markdown formatting OR if they've been through cleaning
-      const looksClean = ch.pages.some(p =>
-        p.markdown && (p.markdown.includes("## ") || p.markdown.includes("### ") || p.markdown.includes("**"))
-      );
-
-      if (looksClean) {
-        pagesAlreadyClean += ch.pages.length;
-        pagesProcessed += ch.pages.length;
-        continue;
+      if (!ch.pages) continue;
+      for (let pi = 0; pi < ch.pages.length; pi++) {
+        allPages.push({ ci, pi, source_page: ch.pages[pi].source_page, markdown: ch.pages[pi].markdown });
       }
+    }
 
-      const BATCH_SIZE = 6;
-      const MAX_MD_CHARS = 6000;
-      const cleanedPages: { source_page: number; markdown: string }[] = [];
+    const totalPagesAll = allPages.length;
+    if (totalPagesAll === 0) {
+      await supabase.from("biblioteca_livros").update({ status: "ready", versao_processamento: 2 }).eq("id", livroId);
+      return;
+    }
 
-      for (let bi = 0; bi < ch.pages.length; bi += BATCH_SIZE) {
-        const batch = ch.pages.slice(bi, bi + BATCH_SIZE).map((p) => ({
-          source_page: p.source_page,
-          markdown: p.markdown.slice(0, MAX_MD_CHARS),
-        }));
-        const cleaned = await cleanChapterMarkdown(geminiApiKey, batch);
-        cleanedPages.push(...cleaned);
+    const EDGE_SIZE = 10;
+    const firstEdge = allPages.filter((_, i) => i < EDGE_SIZE);
+    const lastEdge = allPages.filter((_, i) => i >= totalPagesAll - EDGE_SIZE && i >= EDGE_SIZE);
+    const middlePages = allPages.filter((_, i) => i >= EDGE_SIZE && i < totalPagesAll - EDGE_SIZE);
 
-        pagesProcessed += batch.length;
-        const pct = totalPagesAll > 0
-          ? Math.min(Math.round((pagesProcessed / totalPagesAll) * 100), 99)
-          : 99;
-        await supabase
-          .from("biblioteca_livros")
-          .update({ status: `cleaning:${pct}` })
-          .eq("id", livroId);
+    console.log(`Cleaning: ${firstEdge.length} first + ${lastEdge.length} last pages with AI, ${middlePages.length} middle pages normalized only`);
+
+    // 1) Clean first edge pages with AI
+    await supabase.from("biblioteca_livros").update({ status: "cleaning:10" }).eq("id", livroId);
+    const cleanedFirst = await cleanEdgePages(geminiApiKey, firstEdge.map(p => ({ source_page: p.source_page, markdown: p.markdown })));
+    for (const cp of cleanedFirst) {
+      const entry = firstEdge.find(p => p.source_page === cp.source_page);
+      if (entry) estrutura.chapters[entry.ci].pages![entry.pi].markdown = cp.markdown;
+    }
+
+    // 2) Normalize middle pages (deterministic only — fast)
+    await supabase.from("biblioteca_livros").update({ status: "cleaning:50" }).eq("id", livroId);
+    for (const mp of middlePages) {
+      const normalized = normalizeMarkdownPages([{ source_page: mp.source_page, markdown: mp.markdown }]);
+      estrutura.chapters[mp.ci].pages![mp.pi].markdown = normalized[0].markdown;
+    }
+
+    // 3) Clean last edge pages with AI
+    await supabase.from("biblioteca_livros").update({ status: "cleaning:80" }).eq("id", livroId);
+    if (lastEdge.length > 0) {
+      const cleanedLast = await cleanEdgePages(geminiApiKey, lastEdge.map(p => ({ source_page: p.source_page, markdown: p.markdown })));
+      for (const cp of cleanedLast) {
+        const entry = lastEdge.find(p => p.source_page === cp.source_page);
+        if (entry) estrutura.chapters[entry.ci].pages![entry.pi].markdown = cp.markdown;
       }
-
-      estrutura.chapters[ci].pages = cleanedPages;
     }
 
     console.log(`Resume complete: ${pagesAlreadyClean} already clean, ${pagesProcessed - pagesAlreadyClean} newly cleaned`);
