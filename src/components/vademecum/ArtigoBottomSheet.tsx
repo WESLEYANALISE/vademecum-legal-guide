@@ -1486,7 +1486,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
         </Tabs>
 
         {/* Floating FABs — Grifo Mágico + Font size */}
-        <div className={`fixed ${activeTab === 'artigo' ? 'bottom-24' : 'bottom-6'} right-5 z-[60] flex flex-col items-end gap-2`}>
+        <div className={`absolute ${activeTab === 'artigo' ? 'bottom-24' : 'bottom-6'} right-5 z-[60] flex flex-col items-end gap-2`}>
           <AnimatePresence>
             {showFontControls && (
               <motion.div
