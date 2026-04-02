@@ -334,6 +334,7 @@ export default function BibliotecaView({ onBack }: BibliotecaViewProps) {
               const isReady = baseStatus === 'ready';
               const isProcessing = ['ocr', 'structuring', 'cleaning', 'processing'].includes(baseStatus);
               const isError = baseStatus === 'error';
+              const hasOneChapter = isReady && livro.estrutura_leitura?.chapters?.length <= 1;
               const isLegacy = isReady && (!livro.estrutura_leitura || livro.versao_processamento < 2);
               const statusInfo = STATUS_LABELS[baseStatus] || { label: livro.status, color: 'text-muted-foreground' };
 
