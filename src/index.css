@@ -7,25 +7,25 @@
 @layer base {
   :root {
     --background: 340 55% 12%;
-    --foreground: 40 15% 95%;
+    --foreground: 38 15% 95%;
 
     --card: 340 50% 16%;
-    --card-foreground: 40 15% 95%;
+    --card-foreground: 38 15% 95%;
 
     --popover: 340 50% 16%;
-    --popover-foreground: 40 15% 95%;
+    --popover-foreground: 38 15% 95%;
 
-    --primary: 42 75% 55%;
+    --primary: 38 72% 48%;
     --primary-foreground: 340 55% 10%;
-    --primary-light: 42 80% 65%;
+    --primary-light: 38 78% 58%;
 
     --secondary: 340 40% 21%;
-    --secondary-foreground: 40 10% 90%;
+    --secondary-foreground: 38 10% 90%;
 
     --muted: 340 40% 18%;
     --muted-foreground: 340 30% 55%;
 
-    --accent: 42 70% 50%;
+    --accent: 36 68% 45%;
     --accent-foreground: 340 55% 10%;
 
     --destructive: 0 70% 55%;
@@ -33,22 +33,22 @@
 
     --border: 340 35% 24%;
     --input: 340 35% 24%;
-    --ring: 42 75% 55%;
+    --ring: 38 72% 48%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 340 55% 12%;
-    --sidebar-foreground: 40 10% 90%;
-    --sidebar-primary: 42 75% 55%;
+    --sidebar-foreground: 38 10% 90%;
+    --sidebar-primary: 38 72% 48%;
     --sidebar-primary-foreground: 340 55% 10%;
     --sidebar-accent: 340 40% 18%;
-    --sidebar-accent-foreground: 40 10% 90%;
+    --sidebar-accent-foreground: 38 10% 90%;
     --sidebar-border: 340 35% 24%;
-    --sidebar-ring: 42 75% 55%;
+    --sidebar-ring: 38 72% 48%;
 
-    --copper: 42 75% 55%;
-    --copper-light: 42 65% 65%;
-    --copper-dark: 42 55% 38%;
+    --copper: 38 72% 48%;
+    --copper-light: 38 62% 58%;
+    --copper-dark: 38 52% 34%;
     --signature: 0 70% 68%;
   }
 }
