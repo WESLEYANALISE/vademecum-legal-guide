@@ -398,8 +398,14 @@ const Index = () => {
                 <motion.div className="py-4 flex justify-center" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 24 }}>
                   <div
                     className="relative flex items-center h-11 cursor-pointer w-[280px] rounded-full bg-[hsl(48,95%,54%)] shadow-md shadow-[hsl(48,95%,54%)/0.25]"
-                    onClick={() => navigate('/radar-360')}
+                    onClick={() => { navigate('/radar-360'); localStorage.setItem(RADAR_SEEN_KEY, String(Date.now())); setRadarBadge(0); }}
                   >
+                    {/* Badge de notificação */}
+                    {radarBadge > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 z-20 min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground flex items-center justify-center shadow-md animate-pulse">
+                        {radarBadge}
+                      </span>
+                    )}
                     {/* Lottie icon dentro da barra */}
                     <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-card border-2 border-[hsl(48,95%,54%)]">
                       <iframe
