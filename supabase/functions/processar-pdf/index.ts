@@ -507,7 +507,7 @@ Retorne APENAS um JSON válido: array de objetos com "source_page" (número) e "
 PÁGINAS:
 ${pagesText}`;
 
-  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
   try {
     const response = await fetch(geminiUrl, {
