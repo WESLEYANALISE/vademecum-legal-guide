@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { X, Scale, FileText, Newspaper, BookOpen, Gavel, Landmark, Shield, ScrollText, Settings, Bell, Rss, Info, HelpCircle, Palette, LogOut, User, LifeBuoy, Lightbulb, Building2, BookA, BellRing, MessageCircle, Mic, Gamepad2, ShieldCheck, ClipboardList, Brain, Activity, ChevronDown, Lock } from 'lucide-react';
+import { X, Scale, FileText, Newspaper, BookOpen, Gavel, Landmark, Shield, ScrollText, Settings, Bell, Rss, Info, Palette, LogOut, User, LifeBuoy, Lightbulb, Building2, BookA, BellRing, MessageCircle, Mic, Gamepad2, ShieldCheck, ClipboardList, Brain, Activity, ChevronDown, Lock } from 'lucide-react';
+import SuporteSheet from './SuporteSheet';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,9 +42,7 @@ const MENU_SECTIONS = [
   {
     title: 'Configurações',
     items: [
-      { id: 'personalizar', label: 'Personalizar Atalhos', icon: Settings, disabled: true },
       { id: 'sobre', label: 'Sobre o App', icon: Info },
-      { id: 'ajuda', label: 'Ajuda', icon: HelpCircle },
       { id: 'sair', label: 'Sair', icon: LogOut },
     ],
   },
@@ -67,6 +66,7 @@ const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const [adminOpen, setAdminOpen] = useState(false);
+  const [suporteOpen, setSuporteOpen] = useState(false);
 
   const handleItemClick = async (id: string) => {
     if (id === 'sair') {
@@ -92,6 +92,8 @@ const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
       'gamificacao': '/gamificacao',
       'mapa-mental': '/mapa-mental',
       'simulado-admin': '/simulado-admin',
+      'sobre': '/sobre',
+      'perfil': '/perfil',
       'geracao-admin': '/geracao-admin',
       'admin-monitor': '/admin-monitor',
     };
@@ -145,11 +147,11 @@ const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
 
               {/* Profile & Support buttons */}
               <div className="flex gap-2">
-                <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary/70 border border-border text-foreground/80 hover:bg-secondary transition-colors">
+              <button onClick={() => { navigate('/perfil'); onClose(); }} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary/70 border border-border text-foreground/80 hover:bg-secondary transition-colors">
                   <User className="w-4 h-4 text-primary/70" />
                   <span className="font-body text-sm font-medium">Perfil</span>
                 </button>
-                <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary/70 border border-border text-foreground/80 hover:bg-secondary transition-colors">
+                <button onClick={() => setSuporteOpen(true)} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary/70 border border-border text-foreground/80 hover:bg-secondary transition-colors">
                   <LifeBuoy className="w-4 h-4 text-primary/70" />
                   <span className="font-body text-sm font-medium">Suporte</span>
                 </button>
@@ -225,6 +227,7 @@ const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
               </p>
             </div>
           </motion.aside>
+          <SuporteSheet open={suporteOpen} onClose={() => setSuporteOpen(false)} />
         </>
       )}
     </AnimatePresence>

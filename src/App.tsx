@@ -45,6 +45,8 @@ const Simulado = lazy(() => import("./pages/Simulado.tsx"));
 const GeracaoAdmin = lazy(() => import("./pages/GeracaoAdmin.tsx"));
 const MapaMentalGrafo = lazy(() => import("./pages/MapaMentalGrafo.tsx"));
 const AdminMonitor = lazy(() => import("./pages/AdminMonitor.tsx"));
+const Perfil = lazy(() => import("./pages/Perfil.tsx"));
+const SobreApp = lazy(() => import("./pages/SobreApp.tsx"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -140,6 +142,8 @@ function AnimatedRoutes() {
           <Route path="/geracao-admin" element={<ProtectedRoute><PageTransition><GeracaoAdmin /></PageTransition></ProtectedRoute>} />
           <Route path="/mapa-mental" element={<ProtectedRoute><PageTransition><MapaMentalGrafo /></PageTransition></ProtectedRoute>} />
           <Route path="/admin-monitor" element={<ProtectedRoute><PageTransition><AdminMonitor /></PageTransition></ProtectedRoute>} />
+          <Route path="/perfil" element={<ProtectedRoute><PageTransition><Perfil /></PageTransition></ProtectedRoute>} />
+          <Route path="/sobre" element={<ProtectedRoute><PageTransition><SobreApp /></PageTransition></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

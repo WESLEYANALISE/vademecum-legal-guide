@@ -2737,6 +2737,33 @@ export type Database = {
         }
         Relationships: []
       }
+      mensagens_suporte: {
+        Row: {
+          assunto: string
+          created_at: string
+          email: string
+          id: string
+          mensagem: string
+          user_id: string
+        }
+        Insert: {
+          assunto: string
+          created_at?: string
+          email: string
+          id?: string
+          mensagem: string
+          user_id: string
+        }
+        Update: {
+          assunto?: string
+          created_at?: string
+          email?: string
+          id?: string
+          mensagem?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       narracoes_artigos: {
         Row: {
           artigo_numero: string

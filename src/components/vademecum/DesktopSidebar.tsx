@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Scale, BookOpen, FileText, Newspaper, Landmark, Shield, ScrollText, Gavel, Settings, HelpCircle, PanelLeftClose, Radar, RefreshCw, Rss, Bell, Building2, Lightbulb, Mic, BookA, BellRing, MessageCircle, Palette, Info, LogOut, Gamepad2, ClipboardList, ShieldCheck, Brain, Activity, BookMarked, HeartPulse, ChevronDown, Lock } from 'lucide-react';
+import { Scale, BookOpen, FileText, Newspaper, Landmark, Shield, ScrollText, Gavel, Settings, PanelLeftClose, Radar, RefreshCw, Rss, Bell, Building2, Lightbulb, Mic, BookA, BellRing, MessageCircle, Palette, Info, LogOut, Gamepad2, ClipboardList, ShieldCheck, Brain, Activity, BookMarked, HeartPulse, ChevronDown, Lock } from 'lucide-react';
+import SuporteSheet from './SuporteSheet';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -48,9 +49,8 @@ const ADMIN_FUNCTIONS = [
 ];
 
 const CONFIG_ITEMS = [
-  { id: 'personalizar', label: 'Personalizar Atalhos', icon: Settings, disabled: true },
-  { id: 'sobre', label: 'Sobre o App', icon: Info },
-  { id: 'ajuda', label: 'Ajuda', icon: HelpCircle },
+  { id: 'perfil', label: 'Perfil', icon: Settings, route: '/perfil' },
+  { id: 'sobre', label: 'Sobre o App', icon: Info, route: '/sobre' },
   { id: 'sair', label: 'Sair', icon: LogOut },
 ];
 
@@ -60,6 +60,7 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
   const isAdmin = user?.email === 'wn7corporation@gmail.com';
   const [collapsed, setCollapsed] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [suporteOpen, setSuporteOpen] = useState(false);
 
   const handleItemClick = async (item: { id: string; route?: string }) => {
     if (item.id === 'sair') {
@@ -104,6 +105,7 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
   );
 
   return (
+    <>
     <aside className={`${collapsed ? 'w-[60px]' : 'w-[260px]'} shrink-0 sticky top-0 h-screen bg-card border-r border-border flex flex-col transition-all duration-300`}>
       {/* Collapse toggle + Logo */}
       <div className="p-3 border-b border-border flex items-center gap-2.5">
@@ -240,6 +242,8 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
         )}
       </div>
     </aside>
+    <SuporteSheet open={suporteOpen} onClose={() => setSuporteOpen(false)} />
+    </>
   );
 };
 
