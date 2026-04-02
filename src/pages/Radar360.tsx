@@ -284,17 +284,17 @@ const Radar360 = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-br from-primary/90 to-copper-dark px-4 pt-6 pb-5 sm:px-6">
+      <div className="bg-gradient-to-br from-primary/90 to-copper-dark px-4 pt-8 pb-6 sm:px-6">
         <div className="max-w-2xl mx-auto">
           <button
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm mb-2"
+            className="flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm mb-3"
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
+            <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center">
               <ScanEye className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -304,6 +304,22 @@ const Radar360 = () => {
               </p>
             </div>
           </div>
+
+          {/* Contextual description card */}
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mt-4 bg-black/20 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/10"
+          >
+            <p className="text-white font-display text-sm font-semibold mb-0.5">
+              {TAB_DESCRIPTIONS[activeTab]?.title}
+            </p>
+            <p className="text-white/70 text-xs leading-relaxed">
+              {TAB_DESCRIPTIONS[activeTab]?.description}
+            </p>
+          </motion.div>
         </div>
       </div>
 
