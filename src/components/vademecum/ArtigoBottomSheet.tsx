@@ -774,8 +774,8 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
     let baseNodes: React.ReactNode[];
     if (isFirst && !isRevogado) {
       baseNodes = [
-        <span key="num" className="text-primary-light font-bold">{artigo.numero}</span>,
-        <span key="sep" className="text-primary-light font-bold"> – </span>,
+        <span key="num" className="font-bold text-[hsl(var(--gold-accent))]">{artigo.numero}</span>,
+        <span key="sep" className="font-bold text-[hsl(var(--gold-accent))]"> – </span>,
         ...highlightTermos(displayText, modificationInfo ? isModifiedLine && showRedacao : showRedacao),
       ];
     } else {
@@ -934,7 +934,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
 
         <div className="px-5 pb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="font-display text-xl text-primary-light font-bold">
+            <h3 className="font-display text-xl font-bold text-[hsl(var(--gold-accent))]">
               {artigo.numero}
             </h3>
             {onlineCount > 1 && (

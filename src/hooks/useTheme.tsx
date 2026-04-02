@@ -24,6 +24,7 @@ function p(bg: string, fg: string, card: string, cardFg: string, primary: string
     '--sidebar-accent': muted, '--sidebar-accent-foreground': secondaryFg,
     '--sidebar-border': border, '--sidebar-ring': ring,
     '--copper': copper, '--copper-light': copperLight, '--copper-dark': copperDark,
+    '--gold-accent': '45 65% 62%',
   };
 }
 
