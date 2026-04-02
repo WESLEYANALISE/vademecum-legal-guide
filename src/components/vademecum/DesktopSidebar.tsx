@@ -29,10 +29,6 @@ const CONTEUDO_ITEMS = [
   { id: 'novidades', label: 'Novidades', icon: Bell, route: '/novidades' },
 ];
 
-const FERRAMENTAS_ITEMS = [
-  { id: 'dicionario', label: 'Dicionário Jurídico', icon: BookA },
-  { id: 'mapa-mental', label: 'Mapa Mental', icon: Brain, route: '/mapa-mental' },
-];
 
 const ADMIN_FUNCTIONS = [
   { id: 'admin-monitor', label: 'Monitoramento', icon: Activity, route: '/admin-monitor' },
