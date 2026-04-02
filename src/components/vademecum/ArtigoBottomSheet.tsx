@@ -774,8 +774,8 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
     let baseNodes: React.ReactNode[];
     if (isFirst && !isRevogado) {
       baseNodes = [
-        <span key="num" className="text-primary-light font-bold">{artigo.numero}</span>,
-        <span key="sep" className="text-primary-light font-bold"> – </span>,
+        <span key="num" className="font-bold" style={{ color: 'hsl(45, 65%, 62%)' }}>{artigo.numero}</span>,
+        <span key="sep" className="font-bold" style={{ color: 'hsl(45, 65%, 62%)' }}> – </span>,
         ...highlightTermos(displayText, modificationInfo ? isModifiedLine && showRedacao : showRedacao),
       ];
     } else {
