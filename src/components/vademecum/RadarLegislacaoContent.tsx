@@ -28,6 +28,31 @@ const LEI_REFS: Record<string, { refs: string[]; tipos: string[] }> = {
   'CMIN_CODIGO_MINAS': { refs: ['decreto-lei nº 227', 'decreto-lei n° 227', 'código de minas', 'codigo de minas', 'código de mineração', 'codigo de mineracao'], tipos: ['PL'] },
   'CTEL_CODIGO_TELECOMUNICACOES': { refs: ['lei nº 4.117', 'lei n° 4.117', 'lei 4.117', 'código de telecomunicações', 'codigo de telecomunicacoes'], tipos: ['PL'] },
   'CPPM_CODIGO_PROCESSO_PENAL_MILITAR': { refs: ['decreto-lei nº 1.002', 'decreto-lei n° 1.002', 'código de processo penal militar', 'codigo de processo penal militar'], tipos: ['PL'] },
+  // Leis Especiais
+  'LEP_EXECUCAO_PENAL': { refs: ['lei nº 7.210', 'lei 7.210', 'execução penal', 'execucao penal'], tipos: ['PL'] },
+  'LMP_MARIA_PENHA': { refs: ['lei nº 11.340', 'lei 11.340', 'maria da penha', 'violência doméstica', 'violencia domestica'], tipos: ['PL'] },
+  'LD_LEI_DROGAS': { refs: ['lei nº 11.343', 'lei 11.343', 'lei de drogas', 'tráfico de drogas', 'trafico de drogas'], tipos: ['PL'] },
+  'LOC_ORGANIZACAO_CRIMINOSA': { refs: ['lei nº 12.850', 'lei 12.850', 'organização criminosa', 'organizacao criminosa', 'crime organizado'], tipos: ['PL'] },
+  'LAA_ABUSO_AUTORIDADE': { refs: ['lei nº 13.869', 'lei 13.869', 'abuso de autoridade'], tipos: ['PL'] },
+  'LIT_INTERCEPTACAO_TELEFONICA': { refs: ['lei nº 9.296', 'lei 9.296', 'interceptação telefônica', 'interceptacao telefonica'], tipos: ['PL'] },
+  'L8112_SERVIDORES_FEDERAIS': { refs: ['lei nº 8.112', 'lei 8.112', 'servidores públicos', 'servidores federais', 'regime jurídico'], tipos: ['PL'] },
+  'LIA_IMPROBIDADE_ADMINISTRATIVA': { refs: ['lei nº 8.429', 'lei 8.429', 'improbidade administrativa'], tipos: ['PL'] },
+  'NLL_LICITACOES': { refs: ['lei nº 14.133', 'lei 14.133', 'licitações', 'licitacoes', 'nova lei de licitações'], tipos: ['PL'] },
+  'LMS_MANDADO_SEGURANCA': { refs: ['lei nº 12.016', 'lei 12.016', 'mandado de segurança', 'mandado de seguranca'], tipos: ['PL'] },
+  'LACP_ACAO_CIVIL_PUBLICA': { refs: ['lei nº 7.347', 'lei 7.347', 'ação civil pública', 'acao civil publica'], tipos: ['PL'] },
+  'LJE_JUIZADOS_ESPECIAIS': { refs: ['lei nº 9.099', 'lei 9.099', 'juizados especiais'], tipos: ['PL'] },
+  'LGPD_PROTECAO_DADOS': { refs: ['lei nº 13.709', 'lei 13.709', 'lgpd', 'proteção de dados', 'protecao de dados', 'dados pessoais'], tipos: ['PL'] },
+  'MCI_MARCO_CIVIL_INTERNET': { refs: ['lei nº 12.965', 'lei 12.965', 'marco civil da internet', 'neutralidade da rede'], tipos: ['PL'] },
+  'LF_FALENCIAS': { refs: ['lei nº 11.101', 'lei 11.101', 'falência', 'falencia', 'recuperação judicial', 'recuperacao judicial'], tipos: ['PL'] },
+  'LA_ARBITRAGEM': { refs: ['lei nº 9.307', 'lei 9.307', 'arbitragem'], tipos: ['PL'] },
+  'LI_INQUILINATO': { refs: ['lei nº 8.245', 'lei 8.245', 'inquilinato', 'locação', 'locacao'], tipos: ['PL'] },
+  'LRP_REGISTROS_PUBLICOS': { refs: ['lei nº 6.015', 'lei 6.015', 'registros públicos', 'registros publicos'], tipos: ['PL'] },
+  'LOMAN_LEI_ORGANICA_MAGISTRATURA': { refs: ['lei complementar nº 35', 'lc 35', 'loman', 'magistratura nacional'], tipos: ['PLP'] },
+  'LAT_ANTITERRORISMO': { refs: ['lei nº 13.260', 'lei 13.260', 'antiterrorismo', 'terrorismo'], tipos: ['PL'] },
+  // Previdenciário
+  'LBPS_BENEFICIOS_PREVIDENCIA': { refs: ['lei nº 8.213', 'lei 8.213', 'benefícios previdenciários', 'beneficios previdenciarios', 'aposentadoria'], tipos: ['PL', 'PEC'] },
+  'LCSS_CUSTEIO_SEGURIDADE': { refs: ['lei nº 8.212', 'lei 8.212', 'custeio da seguridade', 'contribuição previdenciária', 'contribuicao previdenciaria'], tipos: ['PL', 'PEC'] },
+  'LPC_PREVIDENCIA_COMPLEMENTAR': { refs: ['lei complementar nº 109', 'lc 109', 'previdência complementar', 'previdencia complementar'], tipos: ['PLP'] },
 };
 
 function extractRefs(leiNome: string): string[] {

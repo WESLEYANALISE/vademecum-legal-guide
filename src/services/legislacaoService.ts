@@ -188,17 +188,34 @@ export function setCachedArtigos(tabelaNome: string, artigos: ArtigoLei[]) {
 // Prefetch all artigos from LEIS_CATALOG with controlled concurrency
 let prefetchPromise: Promise<void> | null = null;
 
+// Priority tables to prefetch first (most used laws)
+const PRIORITY_TABLES = new Set([
+  'CF88_CONSTITUICAO_FEDERAL', 'CP_CODIGO_PENAL', 'CC_CODIGO_CIVIL',
+  'CPC_CODIGO_PROCESSO_CIVIL', 'CPP_CODIGO_PROCESSO_PENAL',
+  'CLT_CONSOLIDACAO_LEIS_TRABALHO', 'CDC_CODIGO_DEFESA_CONSUMIDOR',
+  'CTN_CODIGO_TRIBUTARIO_NACIONAL', 'ECA_ESTATUTO_CRIANCA_ADOLESCENTE',
+  'CTB_CODIGO_TRANSITO_BRASILEIRO',
+]);
+
 // Auto-start prefetch as soon as this module is imported
 if (typeof window !== 'undefined') {
-  // Small delay to not block initial render
-  setTimeout(() => prefetchAllArtigos(4), 500);
+  // Small delay to not block initial render — only priority tables
+  setTimeout(() => prefetchAllArtigos(4, true), 500);
+  // Remaining tables after 5s
+  setTimeout(() => prefetchAllArtigos(2, false), 5000);
 }
 
-export function prefetchAllArtigos(concurrency = 4): Promise<void> {
-  if (prefetchPromise) return prefetchPromise;
+export function prefetchAllArtigos(concurrency = 4, priorityOnly = false): Promise<void> {
+  const cacheKey = priorityOnly ? 'priority' : 'all';
+  if (priorityOnly && prefetchPromise) return prefetchPromise;
+  if (!priorityOnly && _fullPrefetchPromise) return _fullPrefetchPromise;
 
-  prefetchPromise = (async () => {
-    const queue = LEIS_CATALOG.filter(lei => !artigosCache.has(lei.tabela_nome));
+  const promise = (async () => {
+    const queue = LEIS_CATALOG.filter(lei => {
+      if (artigosCache.has(lei.tabela_nome)) return false;
+      if (priorityOnly) return PRIORITY_TABLES.has(lei.tabela_nome);
+      return !PRIORITY_TABLES.has(lei.tabela_nome);
+    });
     let i = 0;
 
     const worker = async () => {
@@ -208,7 +225,7 @@ export function prefetchAllArtigos(concurrency = 4): Promise<void> {
         try {
           await fetchArtigosPaginado(lei.tabela_nome, 0, 2000);
         } catch (e) {
-          console.warn(`Prefetch failed for ${lei.tabela_nome}`, e);
+          // Silently skip tables that don't exist yet
         }
       }
     };
@@ -216,8 +233,16 @@ export function prefetchAllArtigos(concurrency = 4): Promise<void> {
     await Promise.all(Array.from({ length: concurrency }, () => worker()));
   })();
 
-  return prefetchPromise;
+  if (priorityOnly) {
+    prefetchPromise = promise;
+  } else {
+    _fullPrefetchPromise = promise;
+  }
+
+  return promise;
 }
+
+let _fullPrefetchPromise: Promise<void> | null = null;
 
 export function getLeisCatalog() {
   return LEIS_CATALOG;
