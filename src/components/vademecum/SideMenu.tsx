@@ -33,13 +33,6 @@ const MENU_SECTIONS = [
     ],
   },
   {
-    title: 'Ferramentas',
-    items: [
-      { id: 'dicionario', label: 'Dicionário Jurídico', icon: BookA },
-      { id: 'mapa-mental', label: 'Mapa Mental', icon: Brain },
-    ],
-  },
-  {
     title: 'Configurações',
     items: [
       { id: 'sobre', label: 'Sobre o App', icon: Info },
