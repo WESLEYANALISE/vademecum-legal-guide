@@ -78,7 +78,7 @@ function parseResenhaHTML(html: string): AtoExtraido[] {
   }
 
   // Extract all date occurrences
-  const dateRe = /(\d{1,2}\s+de\s+(?:janeiro|fevereiro|mar[çc]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\s+de\s+\d{4})/gi;
+  const dateRe = /(\d{1,2}[ºª°]?\s+de\s+(?:janeiro|fevereiro|mar[çc]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\s+de\s+\d{4})/gi;
   const dates: { raw: string; iso: string; pos: number }[] = [];
   let dm;
   while ((dm = dateRe.exec(html)) !== null) {
