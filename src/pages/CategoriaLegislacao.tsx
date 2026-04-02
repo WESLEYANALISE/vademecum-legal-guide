@@ -1585,7 +1585,18 @@ const CategoriaLegislacao = () => {
         ) : (
           <div className="grid gap-3 lg:grid-cols-2">
             {filteredLeis.map((lei, i) => {
-              const iconColor = (lei as any).iconColor || 'hsl(var(--primary))';
+              // Use the category header color for all items
+              const catColors: Record<string, string> = {
+                constituicao: '#d97706',
+                codigo: '#0284c7',
+                estatuto: '#059669',
+                'lei-ordinaria': '#7c3aed',
+                decreto: '#ea580c',
+                sumula: '#db2777',
+                'lei-especial': '#6366f1',
+                previdenciario: '#0d9488',
+              };
+              const iconColor = catColors[tipo || ''] || 'hsl(var(--primary))';
               return (
               <motion.button
                 key={lei.id}
