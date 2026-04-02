@@ -85,21 +85,21 @@ const Ferramentas = () => {
       {/* Header */}
       <div className="relative bg-gradient-to-br from-card to-secondary overflow-hidden px-4 pt-10 pb-8 sm:px-6">
         {/* Decorative circle */}
-        <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-primary-foreground/10" />
-        <Wrench className="absolute top-5 right-5 w-10 h-10 text-primary-foreground/25 rotate-12" />
+        <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/5" />
+        <Wrench className="absolute top-5 right-5 w-10 h-10 text-white/15 rotate-12" />
 
         <div className="relative max-w-2xl mx-auto z-10">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-primary-foreground hover:text-primary-foreground transition-colors text-sm mb-4 bg-black/20 backdrop-blur-sm rounded-lg px-3 py-1.5 w-fit"
+            className="flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar
           </button>
-          <h1 className="font-display text-2xl text-primary-foreground font-bold">
+          <h1 className="font-display text-2xl text-white font-bold">
             Ferramentas
           </h1>
-          <p className="text-primary-foreground/70 text-sm mt-1">
+          <p className="text-white/70 text-sm mt-1">
             Recursos para potencializar seus estudos
           </p>
         </div>
