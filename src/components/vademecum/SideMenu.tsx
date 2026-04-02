@@ -19,7 +19,7 @@ const MENU_SECTIONS = [
       { id: 'estatutos', label: 'Estatutos', icon: Shield },
       { id: 'leis-ordinarias', label: 'Leis Ordinárias', icon: FileText },
       { id: 'decretos', label: 'Decretos', icon: ScrollText },
-      { id: 'sumulas', label: 'Súmulas', icon: Gavel },
+      { id: 'sumulas', label: 'Jurisprudência', icon: Gavel },
     ],
   },
   {

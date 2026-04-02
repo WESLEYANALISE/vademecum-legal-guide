@@ -22,7 +22,7 @@ const TIPO_CONFIG: Record<string, { label: string; icon: React.ElementType; bg: 
   estatuto: { label: 'Estatutos', icon: Shield, bg: 'from-emerald-500/90 to-emerald-700/80' },
   'lei-ordinaria': { label: 'Leis Ordinárias', icon: FileText, bg: 'from-violet-500/90 to-violet-700/80' },
   decreto: { label: 'Decretos', icon: ScrollText, bg: 'from-orange-500/90 to-orange-700/80' },
-  sumula: { label: 'Súmulas', icon: Gavel, bg: 'from-pink-500/90 to-pink-700/80' },
+  sumula: { label: 'Jurisprudência', icon: Gavel, bg: 'from-pink-500/90 to-pink-700/80' },
   'lei-especial': { label: 'Leis Especiais', icon: BookMarked, bg: 'from-indigo-500/90 to-indigo-700/80' },
   previdenciario: { label: 'Previdenciário', icon: HeartPulse, bg: 'from-teal-500/90 to-teal-700/80' },
 };
@@ -739,7 +739,7 @@ const CategoriaLegislacao = () => {
             {loadingSumulas ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                <p className="text-muted-foreground text-sm">Carregando súmulas...</p>
+                <p className="text-muted-foreground text-sm">Carregando jurisprudência...</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -785,7 +785,7 @@ const CategoriaLegislacao = () => {
                   </motion.button>
                 ))}
                 {filteredSumulas.length === 0 && !loadingSumulas && (
-                  <p className="text-center text-muted-foreground py-8">Nenhuma súmula encontrada.</p>
+                  <p className="text-center text-muted-foreground py-8">Nenhuma jurisprudência encontrada.</p>
                 )}
               </div>
             )}
@@ -823,7 +823,7 @@ const CategoriaLegislacao = () => {
                 <Gavel className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="font-display text-2xl text-white font-bold">Súmulas</h1>
+                <h1 className="font-display text-2xl text-white font-bold">Jurisprudência</h1>
                 <p className="text-white/70 text-sm">Selecione o tribunal</p>
               </div>
             </div>
