@@ -29,45 +29,45 @@ function p(bg: string, fg: string, card: string, cardFg: string, primary: string
 }
 
 const PALETTES: ThemePalette[] = [
-  // 1 — Vinho & Marfim (padrão) — fundo vinho escuro + destaques marfim
-  { id: 'vinho-marfim', name: 'Vinho & Marfim', description: 'Elegância vinho com destaques em marfim',
-    colors: p('340 55% 12%','40 20% 95%','340 50% 16%','40 20% 95%','40 15% 92%','340 55% 12%','40 20% 96%','340 40% 21%','40 10% 90%','340 40% 18%','340 25% 55%','40 12% 88%','340 55% 12%','340 35% 24%','40 15% 92%','40 15% 92%','40 20% 96%','40 10% 82%') },
+  // 1 — Vinho & Marfim (padrão) — fundo vinho + branco/cinza quente
+  { id: 'vinho-marfim', name: 'Vinho & Marfim', description: 'Elegância vinho com tons de marfim e cinza quente',
+    colors: p('340 55% 12%','0 0% 92%','340 50% 16%','0 0% 92%','0 0% 88%','340 55% 14%','0 0% 94%','340 40% 21%','0 0% 85%','340 40% 18%','340 20% 52%','0 0% 78%','340 50% 14%','340 35% 24%','0 0% 88%','0 0% 88%','0 0% 94%','0 0% 68%') },
 
-  // 2 — Púrpura Noturna — roxo profundo + branco suave
-  { id: 'purpura-noturna', name: 'Púrpura Noturna', description: 'Profundidade roxa com brilho branco suave',
-    colors: p('280 40% 8%','0 0% 95%','280 35% 12%','0 0% 95%','0 0% 93%','280 40% 8%','0 0% 96%','280 30% 17%','0 0% 90%','280 30% 14%','280 20% 48%','280 15% 85%','280 40% 8%','280 25% 20%','0 0% 93%','0 0% 93%','0 0% 96%','0 0% 80%') },
+  // 2 — Púrpura Noturna — roxo profundo + cinza frio
+  { id: 'purpura-noturna', name: 'Púrpura Noturna', description: 'Profundidade roxa com cinzas frios',
+    colors: p('280 40% 8%','240 5% 90%','280 35% 12%','240 5% 90%','240 4% 85%','280 40% 10%','240 5% 92%','280 30% 17%','240 4% 82%','280 30% 14%','280 15% 46%','240 4% 72%','280 35% 10%','280 25% 20%','240 4% 85%','240 4% 85%','240 5% 92%','240 3% 62%') },
 
-  // 3 — Rubi Claro — vermelho rubi + branco luminoso
-  { id: 'rubi-claro', name: 'Rubi Claro', description: 'Vermelho rubi vibrante com branco luminoso',
-    colors: p('350 60% 14%','0 0% 96%','350 55% 18%','0 0% 96%','0 0% 94%','350 60% 12%','0 0% 97%','350 45% 23%','0 0% 90%','350 45% 20%','350 30% 55%','350 15% 87%','350 60% 12%','350 40% 26%','0 0% 94%','0 0% 94%','0 0% 97%','0 0% 82%') },
+  // 3 — Rubi Claro — vermelho rubi + cinza neutro
+  { id: 'rubi-claro', name: 'Rubi Claro', description: 'Vermelho rubi com cinzas neutros luminosos',
+    colors: p('350 60% 14%','0 0% 91%','350 55% 18%','0 0% 91%','0 0% 86%','350 60% 14%','0 0% 93%','350 45% 23%','0 0% 84%','350 45% 20%','350 25% 52%','0 0% 74%','350 55% 14%','350 40% 26%','0 0% 86%','0 0% 86%','0 0% 93%','0 0% 65%') },
 
-  // 4 — Ameixa & Prata — ameixa escura + prata
+  // 4 — Ameixa & Prata — ameixa escura + prata/cinza azulado
   { id: 'ameixa-prata', name: 'Ameixa & Prata', description: 'Ameixa profunda com reflexos prateados',
-    colors: p('300 35% 11%','220 10% 94%','300 30% 15%','220 10% 94%','220 8% 90%','300 35% 10%','220 12% 94%','300 25% 20%','220 5% 88%','300 25% 17%','300 18% 50%','220 8% 84%','300 35% 10%','300 20% 22%','220 8% 90%','220 8% 90%','220 12% 94%','220 5% 78%') },
+    colors: p('300 35% 11%','220 8% 89%','300 30% 15%','220 8% 89%','220 6% 83%','300 35% 12%','220 8% 90%','300 25% 20%','220 5% 80%','300 25% 17%','300 15% 48%','220 6% 70%','300 30% 12%','300 20% 22%','220 6% 83%','220 6% 83%','220 8% 90%','220 4% 62%') },
 
-  // 5 — Bordô & Pérola — bordô clássico + pérola rosada
-  { id: 'bordo-perola', name: 'Bordô & Pérola', description: 'Bordô clássico com suavidade perolada',
-    colors: p('345 58% 11%','20 15% 94%','345 52% 15%','20 15% 94%','20 12% 91%','345 58% 10%','20 18% 95%','345 42% 20%','20 8% 88%','345 42% 17%','345 28% 50%','20 10% 86%','345 58% 10%','345 37% 22%','20 12% 91%','20 12% 91%','20 18% 95%','20 8% 80%') },
+  // 5 — Bordô & Pérola — bordô clássico + cinza rosado
+  { id: 'bordo-perola', name: 'Bordô & Pérola', description: 'Bordô clássico com cinzas perolados',
+    colors: p('345 58% 11%','350 5% 90%','345 52% 15%','350 5% 90%','350 4% 84%','345 58% 12%','350 5% 91%','345 42% 20%','350 3% 82%','345 42% 17%','345 22% 48%','350 4% 73%','345 52% 12%','345 37% 22%','350 4% 84%','350 4% 84%','350 5% 91%','350 3% 64%') },
 
-  // 6 — Uva Imperial — roxo uva intenso + branco real
-  { id: 'uva-imperial', name: 'Uva Imperial', description: 'Roxo uva intenso com branco real',
-    colors: p('290 45% 13%','0 0% 96%','290 40% 17%','0 0% 96%','0 0% 94%','290 45% 10%','0 0% 97%','290 35% 22%','0 0% 90%','290 35% 19%','290 22% 52%','290 12% 87%','290 45% 10%','290 30% 24%','0 0% 94%','0 0% 94%','0 0% 97%','0 0% 82%') },
+  // 6 — Uva Imperial — roxo uva + cinza lavanda
+  { id: 'uva-imperial', name: 'Uva Imperial', description: 'Roxo uva intenso com cinzas lavanda',
+    colors: p('290 45% 13%','270 5% 90%','290 40% 17%','270 5% 90%','270 4% 85%','290 45% 12%','270 5% 92%','290 35% 22%','270 4% 82%','290 35% 19%','290 18% 50%','270 4% 72%','290 40% 12%','290 30% 24%','270 4% 85%','270 4% 85%','270 5% 92%','270 3% 63%') },
 
-  // 7 — Ébano & Neve — preto com subtom vinho + branco puro
-  { id: 'ebano-neve', name: 'Ébano & Neve', description: 'Preto elegante com branco neve',
-    colors: p('340 10% 5%','0 0% 98%','340 8% 9%','0 0% 98%','0 0% 95%','340 10% 4%','0 0% 98%','340 6% 16%','0 0% 90%','340 6% 12%','340 4% 48%','0 0% 88%','340 10% 4%','340 5% 15%','0 0% 95%','0 0% 95%','0 0% 98%','0 0% 82%') },
+  // 7 — Ébano & Neve — preto com subtom vinho + cinzas puros
+  { id: 'ebano-neve', name: 'Ébano & Neve', description: 'Preto elegante com escala de cinzas',
+    colors: p('340 10% 5%','0 0% 90%','340 8% 9%','0 0% 90%','0 0% 85%','340 10% 6%','0 0% 92%','340 6% 16%','0 0% 82%','340 6% 12%','340 4% 45%','0 0% 72%','340 8% 6%','340 5% 15%','0 0% 85%','0 0% 85%','0 0% 92%','0 0% 62%') },
 
-  // 8 — Grafite Violeta — cinza com subtom violeta + branco
+  // 8 — Grafite Violeta — cinza com subtom violeta
   { id: 'grafite-violeta', name: 'Grafite Violeta', description: 'Cinza sofisticado com nuance violeta',
-    colors: p('270 12% 12%','260 8% 94%','270 10% 16%','260 8% 94%','260 6% 91%','270 12% 10%','260 10% 95%','270 8% 21%','260 4% 88%','270 8% 18%','270 5% 52%','260 6% 85%','270 12% 10%','270 6% 24%','260 6% 91%','260 6% 91%','260 10% 95%','260 4% 80%') },
+    colors: p('270 12% 12%','260 5% 89%','270 10% 16%','260 5% 89%','260 4% 83%','270 12% 12%','260 5% 91%','270 8% 21%','260 3% 80%','270 8% 18%','270 5% 48%','260 4% 71%','270 10% 12%','270 6% 24%','260 4% 83%','260 4% 83%','260 5% 91%','260 3% 62%') },
 
-  // 9 — Mogno & Creme — marrom avermelhado + creme suave
-  { id: 'mogno-creme', name: 'Mogno & Creme', description: 'Calor do mogno com suavidade creme',
-    colors: p('15 45% 13%','36 25% 93%','15 40% 17%','36 25% 93%','36 18% 90%','15 45% 10%','36 22% 94%','15 30% 22%','36 12% 88%','15 30% 19%','15 18% 52%','36 15% 85%','15 45% 10%','15 25% 25%','36 18% 90%','36 18% 90%','36 22% 94%','36 12% 78%') },
+  // 9 — Mogno & Creme — marrom avermelhado + cinza quente
+  { id: 'mogno-creme', name: 'Mogno & Creme', description: 'Calor do mogno com cinzas acolhedores',
+    colors: p('15 45% 13%','30 6% 88%','15 40% 17%','30 6% 88%','30 5% 83%','15 45% 12%','30 6% 90%','15 30% 22%','30 4% 80%','15 30% 19%','15 15% 50%','30 4% 71%','15 40% 12%','15 25% 25%','30 5% 83%','30 5% 83%','30 6% 90%','30 3% 63%') },
 
-  // 10 — Obsidiana Púrpura — preto profundo com nuance roxa + branco gelado
-  { id: 'obsidiana-purpura', name: 'Obsidiana Púrpura', description: 'Preto profundo com nuance violeta e branco gelado',
-    colors: p('280 15% 6%','210 10% 96%','280 12% 10%','210 10% 96%','210 8% 93%','280 15% 5%','210 12% 96%','280 10% 19%','210 5% 90%','280 10% 13%','280 8% 48%','210 8% 86%','280 15% 5%','280 8% 17%','210 8% 93%','210 8% 93%','210 12% 96%','210 5% 80%') },
+  // 10 — Obsidiana Púrpura — preto profundo com nuance roxa + cinza gelado
+  { id: 'obsidiana-purpura', name: 'Obsidiana Púrpura', description: 'Preto profundo com cinzas gelados',
+    colors: p('280 15% 6%','220 5% 89%','280 12% 10%','220 5% 89%','220 4% 84%','280 15% 7%','220 5% 91%','280 10% 19%','220 3% 81%','280 10% 13%','280 8% 46%','220 4% 72%','280 12% 7%','280 8% 17%','220 4% 84%','220 4% 84%','220 5% 91%','220 3% 63%') },
 ];
 
 interface ThemeContextType {
