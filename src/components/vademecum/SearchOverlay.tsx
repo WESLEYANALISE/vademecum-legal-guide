@@ -1,0 +1,262 @@
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Search, Scale, FileText, Camera } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
+import { useFuzzySearch } from '@/hooks/useFuzzySearch';
+import OcrScanner from './OcrScanner';
+
+import { LEIS_CATALOG } from '@/data/leisCatalog';
+
+interface SearchOverlayProps {
+  open: boolean;
+  onClose: () => void;
+  onSelectLei: (lei: { tipo: string; leiId: string; nome: string; descricao: string; tabela_nome: string; artigoNumero?: string }) => void;
+}
+
+type SearchMode = 'lei' | 'artigo';
+
+interface ArtigoResult {
+  numero: string;
+  texto: string;
+  lei_nome: string;
+  lei_sigla: string;
+  tabela_nome: string;
+  tipo: string;
+  leiId: string;
+}
+
+const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
+  const [query, setQuery] = useState('');
+  const [mode, setMode] = useState<SearchMode>('artigo');
+  const [artigoResults, setArtigoResults] = useState<ArtigoResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [ocrOpen, setOcrOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setQuery('');
+      setArtigoResults([]);
+      setTimeout(() => inputRef.current?.focus(), 300);
+    }
+  }, [open]);
+
+  // Fuzzy search for leis
+  const filteredLeis = useFuzzySearch(LEIS_CATALOG, query, {
+    keys: ['nome', 'sigla', 'descricao'],
+    threshold: 0.35,
+    limit: 20,
+  });
+
+  // Search artigos using FTS RPC
+  useEffect(() => {
+    if (mode !== 'artigo' || query.trim().length < 1) {
+      setArtigoResults([]);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const { data, error } = await supabase.rpc('buscar_artigos_global', {
+          search_query: query.trim(),
+          max_results: 30,
+        });
+
+        if (!error && data) {
+          const results: ArtigoResult[] = (data as any[]).map((row: any) => {
+            const lei = LEIS_CATALOG.find(l => l.tabela_nome === row.tabela_nome);
+            return {
+              numero: row.numero,
+              texto: row.caput,
+              lei_nome: lei?.nome || row.tabela_nome,
+              lei_sigla: lei?.sigla || '',
+              tabela_nome: row.tabela_nome,
+              tipo: lei?.tipo || 'codigo',
+              leiId: lei?.id || '',
+            };
+          });
+          // Sort by rank desc then lei name
+          results.sort((a, b) => a.lei_nome.localeCompare(b.lei_nome));
+          setArtigoResults(results.slice(0, 30));
+        } else {
+          setArtigoResults([]);
+        }
+      } catch {
+        setArtigoResults([]);
+      }
+      setSearching(false);
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [query, mode]);
+
+  
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 z-[49] bg-black/50 backdrop-blur-sm"
+        />
+        <motion.div
+          initial={{ y: '100%' }}
+          animate={{ y: 0 }}
+          exit={{ y: '100%' }}
+          transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+          className="fixed z-50 inset-x-0 bottom-0 top-8 bg-background flex flex-col rounded-t-3xl lg:top-[5%] lg:max-w-[800px] lg:mx-auto lg:rounded-t-2xl lg:shadow-2xl"
+        >
+          {/* Header */}
+          <div className="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-border">
+            <button
+              onClick={onClose}
+              className="w-9 h-9 rounded-full bg-muted flex items-center justify-center shrink-0"
+            >
+              <ArrowLeft className="w-5 h-5 text-foreground" />
+            </button>
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={mode === 'artigo' ? 'Digite número, sigla ou texto...' : 'Pesquise leis e códigos...'}
+                className="pl-9 h-10 bg-muted border-none text-sm"
+              />
+            </div>
+            <button
+              onClick={() => setOcrOpen(true)}
+              className="w-9 h-9 rounded-full bg-muted flex items-center justify-center shrink-0"
+              title="Scanner OCR"
+            >
+              <Camera className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
+
+          {/* Mode toggle */}
+          <div className="flex gap-2 px-4 py-3">
+            <button
+              onClick={() => setMode('artigo')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                mode === 'artigo'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              Buscar por Artigo
+            </button>
+            <button
+              onClick={() => setMode('lei')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                mode === 'lei'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              <Scale className="w-4 h-4" />
+              Buscar por Lei
+            </button>
+          </div>
+
+          {/* Results */}
+          <div className="flex-1 overflow-y-auto px-4 pb-6">
+            {mode === 'lei' && (
+              <div className="space-y-2">
+                {filteredLeis.map((lei) => (
+                  <button
+                    key={lei.id}
+                    onClick={() => {
+                      onSelectLei({
+                        tipo: lei.tipo,
+                        leiId: lei.id,
+                        nome: lei.nome,
+                        descricao: lei.descricao,
+                        tabela_nome: lei.tabela_nome,
+                      });
+                      onClose();
+                    }}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/40 transition-all text-left"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-primary">{lei.sigla}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{lei.nome}</p>
+                      <p className="text-xs text-muted-foreground truncate">{lei.descricao}</p>
+                    </div>
+                  </button>
+                ))}
+                {query.length >= 2 && filteredLeis.length === 0 && (
+                  <p className="text-center text-muted-foreground text-sm py-8">Nenhuma lei encontrada</p>
+                )}
+              </div>
+            )}
+
+            {mode === 'artigo' && (
+              <div className="space-y-2">
+                {query.trim().length < 1 && (
+                  <p className="text-center text-muted-foreground text-sm py-8">
+                    Digite o número do artigo ou texto para buscar
+                  </p>
+                )}
+                {searching && (
+                  <p className="text-center text-muted-foreground text-sm py-8 animate-pulse">
+                    Buscando artigos...
+                  </p>
+                )}
+                {!searching && query.trim().length >= 1 && artigoResults.length === 0 && (
+                  <p className="text-center text-muted-foreground text-sm py-8">Nenhum artigo encontrado</p>
+                )}
+                {artigoResults.map((art, i) => (
+                  <button
+                    key={`${art.tabela_nome}-${art.numero}-${i}`}
+                    onClick={() => {
+                      onSelectLei({
+                        tipo: art.tipo,
+                        leiId: art.leiId,
+                        nome: art.lei_nome,
+                        descricao: LEIS_CATALOG.find(l => l.id === art.leiId)?.descricao || '',
+                        tabela_nome: art.tabela_nome,
+                        artigoNumero: art.numero,
+                      });
+                      onClose();
+                    }}
+                    className="w-full p-3 rounded-xl bg-card border border-border hover:border-primary/40 transition-all text-left"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
+                        {art.lei_sigla}
+                      </span>
+                      <span className="text-xs font-semibold text-foreground">Art. {art.numero}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{art.texto}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        <OcrScanner
+          open={ocrOpen}
+          onClose={() => setOcrOpen(false)}
+          onTextExtracted={(text) => {
+            setQuery(text.slice(0, 100));
+            setMode('artigo');
+          }}
+        />
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+export default SearchOverlay;

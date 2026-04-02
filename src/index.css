@@ -1,0 +1,152 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Serif:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --background: 220 12% 12%;
+    --foreground: 45 15% 95%;
+
+    --card: 220 10% 16%;
+    --card-foreground: 45 15% 95%;
+
+    --popover: 220 10% 16%;
+    --popover-foreground: 45 15% 95%;
+
+    --primary: 45 80% 40%;
+    --primary-foreground: 220 12% 10%;
+    --primary-light: 45 90% 65%;
+
+    --secondary: 220 8% 21%;
+    --secondary-foreground: 45 10% 90%;
+
+    --muted: 220 8% 18%;
+    --muted-foreground: 220 8% 55%;
+
+    --accent: 42 75% 50%;
+    --accent-foreground: 220 12% 10%;
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 8% 24%;
+    --input: 220 8% 24%;
+    --ring: 45 85% 55%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 220 12% 12%;
+    --sidebar-foreground: 45 10% 90%;
+    --sidebar-primary: 45 85% 55%;
+    --sidebar-primary-foreground: 220 12% 10%;
+    --sidebar-accent: 220 8% 18%;
+    --sidebar-accent-foreground: 45 10% 90%;
+    --sidebar-border: 220 8% 24%;
+    --sidebar-ring: 45 85% 55%;
+
+    --copper: 45 85% 55%;
+    --copper-light: 45 75% 65%;
+    --copper-dark: 45 60% 38%;
+    --signature: 0 70% 68%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Source Sans 3', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 700;
+  }
+}
+
+@layer utilities {
+  .text-gradient-gold {
+    background: linear-gradient(135deg, hsl(var(--copper-dark)), hsl(var(--copper-light)), hsl(var(--copper-dark)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+@keyframes shinePratique {
+  0% { left: -100%; }
+  50% { left: 100%; }
+  100% { left: 100%; }
+}
+
+@keyframes liveSlide {
+  0% { left: -2rem; }
+  50% { left: calc(100% + 2rem); }
+  100% { left: calc(100% + 2rem); }
+}
+
+@keyframes shimmer-reflect {
+  0% { transform: translateX(-150%) skewX(-15deg); }
+  100% { transform: translateX(250%) skewX(-15deg); }
+}
+
+@keyframes shimmer {
+  0%, 100% { transform: translateX(-150%); }
+  50% { transform: translateX(150%); }
+}
+
+.news-cover-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.news-cover-shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    hsla(45, 85%, 75%, 0.12) 45%,
+    hsla(45, 85%, 90%, 0.2) 50%,
+    hsla(45, 85%, 75%, 0.12) 55%,
+    transparent 70%
+  );
+  transform: translateX(-150%) skewX(-15deg);
+  animation: shimmer-reflect 4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@media (min-width: 1024px) {
+  .desktop-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary) / 0.3) transparent;
+  }
+  .desktop-scrollbar::-webkit-scrollbar {
+    height: 4px;
+  }
+  .desktop-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .desktop-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.3);
+    border-radius: 2px;
+  }
+  .desktop-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.5);
+  }
+}
