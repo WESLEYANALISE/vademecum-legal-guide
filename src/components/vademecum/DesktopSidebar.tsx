@@ -60,6 +60,7 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
   const isAdmin = user?.email === 'wn7corporation@gmail.com';
   const [collapsed, setCollapsed] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [suporteOpen, setSuporteOpen] = useState(false);
 
   const handleItemClick = async (item: { id: string; route?: string }) => {
     if (item.id === 'sair') {
