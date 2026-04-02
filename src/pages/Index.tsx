@@ -402,13 +402,10 @@ const Index = () => {
                   >
                     {/* Lottie icon à esquerda */}
                     <div className="absolute left-0 z-10 w-14 h-14 rounded-full border-2 border-primary/40 overflow-hidden shadow-lg shrink-0 bg-card flex items-center justify-center">
-                      <dotlottie-player
-                        src="https://lottie.host/3b2d7321-76b2-43fb-9eb0-5b564b42750f/D6XzVc9mGe.lottie"
-                        background="transparent"
-                        speed="1"
-                        style={{ width: '36px', height: '36px' }}
-                        loop
-                        autoplay
+                      <iframe
+                        src="https://lottie.host/embed/3b2d7321-76b2-43fb-9eb0-5b564b42750f/D6XzVc9mGe.lottie"
+                        className="w-10 h-10 border-0 pointer-events-none"
+                        title="Radar"
                       />
                     </div>
                     {/* Radar de Leis 360 */}
