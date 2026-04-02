@@ -105,6 +105,7 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
   );
 
   return (
+    <>
     <aside className={`${collapsed ? 'w-[60px]' : 'w-[260px]'} shrink-0 sticky top-0 h-screen bg-card border-r border-border flex flex-col transition-all duration-300`}>
       {/* Collapse toggle + Logo */}
       <div className="p-3 border-b border-border flex items-center gap-2.5">
