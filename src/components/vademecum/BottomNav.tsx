@@ -35,9 +35,15 @@ const BottomNav = ({ onSearchClick, onAssistenteClick, onMenuClick }: BottomNavP
               >
                 <motion.div
                   whileTap={{ scale: 0.9 }}
-                  className="w-14 h-14 rounded-full bg-[hsl(48,95%,54%)] flex items-center justify-center shadow-lg shadow-[hsl(48,95%,54%)/0.35] border-4 border-card"
+                  className="w-14 h-14 rounded-full bg-[hsl(48,95%,54%)] flex items-center justify-center shadow-lg shadow-[hsl(48,95%,54%)/0.35] border-4 border-card relative overflow-hidden"
                 >
-                  <Icon className="w-6 h-6 text-accent-foreground" />
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div
+                      className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-20deg]"
+                      style={{ animation: 'shinePratique 3s ease-in-out infinite' }}
+                    />
+                  </div>
+                  <Icon className="w-6 h-6 text-accent-foreground relative z-10" />
                 </motion.div>
                 <span className="font-body text-[11px] text-foreground font-semibold">{item.label}</span>
               </button>
