@@ -924,15 +924,9 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
           side="bottom"
           className={
             isDesktop
-              ? "z-[9999] flex min-h-0 flex-col gap-0 border border-border bg-card p-0 shadow-2xl [&>button:last-child]:hidden left-1/2 right-auto top-[5%] bottom-0 w-[800px] -translate-x-1/2 rounded-t-2xl"
+              ? "z-[9999] flex min-h-0 flex-col gap-0 rounded-t-2xl border border-border bg-card p-0 shadow-2xl [&>button:last-child]:hidden top-[5%] inset-x-0 mx-auto max-w-[800px]"
               : "z-[9999] flex min-h-0 flex-col gap-0 rounded-t-3xl border-t border-border bg-card p-0 [&>button:last-child]:hidden top-8"
           }
-        >
-        className={
-          isDesktop
-            ? "fixed z-[130] bottom-0 top-[5%] left-0 right-0 mx-auto bg-card border border-border rounded-t-2xl relative flex flex-col w-[800px] shadow-2xl"
-            : "fixed inset-x-0 bottom-0 top-8 z-[130] rounded-t-3xl bg-card border-t border-border relative flex flex-col"
-        }
         >
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
