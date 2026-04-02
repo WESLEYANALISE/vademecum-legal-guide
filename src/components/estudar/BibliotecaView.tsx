@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ArrowLeft, BookOpen, Upload, Loader2, Trash2, Clock, RefreshCw } from 'lucide-react';
+import { ArrowLeft, BookOpen, Upload, Loader2, Trash2, Clock, RefreshCw, ImagePlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -188,6 +188,40 @@ export default function BibliotecaView({ onBack }: BibliotecaViewProps) {
     toast.info('Reprocessamento ainda não implementado no servidor');
   };
 
+  const [fetchingCover, setFetchingCover] = useState<string | null>(null);
+
+  const handleFetchCover = async (livroId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFetchingCover(livroId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) { toast.error('Faça login'); return; }
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/processar-pdf`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ action: 'fetch_cover', livro_id: livroId }),
+        }
+      );
+      const data = await res.json();
+      if (res.ok && data.capa_url) {
+        setLivros(prev => prev.map(l => l.id === livroId ? { ...l, capa_url: data.capa_url } : l));
+        toast.success('Capa encontrada!');
+      } else {
+        toast.error('Capa não encontrada na Google Books');
+      }
+    } catch {
+      toast.error('Erro ao buscar capa');
+    } finally {
+      setFetchingCover(null);
+    }
+  };
+
   const handleUpdateBookmark = async (livroId: string, pagina: number) => {
     await supabase
       .from('biblioteca_livros')
@@ -299,9 +333,25 @@ export default function BibliotecaView({ onBack }: BibliotecaViewProps) {
                   className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border hover:border-primary/30 transition-all cursor-pointer group"
                   onClick={() => isReady && setSelectedLivro(livro)}
                 >
-                  <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden relative">
                     {livro.capa_url ? (
                       <img src={livro.capa_url} alt={livro.titulo} className="w-full h-full object-cover" />
+                    ) : isReady ? (
+                      <button
+                        onClick={(e) => handleFetchCover(livro.id, e)}
+                        disabled={fetchingCover === livro.id}
+                        className="w-full h-full flex flex-col items-center justify-center gap-1 hover:bg-primary/10 transition-colors"
+                        title="Buscar capa"
+                      >
+                        {fetchingCover === livro.id ? (
+                          <Loader2 className="w-5 h-5 animate-spin text-primary/60" />
+                        ) : (
+                          <>
+                            <ImagePlus className="w-5 h-5 text-primary/40" />
+                            <span className="text-[8px] text-primary/40">Capa</span>
+                          </>
+                        )}
+                      </button>
                     ) : (
                       <BookOpen className="w-6 h-6 text-primary/40" />
                     )}
