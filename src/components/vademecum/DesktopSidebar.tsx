@@ -241,6 +241,8 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
         )}
       </div>
     </aside>
+    <SuporteSheet open={suporteOpen} onClose={() => setSuporteOpen(false)} />
+    </>
   );
 };
 
