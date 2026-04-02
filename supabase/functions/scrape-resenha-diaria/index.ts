@@ -33,33 +33,62 @@ function normalizeDateToISO(dateStr: string): string {
     abril:"04",maio:"05",junho:"06",julho:"07",
     agosto:"08",setembro:"09",outubro:"10",novembro:"11",dezembro:"12",
   };
-  const m = dateStr.match(/(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})/i);
+  const m = dateStr.match(/(\d{1,2})[ºª°]?\s+de\s+(\w+)\s+de\s+(\d{4})/i);
   if (!m) return "";
   return `${m[3]}-${meses[m[2].toLowerCase()]||"01"}-${m[1].padStart(2,"0")}`;
 }
 
 async function fetchPage(url: string): Promise<string | null> {
-  // Strategy 1: Direct fetch
-  try {
-    const resp = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36", Accept: "text/html,*/*" },
-    });
-    if (resp.ok) { const t = await resp.text(); if (t.length > 200) { console.log(`Direct OK: ${t.length} chars`); return t; } }
-  } catch (e) { console.log(`Direct failed: ${e}`); }
+  // Strategy 1: Direct fetch with retries
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const resp = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+        },
+      });
+      if (resp.ok) { const t = await resp.text(); if (t.length > 200) { console.log(`Direct OK: ${t.length} chars`); return t; } }
+    } catch (e) { console.log(`Direct attempt ${attempt} failed: ${e}`); }
+  }
 
-  // Strategy 2: Browserless
+  // Strategy 2: Browserless v2 API
   const key = Deno.env.get("BROWSERLESS_API_KEY");
   if (key) {
-    try {
-      console.log("Trying Browserless...");
-      const resp = await fetch(`https://production-sfo.browserless.io/content?token=${key}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, waitForSelector: { selector: "table", timeout: 15000 } }),
-      });
-      if (resp.ok) { const t = await resp.text(); if (t.length > 200) { console.log(`Browserless OK: ${t.length} chars`); return t; } }
-    } catch (e) { console.log(`Browserless failed: ${e}`); }
+    // Try v2 /content endpoint
+    for (const baseUrl of [
+      `https://production-sfo.browserless.io/content?token=${key}`,
+      `https://chrome.browserless.io/content?token=${key}`,
+    ]) {
+      try {
+        console.log(`Trying Browserless: ${baseUrl.split('?')[0]}`);
+        const resp = await fetch(baseUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url, gotoOptions: { waitUntil: "networkidle2", timeout: 20000 } }),
+        });
+        console.log(`Browserless status: ${resp.status}`);
+        if (resp.ok) {
+          const t = await resp.text();
+          console.log(`Browserless response length: ${t.length}`);
+          if (t.length > 200) return t;
+        } else {
+          console.log(`Browserless error body: ${(await resp.text()).slice(0, 300)}`);
+        }
+      } catch (e) { console.log(`Browserless failed: ${e}`); }
+    }
   }
+
+  // Strategy 3: Google cache as last resort
+  try {
+    const cacheUrl = `https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}`;
+    const resp = await fetch(cacheUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+    });
+    if (resp.ok) { const t = await resp.text(); if (t.length > 200) { console.log(`Google cache OK: ${t.length} chars`); return t; } }
+  } catch (e) { console.log(`Google cache failed: ${e}`); }
+
   return null;
 }
 
@@ -78,7 +107,7 @@ function parseResenhaHTML(html: string): AtoExtraido[] {
   }
 
   // Extract all date occurrences
-  const dateRe = /(\d{1,2}\s+de\s+(?:janeiro|fevereiro|mar[çc]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\s+de\s+\d{4})/gi;
+  const dateRe = /(\d{1,2}[ºª°]?\s+de\s+(?:janeiro|fevereiro|mar[çc]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\s+de\s+\d{4})/gi;
   const dates: { raw: string; iso: string; pos: number }[] = [];
   let dm;
   while ((dm = dateRe.exec(html)) !== null) {
