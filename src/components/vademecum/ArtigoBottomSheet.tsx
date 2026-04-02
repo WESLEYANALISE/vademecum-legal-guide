@@ -920,6 +920,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
     <>
     <AnimatePresence>
       <motion.div
+        key="article-sheet-backdrop"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -929,14 +930,15 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
       />
 
       <motion.div
+        key="article-sheet-panel"
         initial={isDesktop ? { y: '100%', opacity: 0.5 } : { y: '100%' }}
         animate={isDesktop ? { y: 0, opacity: 1 } : { y: 0 }}
         exit={isDesktop ? { y: '100%', opacity: 0.5 } : { y: '100%' }}
         transition={{ type: 'spring', damping: 28, stiffness: 300 }}
         className={
           isDesktop
-            ? "fixed z-50 bottom-0 top-[5%] left-0 right-0 mx-auto bg-card border border-border rounded-t-2xl relative flex flex-col w-[800px] shadow-2xl"
-            : "fixed inset-x-0 bottom-0 top-8 z-50 rounded-t-3xl bg-card border-t border-border relative flex flex-col"
+            ? "fixed z-[60] bottom-0 top-[5%] left-0 right-0 mx-auto bg-card border border-border rounded-t-2xl relative flex flex-col w-[800px] shadow-2xl"
+            : "fixed inset-x-0 bottom-0 top-8 z-[60] rounded-t-3xl bg-card border-t border-border relative flex flex-col"
         }
       >
         <div className="flex justify-center pt-3 pb-1">
