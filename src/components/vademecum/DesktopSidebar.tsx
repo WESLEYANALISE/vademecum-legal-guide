@@ -193,34 +193,35 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
 
         {/* Funções Admin - only for admin */}
         {isAdmin && (
-        <div className="py-2 border-t border-border">
-          <button
-            onClick={() => setAdminOpen(!adminOpen)}
-            title={collapsed ? 'Funções Admin' : undefined}
-            className={`w-full flex items-center gap-3 ${collapsed ? 'justify-center px-0' : 'px-5'} py-2.5 text-sm font-body text-foreground/70 hover:bg-secondary hover:text-foreground transition-colors`}
-          >
-            <Lock className="w-[16px] h-[16px] text-primary/60 shrink-0" />
-            {!collapsed && <span className="font-semibold">Funções Admin</span>}
-            {!collapsed && <ChevronDown className={`w-3.5 h-3.5 ml-auto text-muted-foreground transition-transform ${adminOpen ? 'rotate-180' : ''}`} />}
-          </button>
-          {adminOpen && !collapsed && (
-            <div className="bg-secondary/20">
-              {ADMIN_FUNCTIONS.map(item => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleItemClick(item)}
-                    className="w-full flex items-center gap-3 px-7 py-2 text-sm font-body text-foreground/70 hover:bg-secondary hover:text-foreground transition-colors"
-                  >
-                    <Icon className="w-[15px] h-[15px] text-primary/60 shrink-0" />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
+          <div className="py-2 border-t border-border">
+            <button
+              onClick={() => setAdminOpen(!adminOpen)}
+              title={collapsed ? 'Funções Admin' : undefined}
+              className={`w-full flex items-center gap-3 ${collapsed ? 'justify-center px-0' : 'px-5'} py-2.5 text-sm font-body text-foreground/70 hover:bg-secondary hover:text-foreground transition-colors`}
+            >
+              <Lock className="w-[16px] h-[16px] text-primary/60 shrink-0" />
+              {!collapsed && <span className="font-semibold">Funções Admin</span>}
+              {!collapsed && <ChevronDown className={`w-3.5 h-3.5 ml-auto text-muted-foreground transition-transform ${adminOpen ? 'rotate-180' : ''}`} />}
+            </button>
+            {adminOpen && !collapsed && (
+              <div className="bg-secondary/20">
+                {ADMIN_FUNCTIONS.map(item => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleItemClick(item)}
+                      className="w-full flex items-center gap-3 px-7 py-2 text-sm font-body text-foreground/70 hover:bg-secondary hover:text-foreground transition-colors"
+                    >
+                      <Icon className="w-[15px] h-[15px] text-primary/60 shrink-0" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Configurações */}
         {renderSection('Configurações', CONFIG_ITEMS)}
