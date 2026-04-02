@@ -269,6 +269,14 @@ async function processPdfInBackground({
     console.log("Calling Gemini to structure chapters...");
     const estruturaLeitura = await structureWithGemini(geminiApiKey, conteudo, ocrPages.length);
 
+    await supabase
+      .from("biblioteca_livros")
+      .update({
+        estrutura_leitura: estruturaLeitura,
+        total_paginas: ocrPages.length,
+      })
+      .eq("id", livroId);
+
     console.log("Formatting markdown with Gemini...");
     const totalPagesAll = estruturaLeitura.chapters.reduce(
       (acc: number, ch: GeminiChapter) => acc + (ch.pages?.length || 0), 0
