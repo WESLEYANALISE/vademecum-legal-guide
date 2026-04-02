@@ -66,6 +66,7 @@ const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const [adminOpen, setAdminOpen] = useState(false);
+  const [suporteOpen, setSuporteOpen] = useState(false);
 
   const handleItemClick = async (id: string) => {
     if (id === 'sair') {
