@@ -65,7 +65,7 @@ export default function BibliotecaView({ onBack }: BibliotecaViewProps) {
   }, [fetchLivros]);
 
   // Poll for processing books + auto-resume stalled cleaning
-  const lastStatusRef = React.useRef<Record<string, { status: string; since: number }>>({});
+  const lastStatusRef = useRef<Record<string, { status: string; since: number }>>({});
 
   useEffect(() => {
     const processingBooks = livros.filter(l => {
