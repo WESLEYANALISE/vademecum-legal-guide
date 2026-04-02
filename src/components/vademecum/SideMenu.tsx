@@ -46,6 +46,8 @@ const ADMIN_FUNCTIONS = [
   { id: 'geracao-admin', label: 'Geração Admin', icon: ShieldCheck },
   { id: 'simulado-admin', label: 'Simulado Admin', icon: ClipboardList },
   { id: 'gamificacao', label: 'Gamificação', icon: Gamepad2 },
+  { id: 'mapa-mental', label: 'Mapa Mental', icon: Brain },
+  { id: 'dicionario', label: 'Dicionário Jurídico', icon: BookA },
   { id: 'assistente-whatsapp', label: 'Assistente WhatsApp', icon: MessageCircle },
   { id: 'notificacao-push', label: 'Notificação Push', icon: BellRing },
   { id: 'narracao', label: 'Narração de Artigos', icon: Mic },
