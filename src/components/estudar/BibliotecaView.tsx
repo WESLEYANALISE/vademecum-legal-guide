@@ -333,9 +333,25 @@ export default function BibliotecaView({ onBack }: BibliotecaViewProps) {
                   className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border hover:border-primary/30 transition-all cursor-pointer group"
                   onClick={() => isReady && setSelectedLivro(livro)}
                 >
-                  <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden relative">
                     {livro.capa_url ? (
                       <img src={livro.capa_url} alt={livro.titulo} className="w-full h-full object-cover" />
+                    ) : isReady ? (
+                      <button
+                        onClick={(e) => handleFetchCover(livro.id, e)}
+                        disabled={fetchingCover === livro.id}
+                        className="w-full h-full flex flex-col items-center justify-center gap-1 hover:bg-primary/10 transition-colors"
+                        title="Buscar capa"
+                      >
+                        {fetchingCover === livro.id ? (
+                          <Loader2 className="w-5 h-5 animate-spin text-primary/60" />
+                        ) : (
+                          <>
+                            <ImagePlus className="w-5 h-5 text-primary/40" />
+                            <span className="text-[8px] text-primary/40">Capa</span>
+                          </>
+                        )}
+                      </button>
                     ) : (
                       <BookOpen className="w-6 h-6 text-primary/40" />
                     )}
