@@ -739,7 +739,7 @@ const CategoriaLegislacao = () => {
             {loadingSumulas ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                <p className="text-muted-foreground text-sm">Carregando súmulas...</p>
+                <p className="text-muted-foreground text-sm">Carregando jurisprudência...</p>
               </div>
             ) : (
               <div className="space-y-2">
