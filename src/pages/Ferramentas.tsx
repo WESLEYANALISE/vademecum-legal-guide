@@ -119,8 +119,8 @@ const Ferramentas = () => {
                 onClick={() => handleToolClick(tool.id)}
                 className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:border-primary/40 transition-all group"
               >
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0 shadow-md">
-                  <Icon className="w-5 h-5 text-primary-foreground" />
+                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center shrink-0 shadow-md`}>
+                  <Icon className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="font-display text-sm font-bold text-foreground group-hover:text-primary transition-colors">
