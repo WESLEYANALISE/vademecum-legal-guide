@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2, ShieldCheck, KeyRound } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import logoVacatio from '@/assets/logo-vacatio.jpeg';
 import themisBg from '@/assets/themis-bg.jpg';
@@ -10,6 +11,9 @@ import themisBg from '@/assets/themis-bg.jpg';
 const Auth = () => {
   const { user, loading, signIn, signUp, resetPassword } = useAuth();
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login');
+  const [forgotStep, setForgotStep] = useState<'email' | 'code' | 'newpass'>('email');
+  const [otpCode, setOtpCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -33,10 +37,29 @@ const Auth = () => {
 
     try {
       if (mode === 'forgot') {
-        const { error } = await resetPassword(email);
-        if (error) throw error;
-        toast.success('Email de recuperação enviado! Verifique sua caixa de entrada.');
-        setMode('login');
+        if (forgotStep === 'email') {
+          const { error } = await resetPassword(email);
+          if (error) throw error;
+          toast.success('Código enviado! Verifique seu email.');
+          setForgotStep('code');
+        } else if (forgotStep === 'code') {
+          const { error } = await supabase.auth.verifyOtp({
+            email,
+            token: otpCode,
+            type: 'recovery',
+          });
+          if (error) throw error;
+          toast.success('Código verificado! Defina sua nova senha.');
+          setForgotStep('newpass');
+        } else if (forgotStep === 'newpass') {
+          const { error } = await supabase.auth.updateUser({ password: newPassword });
+          if (error) throw error;
+          toast.success('Senha atualizada com sucesso!');
+          setMode('login');
+          setForgotStep('email');
+          setOtpCode('');
+          setNewPassword('');
+        }
       } else if (mode === 'login') {
         const { error } = await signIn(email, password);
         if (error) throw error;
@@ -104,7 +127,7 @@ const Auth = () => {
 
         <AnimatePresence mode="wait">
           <motion.form
-            key={mode}
+            key={mode + forgotStep}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -114,9 +137,20 @@ const Auth = () => {
           >
             {mode === 'forgot' && (
               <div className="text-center mb-4">
-                <h2 className="font-display text-lg font-bold text-foreground">Recuperar Senha</h2>
+                <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-3">
+                  {forgotStep === 'email' && <Mail className="w-6 h-6 text-primary" />}
+                  {forgotStep === 'code' && <ShieldCheck className="w-6 h-6 text-primary" />}
+                  {forgotStep === 'newpass' && <KeyRound className="w-6 h-6 text-primary" />}
+                </div>
+                <h2 className="font-display text-lg font-bold text-foreground">
+                  {forgotStep === 'email' && 'Recuperar Senha'}
+                  {forgotStep === 'code' && 'Código de Verificação'}
+                  {forgotStep === 'newpass' && 'Nova Senha'}
+                </h2>
                 <p className="text-xs font-body text-muted-foreground mt-1">
-                  Informe seu email para receber o link de recuperação
+                  {forgotStep === 'email' && 'Informe seu email para receber o código'}
+                  {forgotStep === 'code' && `Enviamos um código para ${email}`}
+                  {forgotStep === 'newpass' && 'Defina sua nova senha abaixo'}
                 </p>
               </div>
             )}
@@ -134,17 +168,57 @@ const Auth = () => {
               </div>
             )}
 
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full pl-10 pr-4 py-3 bg-secondary/50 border border-border rounded-xl text-sm font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-              />
-            </div>
+            {(mode !== 'forgot' || forgotStep === 'email') && (
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-4 py-3 bg-secondary/50 border border-border rounded-xl text-sm font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                />
+              </div>
+            )}
+
+            {mode === 'forgot' && forgotStep === 'code' && (
+              <div className="relative">
+                <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Código de 6 dígitos"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  required
+                  maxLength={6}
+                  inputMode="numeric"
+                  className="w-full pl-10 pr-4 py-3 bg-secondary/50 border border-border rounded-xl text-sm font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all tracking-[0.3em] text-center"
+                />
+              </div>
+            )}
+
+            {mode === 'forgot' && forgotStep === 'newpass' && (
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Nova senha (mínimo 6 caracteres)"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="w-full pl-10 pr-12 py-3 bg-secondary/50 border border-border rounded-xl text-sm font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            )}
 
             {mode !== 'forgot' && (
               <div className="relative">
@@ -192,7 +266,11 @@ const Auth = () => {
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  {mode === 'login' ? 'Entrar' : mode === 'signup' ? 'Criar Conta' : 'Enviar Link'}
+                  {mode === 'login' && 'Entrar'}
+                  {mode === 'signup' && 'Criar Conta'}
+                  {mode === 'forgot' && forgotStep === 'email' && 'Enviar Código'}
+                  {mode === 'forgot' && forgotStep === 'code' && 'Verificar'}
+                  {mode === 'forgot' && forgotStep === 'newpass' && 'Atualizar Senha'}
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -201,7 +279,7 @@ const Auth = () => {
             {mode === 'login' && (
               <button
                 type="button"
-                onClick={() => setMode('forgot')}
+                onClick={() => { setMode('forgot'); setForgotStep('email'); }}
                 className="w-full text-center text-xs font-body text-primary hover:underline"
               >
                 Esqueci minha senha
@@ -211,7 +289,7 @@ const Auth = () => {
             {mode === 'forgot' && (
               <button
                 type="button"
-                onClick={() => setMode('login')}
+                onClick={() => { setMode('login'); setForgotStep('email'); setOtpCode(''); setNewPassword(''); }}
                 className="w-full text-center text-xs font-body text-primary hover:underline"
               >
                 Voltar ao login
