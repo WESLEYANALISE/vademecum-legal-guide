@@ -17,7 +17,7 @@ const TIPO_LABELS: Record<string, string> = {
   estatuto: 'Estatutos',
   'lei-ordinaria': 'Leis Ordinárias',
   decreto: 'Decretos',
-  sumula: 'Súmulas',
+  sumula: 'Jurisprudência',
   'lei-especial': 'Leis Especiais',
   previdenciario: 'Previdenciário',
 };
