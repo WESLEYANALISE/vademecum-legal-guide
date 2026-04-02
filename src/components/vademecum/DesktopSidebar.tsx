@@ -188,8 +188,6 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
         {/* Conteúdo */}
         {renderSection('Conteúdo', CONTEUDO_ITEMS)}
 
-        {/* Ferramentas */}
-        {renderSection('Ferramentas', FERRAMENTAS_ITEMS)}
 
         {/* Funções Admin - only for admin */}
         {isAdmin && (
