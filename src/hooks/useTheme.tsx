@@ -28,69 +28,45 @@ function p(bg: string, fg: string, card: string, cardFg: string, primary: string
 }
 
 const PALETTES: ThemePalette[] = [
-  // 1 — Grafite Dourado (padrão) — cinza escuro neutro + amarelo ouro vibrante
-  { id: 'grafite-dourado', name: 'Grafite Dourado', description: 'Elegância escura com destaques em ouro',
-    colors: p('220 12% 12%','45 15% 95%','220 10% 16%','45 15% 95%','45 85% 55%','220 12% 10%','45 90% 65%','220 8% 21%','45 10% 90%','220 8% 18%','220 8% 55%','42 75% 50%','220 12% 10%','220 8% 24%','45 85% 55%','45 85% 55%','45 75% 65%','45 60% 38%') },
+  // 1 — Marsala & Ouro (padrão) — bordô escuro + dourado fiel ao logo
+  { id: 'marsala-ouro', name: 'Marsala & Ouro', description: 'Elegância bordô com destaques em ouro',
+    colors: p('340 55% 12%','40 15% 95%','340 50% 16%','40 15% 95%','42 75% 55%','340 55% 10%','42 80% 65%','340 40% 21%','40 10% 90%','340 40% 18%','340 30% 55%','42 70% 50%','340 55% 10%','340 35% 24%','42 75% 55%','42 75% 55%','42 65% 65%','42 55% 38%') },
 
-  // 2 — Carvão Âmbar — cinza mais quente + âmbar profundo
-  { id: 'carvao-ambar', name: 'Carvão Âmbar', description: 'Tons quentes de carvão e âmbar',
-    colors: p('30 8% 11%','40 12% 94%','30 7% 15%','40 12% 94%','38 80% 50%','30 8% 10%','38 85% 62%','30 6% 20%','40 8% 90%','30 5% 17%','30 6% 52%','35 70% 48%','30 8% 10%','30 5% 22%','38 80% 50%','38 80% 50%','38 70% 62%','38 58% 36%') },
+  // 2 — Vinho Noturno — bordô profundo/preto + ouro suave
+  { id: 'vinho-noturno', name: 'Vinho Noturno', description: 'Profundidade noturna com brilho dourado suave',
+    colors: p('340 50% 8%','38 12% 94%','340 45% 12%','38 12% 94%','40 65% 52%','340 50% 6%','40 70% 64%','340 35% 17%','38 8% 88%','340 35% 14%','340 25% 48%','38 58% 48%','340 50% 6%','340 30% 20%','40 65% 52%','40 65% 52%','40 55% 64%','40 48% 36%') },
 
-  // 3 — Aço Limão — cinza azulado frio + amarelo limão
-  { id: 'aco-limao', name: 'Aço & Limão', description: 'Cinza industrial com amarelo vivo',
-    colors: p('215 10% 13%','50 12% 94%','215 8% 17%','50 12% 94%','52 90% 52%','215 10% 10%','52 92% 64%','215 7% 22%','50 8% 90%','215 6% 19%','215 6% 54%','50 80% 48%','215 10% 10%','215 6% 25%','52 90% 52%','52 90% 52%','52 80% 64%','52 65% 38%') },
+  // 3 — Rubi Imperial — vermelho rubi vibrante + ouro intenso
+  { id: 'rubi-imperial', name: 'Rubi Imperial', description: 'Vermelho rubi vibrante com ouro intenso',
+    colors: p('350 60% 14%','42 14% 95%','350 55% 18%','42 14% 95%','45 85% 54%','350 60% 10%','45 88% 66%','350 45% 23%','42 10% 90%','350 45% 20%','350 35% 55%','44 78% 50%','350 60% 10%','350 40% 26%','45 85% 54%','45 85% 54%','45 75% 66%','45 62% 38%') },
 
-  // 4 — Fumaça Mel — cinza suave + mel dourado
-  { id: 'fumaca-mel', name: 'Fumaça & Mel', description: 'Suavidade cinzenta com calor de mel',
-    colors: p('210 6% 15%','42 14% 93%','210 5% 19%','42 14% 93%','40 72% 52%','210 6% 12%','40 78% 64%','210 4% 24%','42 10% 88%','210 4% 21%','210 4% 54%','38 65% 48%','210 6% 12%','210 4% 26%','40 72% 52%','40 72% 52%','40 62% 64%','40 52% 38%') },
+  // 4 — Mogno & Champanhe — marrom avermelhado + champanhe
+  { id: 'mogno-champanhe', name: 'Mogno & Champanhe', description: 'Calor do mogno com suavidade champanhe',
+    colors: p('15 45% 13%','38 18% 93%','15 40% 17%','38 18% 93%','38 55% 58%','15 45% 10%','38 60% 70%','15 30% 22%','38 12% 88%','15 30% 19%','15 20% 52%','36 48% 52%','15 45% 10%','15 25% 25%','38 55% 58%','38 55% 58%','38 48% 70%','38 42% 42%') },
 
-  // 5 — Obsidiana Solar — preto profundo + amarelo solar intenso
-  { id: 'obsidiana-solar', name: 'Obsidiana Solar', description: 'Escuridão profunda com brilho solar',
-    colors: p('0 0% 8%','48 10% 94%','0 0% 12%','48 10% 94%','48 95% 54%','0 0% 6%','48 98% 66%','0 0% 16%','48 6% 88%','0 0% 13%','0 0% 50%','46 85% 50%','0 0% 6%','0 0% 18%','48 95% 54%','48 95% 54%','48 85% 66%','48 68% 38%') },
+  // 5 — Carmesim & Bronze — vermelho escuro + bronze metálico
+  { id: 'carmesim-bronze', name: 'Carmesim & Bronze', description: 'Força carmesim com reflexos em bronze',
+    colors: p('355 52% 13%','35 14% 94%','355 48% 17%','35 14% 94%','30 65% 48%','355 52% 10%','30 70% 60%','355 38% 22%','35 10% 88%','355 38% 19%','355 28% 52%','28 58% 45%','355 52% 10%','355 33% 24%','30 65% 48%','30 65% 48%','30 55% 60%','30 48% 35%') },
 
-  // 6 — Prata Mostarda — cinza claro prateado + mostarda
-  { id: 'prata-mostarda', name: 'Prata & Mostarda', description: 'Prata sofisticada com mostarda refinada',
-    colors: p('220 6% 16%','44 8% 92%','220 5% 20%','44 8% 92%','42 65% 48%','220 6% 14%','42 70% 60%','220 4% 25%','44 6% 87%','220 4% 22%','220 4% 52%','40 58% 45%','220 6% 14%','220 4% 27%','42 65% 48%','42 65% 48%','42 55% 60%','42 48% 35%') },
+  // 6 — Borgonha Clássica — borgonha pura + ouro antigo
+  { id: 'borgonha-classica', name: 'Borgonha Clássica', description: 'Borgonha pura com ouro envelhecido',
+    colors: p('345 58% 11%','40 12% 94%','345 52% 15%','40 12% 94%','42 68% 48%','345 58% 8%','42 72% 60%','345 42% 20%','40 8% 87%','345 42% 17%','345 32% 50%','40 60% 45%','345 58% 8%','345 37% 22%','42 68% 48%','42 68% 48%','42 58% 60%','42 50% 35%') },
 
-  // 7 — Concreto Ouro — cinza médio brutalista + ouro escuro
-  { id: 'concreto-ouro', name: 'Concreto & Ouro', description: 'Força bruta do concreto com ouro',
-    colors: p('200 5% 14%','46 10% 93%','200 4% 18%','46 10% 93%','43 78% 48%','200 5% 10%','43 82% 60%','200 3% 23%','46 7% 88%','200 3% 20%','200 3% 52%','40 68% 45%','200 5% 10%','200 3% 25%','43 78% 48%','43 78% 48%','43 68% 60%','43 55% 35%') },
+  // 7 — Ébano & Ouro — preto elegante + ouro do logo
+  { id: 'ebano-ouro', name: 'Ébano & Ouro', description: 'Preto puro elegante com ouro luminoso',
+    colors: p('0 0% 5%','0 0% 100%','0 0% 9%','0 0% 100%','42 80% 52%','0 0% 4%','42 85% 64%','0 0% 18%','0 0% 90%','0 0% 12%','0 0% 50%','42 72% 48%','0 0% 4%','0 0% 16%','42 80% 52%','42 80% 52%','42 72% 64%','42 58% 36%') },
 
-  // 8 — Névoa Canário — cinza nebuloso + amarelo canário
-  { id: 'nevoa-canario', name: 'Névoa & Canário', description: 'Atmosfera enevoada com amarelo vibrante',
-    colors: p('210 8% 14%','50 10% 94%','210 7% 18%','50 10% 94%','50 88% 56%','210 8% 10%','50 90% 68%','210 5% 23%','50 7% 90%','210 5% 20%','210 5% 55%','48 78% 52%','210 8% 10%','210 5% 25%','50 88% 56%','50 88% 56%','50 78% 68%','50 62% 40%') },
+  // 8 — Grafite Bordeaux — cinza com subtom bordô + ouro
+  { id: 'grafite-bordeaux', name: 'Grafite Bordeaux', description: 'Cinza sofisticado com nuance bordô e ouro',
+    colors: p('340 12% 12%','40 10% 94%','340 10% 16%','40 10% 94%','42 72% 52%','340 12% 10%','42 78% 64%','340 8% 21%','40 6% 88%','340 8% 18%','340 6% 52%','40 62% 48%','340 12% 10%','340 6% 24%','42 72% 52%','42 72% 52%','42 62% 64%','42 50% 36%') },
 
-  // 9 — Ardósia Champanhe — ardósia escura + champanhe/dourado suave
-  { id: 'ardosia-champanhe', name: 'Ardósia & Champanhe', description: 'Ardósia nobre com tons de champanhe',
-    colors: p('215 8% 13%','38 15% 92%','215 7% 17%','38 15% 92%','38 55% 58%','215 8% 12%','38 60% 70%','215 5% 22%','38 10% 88%','215 5% 19%','215 5% 53%','36 48% 52%','215 8% 12%','215 5% 24%','38 55% 58%','38 55% 58%','38 48% 70%','38 42% 42%') },
+  // 9 — Terracota & Mel — terracota quente + mel dourado
+  { id: 'terracota-mel', name: 'Terracota & Mel', description: 'Calor terroso com doçura de mel dourado',
+    colors: p('12 40% 14%','40 16% 93%','12 35% 18%','40 16% 93%','40 72% 52%','12 40% 10%','40 78% 64%','12 28% 23%','40 10% 88%','12 28% 20%','12 18% 52%','38 65% 48%','12 40% 10%','12 22% 25%','40 72% 52%','40 72% 52%','40 62% 64%','40 52% 38%') },
 
-  // 10 — Tungstênio — cinza metálico denso + amarelo elétrico
-  { id: 'tungstenio', name: 'Tungstênio', description: 'Metal denso com faísca elétrica',
-    colors: p('225 6% 11%','48 12% 94%','225 5% 15%','48 12% 94%','48 92% 50%','225 6% 8%','48 95% 62%','225 4% 20%','48 8% 88%','225 4% 17%','225 4% 50%','46 82% 46%','225 6% 8%','225 4% 22%','48 92% 50%','48 92% 50%','48 82% 62%','48 65% 36%') },
-
-  // 11 — Vacatio — preto puro elegante + amarelo ouro intenso + branco puro
-  { id: 'vacatio', name: 'Vacatio', description: 'Preto elegante com ouro e branco puro',
-    colors: p('0 0% 4%','0 0% 100%','0 0% 8%','0 0% 100%','51 100% 50%','0 0% 4%','51 100% 62%','0 0% 20%','0 0% 90%','0 0% 12%','0 0% 50%','51 90% 48%','0 0% 4%','0 0% 16%','51 100% 50%','51 100% 50%','51 90% 62%','51 75% 36%') },
-
-  // 12 — Vacatio Azulado — preto com toque azulado + ouro
-  { id: 'vacatio-azulado', name: 'Vacatio Azulado', description: 'Preto azulado noturno com ouro luminoso',
-    colors: p('220 15% 5%','0 0% 100%','220 12% 9%','0 0% 100%','51 100% 50%','220 15% 4%','51 100% 62%','220 10% 18%','0 0% 90%','220 10% 11%','220 8% 48%','51 90% 48%','220 15% 4%','220 10% 15%','51 100% 50%','51 100% 50%','51 90% 62%','51 75% 36%') },
-
-  // 13 — Vacatio Quente — preto avermelhado + ouro âmbar
-  { id: 'vacatio-quente', name: 'Vacatio Quente', description: 'Preto com calor sutil e âmbar dourado',
-    colors: p('15 8% 5%','0 0% 100%','15 6% 9%','0 0% 100%','45 100% 50%','15 8% 4%','45 100% 62%','15 5% 18%','0 0% 90%','15 5% 11%','15 4% 48%','45 85% 48%','15 8% 4%','15 5% 15%','45 100% 50%','45 100% 50%','45 85% 62%','45 70% 36%') },
-
-  // 14 — Vacatio Verde — preto esverdeado + ouro esverdeado
-  { id: 'vacatio-verde', name: 'Vacatio Verde', description: 'Preto profundo com reflexo esmeralda e ouro',
-    colors: p('160 10% 4%','0 0% 100%','160 8% 8%','0 0% 100%','48 95% 50%','160 10% 4%','48 95% 62%','160 6% 17%','0 0% 90%','160 6% 10%','160 5% 46%','48 80% 48%','160 10% 4%','160 6% 14%','48 95% 50%','48 95% 50%','48 85% 62%','48 68% 36%') },
-
-  // 15 — Vacatio Violeta — preto arroxeado + ouro contrastante
-  { id: 'vacatio-violeta', name: 'Vacatio Violeta', description: 'Preto com nuance violeta e ouro intenso',
-    colors: p('270 12% 5%','0 0% 100%','270 10% 9%','0 0% 100%','51 100% 50%','270 12% 4%','51 100% 62%','270 8% 18%','0 0% 90%','270 8% 11%','270 6% 48%','51 90% 48%','270 12% 4%','270 8% 15%','51 100% 50%','51 100% 50%','51 90% 62%','51 75% 36%') },
-
-  // 16 — Vacatio Sépia — preto acastanhado + ouro envelhecido
-  { id: 'vacatio-sepia', name: 'Vacatio Sépia', description: 'Preto com tom sépia e ouro envelhecido',
-    colors: p('30 12% 5%','0 0% 100%','30 10% 9%','0 0% 100%','42 88% 48%','30 12% 4%','42 88% 60%','30 8% 18%','0 0% 90%','30 8% 11%','30 6% 46%','42 75% 45%','30 12% 4%','30 8% 15%','42 88% 48%','42 88% 48%','42 78% 60%','42 62% 34%') },
+  // 10 — Obsidiana Régia — preto com nuance roxa + ouro real
+  { id: 'obsidiana-regia', name: 'Obsidiana Régia', description: 'Preto profundo com nuance violeta e ouro real',
+    colors: p('280 15% 6%','0 0% 100%','280 12% 10%','0 0% 100%','42 82% 50%','280 15% 5%','42 86% 62%','280 10% 19%','0 0% 90%','280 10% 13%','280 8% 48%','42 74% 48%','280 15% 5%','280 8% 17%','42 82% 50%','42 82% 50%','42 74% 62%','42 58% 36%') },
 ];
 
 interface ThemeContextType {
@@ -100,7 +76,7 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  currentTheme: 'grafite-dourado',
+  currentTheme: 'marsala-ouro',
   setTheme: () => {},
   palettes: PALETTES,
 });
@@ -114,7 +90,7 @@ function applyTheme(palette: ThemePalette) {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('vademecum-theme') || 'grafite-dourado';
+    return localStorage.getItem('vademecum-theme') || 'marsala-ouro';
   });
 
   // Load theme from Supabase on mount
