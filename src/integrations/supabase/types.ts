@@ -1780,6 +1780,90 @@ export type Database = {
         }
         Relationships: []
       }
+      LAA_ABUSO_AUTORIDADE: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number
+          ordem_numero: number
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number
+          ordem_numero?: number
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number
+          ordem_numero?: number
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LD_LEI_DROGAS: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number
+          ordem_numero: number
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number
+          ordem_numero?: number
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number
+          ordem_numero?: number
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
       leis_ordinarias: {
         Row: {
           ano: number
@@ -1810,6 +1894,132 @@ export type Database = {
           ordem?: number
           texto_completo?: string | null
           url?: string | null
+        }
+        Relationships: []
+      }
+      LEP_EXECUCAO_PENAL: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number
+          ordem_numero: number
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number
+          ordem_numero?: number
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number
+          ordem_numero?: number
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LMP_MARIA_PENHA: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number
+          ordem_numero: number
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number
+          ordem_numero?: number
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number
+          ordem_numero?: number
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LOC_ORGANIZACAO_CRIMINOSA: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number
+          ordem_numero: number
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number
+          ordem_numero?: number
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number
+          ordem_numero?: number
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
         }
         Relationships: []
       }
