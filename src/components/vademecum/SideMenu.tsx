@@ -108,6 +108,7 @@ const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Usuário';
   const userEmail = user?.email || '';
+  const isAdmin = userEmail === 'wn7corporation@gmail.com';
 
   return (
     <AnimatePresence>
@@ -185,34 +186,36 @@ const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
                 </div>
               ))}
 
-              {/* Funções Admin - collapsible */}
-              <div className="mb-3">
-                <button
-                  onClick={() => setAdminOpen(!adminOpen)}
-                  className="w-full flex items-center gap-3.5 px-5 py-3 text-foreground/80 hover:bg-secondary hover:text-foreground transition-colors"
-                >
-                  <Lock className="w-5 h-5 text-primary/70" />
-                  <span className="font-body text-[15px] font-semibold">Funções Admin</span>
-                  <ChevronDown className={`w-4 h-4 ml-auto text-muted-foreground transition-transform ${adminOpen ? 'rotate-180' : ''}`} />
-                </button>
-                {adminOpen && (
-                  <div className="bg-secondary/30">
-                    {ADMIN_FUNCTIONS.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => handleItemClick(item.id)}
-                          className="w-full flex items-center gap-3.5 px-7 py-2.5 text-foreground/80 hover:bg-secondary hover:text-foreground transition-colors"
-                        >
-                          <Icon className="w-4.5 h-4.5 text-primary/70" />
-                          <span className="font-body text-[14px]">{item.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+              {/* Funções Admin - only for admin */}
+              {isAdmin && (
+                <div className="mb-3">
+                  <button
+                    onClick={() => setAdminOpen(!adminOpen)}
+                    className="w-full flex items-center gap-3.5 px-5 py-3 text-foreground/80 hover:bg-secondary hover:text-foreground transition-colors"
+                  >
+                    <Lock className="w-5 h-5 text-primary/70" />
+                    <span className="font-body text-[15px] font-semibold">Funções Admin</span>
+                    <ChevronDown className={`w-4 h-4 ml-auto text-muted-foreground transition-transform ${adminOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {adminOpen && (
+                    <div className="bg-secondary/30">
+                      {ADMIN_FUNCTIONS.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => handleItemClick(item.id)}
+                            className="w-full flex items-center gap-3.5 px-7 py-2.5 text-foreground/80 hover:bg-secondary hover:text-foreground transition-colors"
+                          >
+                            <Icon className="w-4.5 h-4.5 text-primary/70" />
+                            <span className="font-body text-[14px]">{item.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Footer */}
