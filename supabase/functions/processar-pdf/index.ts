@@ -332,6 +332,7 @@ TAREFA:
 2. Use o sumário como referência principal para identificar os capítulos E subcapítulos/seções
 3. Confirme onde cada capítulo/seção realmente começa no conteúdo
 4. Organize TODAS as ${totalPages} páginas em capítulos, sem pular nenhuma
+5. Identifique páginas DESCARTÁVEIS e a página onde o conteúdo principal começa
 
 REGRAS IMPORTANTES:
 - TODAS as páginas de 1 a ${totalPages} devem estar cobertas (sem buracos nem sobreposições)
@@ -343,10 +344,27 @@ REGRAS IMPORTANTES:
 - NÃO reescreva o conteúdo, apenas organize
 - Se não encontrar sumário, divida por títulos/headings visíveis no texto (incluindo subtítulos em negrito ou caixa alta)
 
+PÁGINAS DESCARTÁVEIS (skip_pages):
+Marque como descartáveis páginas que contêm APENAS:
+- Avisos de copyright/direitos autorais
+- Avisos contra pirataria
+- Página em branco ou quase vazia
+- Folha de rosto repetida
+- Ficha catalográfica / CIP
+- Biografia do autor (na contracapa ou páginas iniciais)
+- Agradecimentos
+- Dedicatórias
+
+NÃO marque como descartáveis: sumário, prefácio, introdução, apresentação, capítulos reais.
+
+CONTENT_START_PAGE: número da página onde começa o primeiro conteúdo real do livro (após sumário, dedicatórias, etc). Geralmente é o primeiro capítulo ou a introdução.
+
 Retorne APENAS um JSON válido com esta estrutura:
 {
   "version": 2,
   "title": "Título do livro",
+  "content_start_page": 15,
+  "skip_pages": [1, 2, 3, 4],
   "chapters": [
     {
       "title": "Nome do capítulo",
