@@ -205,8 +205,22 @@ if (typeof window !== 'undefined') {
   setTimeout(() => prefetchAllArtigos(2, false), 5000);
 }
 
+// Prefetch tables by type for contextual priority
+export function prefetchByTipo(tipo: string, concurrency = 4): Promise<void> {
+  const tabelas = LEIS_CATALOG.filter(l => l.tipo === tipo && !artigosCache.has(l.tabela_nome));
+  if (!tabelas.length) return Promise.resolve();
+  let i = 0;
+  const worker = async () => {
+    while (i < tabelas.length) {
+      const lei = tabelas[i++];
+      if (!lei || artigosCache.has(lei.tabela_nome)) continue;
+      try { await fetchArtigosPaginado(lei.tabela_nome, 0, 2000); } catch {}
+    }
+  };
+  return Promise.all(Array.from({ length: Math.min(concurrency, tabelas.length) }, () => worker())).then(() => {});
+}
+
 export function prefetchAllArtigos(concurrency = 4, priorityOnly = false): Promise<void> {
-  const cacheKey = priorityOnly ? 'priority' : 'all';
   if (priorityOnly && prefetchPromise) return prefetchPromise;
   if (!priorityOnly && _fullPrefetchPromise) return _fullPrefetchPromise;
 
