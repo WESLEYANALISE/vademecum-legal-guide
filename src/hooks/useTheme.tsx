@@ -77,7 +77,7 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  currentTheme: 'vinho-marfim',
+  currentTheme: 'obsidiana-purpura',
   setTheme: () => {},
   palettes: PALETTES,
 });
@@ -91,7 +91,7 @@ function applyTheme(palette: ThemePalette) {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('vademecum-theme') || 'vinho-marfim';
+    return localStorage.getItem('vademecum-theme') || 'obsidiana-purpura';
   });
 
   useEffect(() => {
