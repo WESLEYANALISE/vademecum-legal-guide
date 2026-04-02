@@ -56,7 +56,8 @@ const CONFIG_ITEMS = [
 
 const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
+  const isAdmin = user?.email === 'wn7corporation@gmail.com';
   const [collapsed, setCollapsed] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
 
