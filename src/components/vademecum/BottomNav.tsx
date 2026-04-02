@@ -1,34 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Wrench, Sparkles, Bell, Menu } from 'lucide-react';
+import { GraduationCap, Wrench, Sparkles, Search, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { getLatestDayCount, getResenhaCache, prefetchResenha } from '@/services/atualizacaoService';
 
 interface BottomNavProps {
   onSearchClick: () => void;
+  onAssistenteClick: () => void;
   onMenuClick?: () => void;
 }
 
 const NAV_ITEMS = [
   { id: 'estudar', label: 'Estudar', icon: GraduationCap },
   { id: 'ferramentas', label: 'Ferramentas', icon: Wrench },
-  { id: 'assistente', label: 'Assistente', icon: Sparkles, center: true },
-  { id: 'novidades', label: 'Novidades', icon: Bell },
+  { id: 'buscar', label: 'Buscar', icon: Search, center: true },
+  { id: 'assistente', label: 'Assistente', icon: Sparkles },
   { id: 'menu', label: 'Menu', icon: Menu },
 ];
 
-const BottomNav = ({ onSearchClick, onMenuClick }: BottomNavProps) => {
+const BottomNav = ({ onSearchClick, onAssistenteClick, onMenuClick }: BottomNavProps) => {
   const navigate = useNavigate();
-  const [badgeCount, setBadgeCount] = useState(0);
-
-  useEffect(() => {
-    const cached = getResenhaCache();
-    if (cached) {
-      setBadgeCount(getLatestDayCount());
-    } else {
-      prefetchResenha().then(() => setBadgeCount(getLatestDayCount()));
-    }
-  }, []);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border pb-[env(safe-area-inset-bottom)] lg:hidden">
@@ -60,7 +50,7 @@ const BottomNav = ({ onSearchClick, onMenuClick }: BottomNavProps) => {
               onClick={
                 item.id === 'menu' ? onMenuClick :
                 item.id === 'ferramentas' ? () => navigate('/ferramentas') :
-                item.id === 'novidades' ? () => { setBadgeCount(0); navigate('/novidades'); } :
+                item.id === 'assistente' ? onAssistenteClick :
                 item.id === 'estudar' ? () => navigate('/estudar') :
                 undefined
               }
@@ -68,11 +58,6 @@ const BottomNav = ({ onSearchClick, onMenuClick }: BottomNavProps) => {
             >
               <div className="relative">
                 <Icon className="w-[22px] h-[22px]" />
-                {item.id === 'novidades' && badgeCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center px-1">
-                    {badgeCount > 99 ? '99+' : badgeCount}
-                  </span>
-                )}
               </div>
               <span className="font-body text-[11px]">{item.label}</span>
             </button>

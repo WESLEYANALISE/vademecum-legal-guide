@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Scale, Radar, Brain, GraduationCap, BookOpen, Wrench, Timer, BookOpenText, ScanEye, Sparkles } from 'lucide-react';
+import { Search, Scale, Radar, Brain, GraduationCap, BookOpen, Wrench, Timer, BookOpenText, ScanEye, Sparkles, ChevronRight } from 'lucide-react';
 import heroImage from '@/assets/hero-vademecum.jpg';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import camaraHero from '@/assets/radar/camara-hero.jpg';
@@ -398,22 +398,28 @@ const Index = () => {
                 <motion.div className="py-4" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 24 }}>
                   <div
                     className="relative flex items-center h-14 cursor-pointer"
-                    onClick={() => setSearchOpen(true)}
+                    onClick={() => navigate('/radar-360')}
                   >
-                    {/* Avatar integrado à esquerda */}
-                    <div className="absolute left-0 z-10 w-14 h-14 rounded-full border-2 border-primary/40 overflow-hidden shadow-lg shrink-0">
-                      <img src={vacatioLogo} alt="Vacatio" loading="eager" decoding="sync" fetchPriority="high" className="w-full h-full object-cover" />
+                    {/* Lottie icon à esquerda */}
+                    <div className="absolute left-0 z-10 w-14 h-14 rounded-full border-2 border-primary/40 overflow-hidden shadow-lg shrink-0 bg-card flex items-center justify-center">
+                      <iframe
+                        src="https://lottie.host/embed/3b2d7321-76b2-43fb-9eb0-5b564b42750f/D6XzVc9mGe.lottie"
+                        className="w-10 h-10 border-0 pointer-events-none"
+                        title="Radar"
+                      />
                     </div>
-                    {/* Barra de pesquisa */}
-                    <div className="flex-1 flex items-center h-11 ml-10 pl-8 pr-12 rounded-full bg-secondary/80 border border-border/60 shadow-sm">
-                      <span className="text-muted-foreground text-sm font-body truncate">
-                        {typingHint}<span className="animate-pulse">|</span>
+                    {/* Radar de Leis 360 */}
+                    <div className="flex-1 flex items-center justify-between h-11 ml-10 pl-8 pr-4 rounded-full bg-secondary/80 border border-border/60 shadow-sm">
+                      <span className="text-foreground text-sm font-display font-semibold">
+                        Radar de Leis 360
                       </span>
+                      <motion.div
+                        animate={{ x: [0, 6, 0] }}
+                        transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+                      >
+                        <ChevronRight className="w-5 h-5 text-primary" />
+                      </motion.div>
                     </div>
-                    {/* Botão de busca à direita */}
-                    <button className="absolute right-1.5 w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-md">
-                      <Search className="w-4 h-4 text-primary-foreground" />
-                    </button>
                   </div>
                 </motion.div>
                 <motion.div className="pb-4 pt-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16, type: 'spring', stiffness: 260, damping: 24 }}>
@@ -438,7 +444,8 @@ const Index = () => {
       {/* Bottom Nav - visible on all tabs */}
       {!personalizarOpen && (
         <BottomNav
-          onSearchClick={() => setAssistenteOpen(true)}
+          onSearchClick={() => setSearchOpen(true)}
+          onAssistenteClick={() => setAssistenteOpen(true)}
           onMenuClick={() => setMenuOpen(true)}
         />
       )}
