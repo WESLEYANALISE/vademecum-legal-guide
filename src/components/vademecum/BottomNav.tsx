@@ -35,7 +35,7 @@ const BottomNav = ({ onSearchClick, onAssistenteClick, onMenuClick }: BottomNavP
               >
                 <motion.div
                   whileTap={{ scale: 0.9 }}
-                  className="w-14 h-14 rounded-full bg-accent flex items-center justify-center shadow-lg shadow-accent/30 border-4 border-card"
+                  className="w-14 h-14 rounded-full bg-[hsl(48,95%,54%)] flex items-center justify-center shadow-lg shadow-[hsl(48,95%,54%)/0.35] border-4 border-card"
                 >
                   <Icon className="w-6 h-6 text-accent-foreground" />
                 </motion.div>
