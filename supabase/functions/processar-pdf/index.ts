@@ -339,44 +339,47 @@ async function processPdfInBackground({
       })
       .eq("id", livroId);
 
-    console.log("Formatting markdown with Gemini...");
-    const totalPagesAll = estruturaLeitura.chapters.reduce(
-      (acc: number, ch: GeminiChapter) => acc + (ch.pages?.length || 0), 0
-    );
-    let pagesProcessed = 0;
+    console.log("Cleaning edge pages with Gemini (first/last 10)...");
 
-    await supabase
-      .from("biblioteca_livros")
-      .update({ status: "cleaning:0" })
-      .eq("id", livroId);
-
+    // Collect all pages flat
+    const allPagesFlat: { ci: number; pi: number; source_page: number; markdown: string }[] = [];
     for (let ci = 0; ci < estruturaLeitura.chapters.length; ci++) {
       const ch = estruturaLeitura.chapters[ci];
-      if (!ch.pages || ch.pages.length === 0) continue;
-
-      const BATCH_SIZE = 6;
-      const MAX_MD_CHARS = 6000;
-      const cleanedPages: { source_page: number; markdown: string }[] = [];
-
-      for (let bi = 0; bi < ch.pages.length; bi += BATCH_SIZE) {
-        const batch = ch.pages.slice(bi, bi + BATCH_SIZE).map((p) => ({
-          source_page: p.source_page,
-          markdown: p.markdown.slice(0, MAX_MD_CHARS),
-        }));
-        const cleaned = await cleanChapterMarkdown(geminiApiKey, batch);
-        cleanedPages.push(...cleaned);
-
-        pagesProcessed += batch.length;
-        const pct = totalPagesAll > 0
-          ? Math.min(Math.round((pagesProcessed / totalPagesAll) * 100), 99)
-          : 99;
-        await supabase
-          .from("biblioteca_livros")
-          .update({ status: `cleaning:${pct}` })
-          .eq("id", livroId);
+      if (!ch.pages) continue;
+      for (let pi = 0; pi < ch.pages.length; pi++) {
+        allPagesFlat.push({ ci, pi, source_page: ch.pages[pi].source_page, markdown: ch.pages[pi].markdown });
       }
+    }
 
-      estruturaLeitura.chapters[ci].pages = cleanedPages;
+    const EDGE = 10;
+    const firstEdge = allPagesFlat.filter((_, i) => i < EDGE);
+    const lastEdge = allPagesFlat.filter((_, i) => i >= allPagesFlat.length - EDGE && i >= EDGE);
+    const middlePages = allPagesFlat.filter((_, i) => i >= EDGE && i < allPagesFlat.length - EDGE);
+
+    await supabase.from("biblioteca_livros").update({ status: "cleaning:10" }).eq("id", livroId);
+
+    // Clean first 10 with AI
+    const cleanedFirst = await cleanEdgePages(geminiApiKey, firstEdge.map(p => ({ source_page: p.source_page, markdown: p.markdown })));
+    for (const cp of cleanedFirst) {
+      const entry = firstEdge.find(p => p.source_page === cp.source_page);
+      if (entry) estruturaLeitura.chapters[entry.ci].pages![entry.pi].markdown = cp.markdown;
+    }
+
+    // Normalize middle pages (deterministic only)
+    await supabase.from("biblioteca_livros").update({ status: "cleaning:50" }).eq("id", livroId);
+    for (const mp of middlePages) {
+      const normalized = normalizeMarkdownPages([{ source_page: mp.source_page, markdown: mp.markdown }]);
+      estruturaLeitura.chapters[mp.ci].pages![mp.pi].markdown = normalized[0].markdown;
+    }
+
+    // Clean last 10 with AI
+    await supabase.from("biblioteca_livros").update({ status: "cleaning:80" }).eq("id", livroId);
+    if (lastEdge.length > 0) {
+      const cleanedLast = await cleanEdgePages(geminiApiKey, lastEdge.map(p => ({ source_page: p.source_page, markdown: p.markdown })));
+      for (const cp of cleanedLast) {
+        const entry = lastEdge.find(p => p.source_page === cp.source_page);
+        if (entry) estruturaLeitura.chapters[entry.ci].pages![entry.pi].markdown = cp.markdown;
+      }
     }
 
     const { error: updateError } = await supabase
@@ -557,9 +560,9 @@ ${pagesPayload}`;
   }
 }
 
-// ── Gemini markdown cleaning ────────────────────────────────────────
+// ── Gemini edge-page cleaning (first/last pages only) ───────────────
 
-async function cleanChapterMarkdown(
+async function cleanEdgePages(
   apiKey: string,
   pages: { source_page: number; markdown: string }[]
 ): Promise<{ source_page: number; markdown: string }[]> {
@@ -569,31 +572,27 @@ async function cleanChapterMarkdown(
     .map((p) => `--- Página ${p.source_page} ---\n${p.markdown}`)
     .join("\n\n");
 
-  const prompt = `Você é um editor profissional de livros. Recebeu páginas de um livro extraídas por OCR que precisam de formatação hierárquica rica em Markdown.
+  const prompt = `Você é um editor de livros. Recebeu páginas iniciais ou finais de um livro extraídas por OCR.
 
-TAREFA: Leia cada página cuidadosamente e reformate com hierarquia visual clara.
+TAREFA: Identifique e REMOVA conteúdo irrelevante como:
+- Páginas de copyright, aviso legal, ficha catalográfica
+- Biografia do autor, "sobre o autor"
+- Avisos sobre pirataria, reprodução proibida
+- Páginas em branco ou com apenas números
+- Propagandas, "outros livros do autor"
+- Agradecimentos, dedicatórias (a menos que sejam substanciais)
+- Referências bibliográficas genéricas nas últimas páginas
 
-FORMATAÇÃO OBRIGATÓRIA:
-- Use ## para títulos de capítulo e seções principais
-- Use ### para subtítulos e subseções
-- Use **negrito** para: termos importantes, conceitos-chave, nomes próprios, nomes de autores, e qualquer texto que esteja em CAIXA ALTA no original
-- Use listas numeradas (1. 2. 3.) quando houver enumerações no texto
-- Use listas com marcadores (- item) quando houver itens sem ordem
-- Separe parágrafos com uma linha em branco entre eles
-- Citações devem usar > (blockquote)
+MANTER intacto:
+- Sumário / índice (formatar cada entrada em sua linha)
+- Prefácio, introdução, apresentação (são conteúdo real)
+- Todo o conteúdo principal do livro
+- Notas de rodapé relevantes ao conteúdo
 
-LIMPEZA:
-- Remova números de página soltos (ex: "1.", "23", "— 5 —")
-- Em sumário/índice: cada entrada em sua própria linha, nunca marcadores soltos
-- Junte palavras hifenizadas por quebra de linha (ex: "consti-tuição" → "constituição")
-- Corrija espaçamentos irregulares do OCR
+Para páginas que devem ser REMOVIDAS: retorne com markdown vazio "".
+Para páginas que devem ser MANTIDAS: formate com ## para títulos, ### subtítulos, **negrito** para termos importantes.
 
-PROIBIÇÕES:
-- NÃO invente, resuma ou altere o conteúdo textual
-- NÃO remova nem altere imagens: mantenha ![...](...) intactas
-- NÃO adicione conteúdo que não existe no original
-
-Retorne APENAS um JSON válido: array de objetos com "source_page" (número) e "markdown" (string formatada).
+Retorne APENAS um JSON válido: array de objetos com "source_page" (número) e "markdown" (string, vazia se removida).
 
 PÁGINAS:
 ${pagesText}`;
@@ -644,7 +643,7 @@ ${pagesText}`;
 
       return mergeCleanedPages(normalizedPages, parsed);
     } catch (err) {
-      console.error(`cleanChapterMarkdown error (attempt ${attempt + 1}):`, err);
+      console.error(`cleanEdgePages error (attempt ${attempt + 1}):`, err);
       if (attempt < MAX_RETRIES) {
         await new Promise(r => setTimeout(r, 1000));
         continue;
@@ -688,50 +687,52 @@ async function resumeCleaning({
 
     console.log(`Resuming cleaning for book ${livroId}...`);
 
-    const totalPagesAll = estrutura.chapters.reduce(
-      (acc: number, ch: GeminiChapter) => acc + (ch.pages?.length || 0), 0
-    );
-    let pagesProcessed = 0;
-    let pagesAlreadyClean = 0;
-
+    // Collect ALL pages across chapters with their chapter index
+    const allPages: { ci: number; pi: number; source_page: number; markdown: string }[] = [];
     for (let ci = 0; ci < estrutura.chapters.length; ci++) {
       const ch = estrutura.chapters[ci];
-      if (!ch.pages || ch.pages.length === 0) continue;
-
-      // Check if pages already have markdown formatting OR if they've been through cleaning
-      const looksClean = ch.pages.some(p =>
-        p.markdown && (p.markdown.includes("## ") || p.markdown.includes("### ") || p.markdown.includes("**"))
-      );
-
-      if (looksClean) {
-        pagesAlreadyClean += ch.pages.length;
-        pagesProcessed += ch.pages.length;
-        continue;
+      if (!ch.pages) continue;
+      for (let pi = 0; pi < ch.pages.length; pi++) {
+        allPages.push({ ci, pi, source_page: ch.pages[pi].source_page, markdown: ch.pages[pi].markdown });
       }
+    }
 
-      const BATCH_SIZE = 6;
-      const MAX_MD_CHARS = 6000;
-      const cleanedPages: { source_page: number; markdown: string }[] = [];
+    const totalPagesAll = allPages.length;
+    if (totalPagesAll === 0) {
+      await supabase.from("biblioteca_livros").update({ status: "ready", versao_processamento: 2 }).eq("id", livroId);
+      return;
+    }
 
-      for (let bi = 0; bi < ch.pages.length; bi += BATCH_SIZE) {
-        const batch = ch.pages.slice(bi, bi + BATCH_SIZE).map((p) => ({
-          source_page: p.source_page,
-          markdown: p.markdown.slice(0, MAX_MD_CHARS),
-        }));
-        const cleaned = await cleanChapterMarkdown(geminiApiKey, batch);
-        cleanedPages.push(...cleaned);
+    const EDGE_SIZE = 10;
+    const firstEdge = allPages.filter((_, i) => i < EDGE_SIZE);
+    const lastEdge = allPages.filter((_, i) => i >= totalPagesAll - EDGE_SIZE && i >= EDGE_SIZE);
+    const middlePages = allPages.filter((_, i) => i >= EDGE_SIZE && i < totalPagesAll - EDGE_SIZE);
 
-        pagesProcessed += batch.length;
-        const pct = totalPagesAll > 0
-          ? Math.min(Math.round((pagesProcessed / totalPagesAll) * 100), 99)
-          : 99;
-        await supabase
-          .from("biblioteca_livros")
-          .update({ status: `cleaning:${pct}` })
-          .eq("id", livroId);
+    console.log(`Cleaning: ${firstEdge.length} first + ${lastEdge.length} last pages with AI, ${middlePages.length} middle pages normalized only`);
+
+    // 1) Clean first edge pages with AI
+    await supabase.from("biblioteca_livros").update({ status: "cleaning:10" }).eq("id", livroId);
+    const cleanedFirst = await cleanEdgePages(geminiApiKey, firstEdge.map(p => ({ source_page: p.source_page, markdown: p.markdown })));
+    for (const cp of cleanedFirst) {
+      const entry = firstEdge.find(p => p.source_page === cp.source_page);
+      if (entry) estrutura.chapters[entry.ci].pages![entry.pi].markdown = cp.markdown;
+    }
+
+    // 2) Normalize middle pages (deterministic only — fast)
+    await supabase.from("biblioteca_livros").update({ status: "cleaning:50" }).eq("id", livroId);
+    for (const mp of middlePages) {
+      const normalized = normalizeMarkdownPages([{ source_page: mp.source_page, markdown: mp.markdown }]);
+      estrutura.chapters[mp.ci].pages![mp.pi].markdown = normalized[0].markdown;
+    }
+
+    // 3) Clean last edge pages with AI
+    await supabase.from("biblioteca_livros").update({ status: "cleaning:80" }).eq("id", livroId);
+    if (lastEdge.length > 0) {
+      const cleanedLast = await cleanEdgePages(geminiApiKey, lastEdge.map(p => ({ source_page: p.source_page, markdown: p.markdown })));
+      for (const cp of cleanedLast) {
+        const entry = lastEdge.find(p => p.source_page === cp.source_page);
+        if (entry) estrutura.chapters[entry.ci].pages![entry.pi].markdown = cp.markdown;
       }
-
-      estrutura.chapters[ci].pages = cleanedPages;
     }
 
     console.log(`Resume complete: ${pagesAlreadyClean} already clean, ${pagesProcessed - pagesAlreadyClean} newly cleaned`);
