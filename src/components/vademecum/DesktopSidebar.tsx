@@ -58,6 +58,7 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
 
   const handleItemClick = async (item: { id: string; route?: string }) => {
     if (item.id === 'sair') {
