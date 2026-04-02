@@ -823,7 +823,7 @@ const CategoriaLegislacao = () => {
                 <Gavel className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="font-display text-2xl text-white font-bold">Súmulas</h1>
+                <h1 className="font-display text-2xl text-white font-bold">Jurisprudência</h1>
                 <p className="text-white/70 text-sm">Selecione o tribunal</p>
               </div>
             </div>
