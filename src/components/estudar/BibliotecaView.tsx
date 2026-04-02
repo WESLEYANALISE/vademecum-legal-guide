@@ -446,14 +446,14 @@ export default function BibliotecaView({ onBack }: BibliotecaViewProps) {
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    {isLegacy && (
+                    {(isLegacy || hasOneChapter) && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleReprocess(livro.id);
                         }}
                         className="p-2 rounded-lg text-muted-foreground/40 hover:text-primary hover:bg-primary/10 transition-colors"
-                        title="Reprocessar com IA"
+                        title="Reindexar capítulos"
                       >
                         <RefreshCw className="w-4 h-4" />
                       </button>
