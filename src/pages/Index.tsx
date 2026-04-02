@@ -397,9 +397,16 @@ const Index = () => {
                 </motion.div>
                 <motion.div className="py-4 flex justify-center" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 24 }}>
                   <div
-                    className="relative flex items-center h-11 cursor-pointer w-[280px] rounded-full bg-[hsl(48,95%,54%)] shadow-md shadow-[hsl(48,95%,54%)/0.25]"
+                    className="relative flex items-center h-11 cursor-pointer w-[280px] rounded-full bg-[hsl(48,95%,54%)] shadow-md shadow-[hsl(48,95%,54%)/0.25] overflow-hidden"
                     onClick={() => { navigate('/radar-360'); localStorage.setItem(RADAR_SEEN_KEY, String(Date.now())); setRadarBadge(0); }}
                   >
+                    {/* Shimmer reflection */}
+                    <div className="absolute inset-0 pointer-events-none z-10">
+                      <div
+                        className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-20deg]"
+                        style={{ animation: 'shinePratique 3s ease-in-out infinite' }}
+                      />
+                    </div>
                     {/* Badge de notificação */}
                     {radarBadge > 0 && (
                       <span className="absolute -top-1.5 -right-1.5 z-20 min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground flex items-center justify-center shadow-md animate-pulse">
@@ -407,16 +414,16 @@ const Index = () => {
                       </span>
                     )}
                     {/* Lottie icon dentro da barra */}
-                    <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-card border-2 border-[hsl(48,95%,54%)]">
+                    <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-card border-2 border-[hsl(48,95%,54%)] z-10">
                       <iframe
                         src="https://lottie.host/embed/3b2d7321-76b2-43fb-9eb0-5b564b42750f/D6XzVc9mGe.lottie"
                         className="w-9 h-9 border-0 pointer-events-none scale-125"
                         title="Radar"
                       />
                     </div>
-                    <div className="flex-1 flex items-center justify-between pl-3 pr-3">
+                    <div className="flex-1 flex items-center justify-between pl-3 pr-3 relative z-10">
                       <span className="text-primary-foreground text-[13px] font-display font-semibold tracking-wide italic">
-                        Radar de Leis 360
+                        Radar de Leis 360°
                       </span>
                       <motion.div
                         animate={{ x: [0, 5, 0] }}
