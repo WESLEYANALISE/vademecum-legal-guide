@@ -409,8 +409,8 @@ const Index = () => {
                       />
                     </div>
                     {/* Radar de Leis 360 — fundo amarelo */}
-                    <div className="flex-1 flex items-center justify-between h-10 ml-8 pl-7 pr-3 rounded-full bg-primary shadow-md">
-                      <span className="text-primary-foreground text-sm font-display font-bold">
+                    <div className="flex-1 flex items-center justify-between h-10 ml-8 pl-7 pr-3 rounded-full bg-primary/85 shadow-md">
+                      <span className="text-primary-foreground text-[13px] font-display font-semibold tracking-wide italic">
                         Radar de Leis 360
                       </span>
                       <motion.div
