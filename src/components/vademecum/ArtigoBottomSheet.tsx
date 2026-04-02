@@ -1110,7 +1110,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
           )}
 
 
-          <TabsContent value="artigo" className="flex-1 min-h-0 overflow-y-auto px-5 pb-24 pt-4 relative">
+          <TabsContent value="artigo" className="flex-1 min-h-0 overflow-y-auto px-5 pb-28 pt-4 relative">
             {/* Brasão watermark fixo */}
             <div className="sticky top-1/2 -translate-y-1/2 left-0 right-0 flex items-center justify-center pointer-events-none z-0" style={{ height: 0 }}>
               <img src={brasaoImg} alt="" className="w-48 h-48 opacity-[0.04] object-contain" />
