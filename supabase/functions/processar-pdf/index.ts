@@ -643,7 +643,7 @@ ${pagesText}`;
 
       return mergeCleanedPages(normalizedPages, parsed);
     } catch (err) {
-      console.error(`cleanChapterMarkdown error (attempt ${attempt + 1}):`, err);
+      console.error(`cleanEdgePages error (attempt ${attempt + 1}):`, err);
       if (attempt < MAX_RETRIES) {
         await new Promise(r => setTimeout(r, 1000));
         continue;
