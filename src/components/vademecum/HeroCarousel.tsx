@@ -162,7 +162,7 @@ const HeroCarousel = () => {
 
       {/* Dots */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
-        {noticias.map((_, i) => (
+        {Array.from({ length: totalSlides }).map((_, i) => (
           <button
             key={i}
             onClick={() => emblaApi?.scrollTo(i)}
