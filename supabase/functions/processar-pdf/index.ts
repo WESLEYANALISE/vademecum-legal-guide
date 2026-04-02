@@ -111,6 +111,55 @@ Deno.serve(async (req) => {
           status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      if (body.action === "restructure" && body.livro_id) {
+        const { data: book, error: bookErr } = await supabase
+          .from("biblioteca_livros")
+          .select("conteudo, total_paginas, user_id")
+          .eq("id", body.livro_id)
+          .single();
+        if (bookErr || !book) {
+          return new Response(JSON.stringify({ error: "Livro não encontrado" }), {
+            status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (book.user_id !== user.id) {
+          return new Response(JSON.stringify({ error: "Não autorizado" }), {
+            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const conteudo = (book.conteudo as any[]).map((p: any) => ({ pagina: p.pagina, markdown: p.markdown }));
+        await supabase.from("biblioteca_livros").update({ status: "structuring" }).eq("id", body.livro_id);
+
+        // @ts-ignore
+        EdgeRuntime.waitUntil((async () => {
+          const sb = createClient(supabaseUrl, supabaseServiceKey);
+          try {
+            const estrutura = await structureWithGemini(geminiApiKey, conteudo, book.total_paginas);
+            // Populate pages with markdown
+            for (const ch of estrutura.chapters) {
+              if (!ch.pages || ch.pages.length === 0) {
+                const skipSet = new Set(estrutura.skip_pages || []);
+                ch.pages = [];
+                for (let pg = ch.start_source_page; pg <= ch.end_source_page; pg++) {
+                  if (skipSet.has(pg)) continue;
+                  const found = conteudo.find((p: any) => p.pagina === pg);
+                  if (found) ch.pages.push({ source_page: pg, markdown: found.markdown });
+                }
+              }
+            }
+            await sb.from("biblioteca_livros").update({ estrutura_leitura: estrutura, status: "ready" }).eq("id", body.livro_id);
+          } catch (e) {
+            console.error("Restructure error:", e);
+            await sb.from("biblioteca_livros").update({ status: "ready", erro_detalhe: "Falha ao reindexar capítulos" }).eq("id", body.livro_id);
+          }
+        })());
+
+        return new Response(
+          JSON.stringify({ success: true, message: "Reindexação iniciada" }),
+          { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const formData = await req.formData();
@@ -463,10 +512,11 @@ async function structureWithGemini(
 
   let pagesPayload: string;
   if (isLargeBook) {
-    const summaries = conteudo.map(p =>
-      `--- Página ${p.pagina} ---\n${p.markdown.slice(0, 200)}`
-    ).join("\n\n");
-    pagesPayload = summaries;
+    pagesPayload = conteudo.map(p => {
+      const isInitial = p.pagina <= 15;
+      const text = isInitial ? p.markdown : p.markdown.slice(0, 500);
+      return `--- Página ${p.pagina} ---\n${text}`;
+    }).join("\n\n");
   } else {
     pagesPayload = conteudo.map(p =>
       `--- Página ${p.pagina} ---\n${p.markdown}`
@@ -534,7 +584,7 @@ ${pagesPayload}`;
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
         responseMimeType: "application/json",
-        maxOutputTokens: 8192,
+        maxOutputTokens: 16384,
       },
     }),
   });

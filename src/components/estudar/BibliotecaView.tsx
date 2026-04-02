@@ -185,7 +185,32 @@ export default function BibliotecaView({ onBack }: BibliotecaViewProps) {
   };
 
   const handleReprocess = async (livroId: string) => {
-    toast.info('Reprocessamento ainda não implementado no servidor');
+    toast.info('Reindexando capítulos...');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) { toast.error('Faça login'); return; }
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/processar-pdf`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ action: 'restructure', livro_id: livroId }),
+        }
+      );
+      if (res.ok) {
+        toast.success('Reindexação iniciada!');
+        fetchLivros();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Erro ao reindexar');
+      }
+    } catch {
+      toast.error('Erro ao reindexar');
+    }
   };
 
   const [fetchingCover, setFetchingCover] = useState<string | null>(null);
@@ -309,6 +334,7 @@ export default function BibliotecaView({ onBack }: BibliotecaViewProps) {
               const isReady = baseStatus === 'ready';
               const isProcessing = ['ocr', 'structuring', 'cleaning', 'processing'].includes(baseStatus);
               const isError = baseStatus === 'error';
+              const hasOneChapter = isReady && livro.estrutura_leitura?.chapters?.length <= 1;
               const isLegacy = isReady && (!livro.estrutura_leitura || livro.versao_processamento < 2);
               const statusInfo = STATUS_LABELS[baseStatus] || { label: livro.status, color: 'text-muted-foreground' };
 
@@ -420,14 +446,14 @@ export default function BibliotecaView({ onBack }: BibliotecaViewProps) {
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    {isLegacy && (
+                    {(isLegacy || hasOneChapter) && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleReprocess(livro.id);
                         }}
                         className="p-2 rounded-lg text-muted-foreground/40 hover:text-primary hover:bg-primary/10 transition-colors"
-                        title="Reprocessar com IA"
+                        title="Reindexar capítulos"
                       >
                         <RefreshCw className="w-4 h-4" />
                       </button>
