@@ -147,11 +147,11 @@ const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
 
               {/* Profile & Support buttons */}
               <div className="flex gap-2">
-                <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary/70 border border-border text-foreground/80 hover:bg-secondary transition-colors">
+              <button onClick={() => { navigate('/perfil'); onClose(); }} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary/70 border border-border text-foreground/80 hover:bg-secondary transition-colors">
                   <User className="w-4 h-4 text-primary/70" />
                   <span className="font-body text-sm font-medium">Perfil</span>
                 </button>
-                <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary/70 border border-border text-foreground/80 hover:bg-secondary transition-colors">
+                <button onClick={() => setSuporteOpen(true)} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary/70 border border-border text-foreground/80 hover:bg-secondary transition-colors">
                   <LifeBuoy className="w-4 h-4 text-primary/70" />
                   <span className="font-body text-sm font-medium">Suporte</span>
                 </button>
