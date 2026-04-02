@@ -10,6 +10,9 @@ import themisBg from '@/assets/themis-bg.jpg';
 const Auth = () => {
   const { user, loading, signIn, signUp, resetPassword } = useAuth();
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login');
+  const [forgotStep, setForgotStep] = useState<'email' | 'code' | 'newpass'>('email');
+  const [otpCode, setOtpCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
