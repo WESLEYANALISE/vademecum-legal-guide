@@ -360,6 +360,7 @@ async function scrapeMigalhas(browserlessUrl: string): Promise<NewsItem[]> {
         } catch { /* use default */ }
       }
 
+      let conteudo = '';
       // Fetch article content directly (no Browserless needed)
       try {
         const artResp = await fetch(link, {
