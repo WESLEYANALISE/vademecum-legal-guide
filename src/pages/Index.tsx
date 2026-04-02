@@ -447,7 +447,8 @@ const Index = () => {
       {/* Bottom Nav - visible on all tabs */}
       {!personalizarOpen && (
         <BottomNav
-          onSearchClick={() => setAssistenteOpen(true)}
+          onSearchClick={() => setSearchOpen(true)}
+          onAssistenteClick={() => setAssistenteOpen(true)}
           onMenuClick={() => setMenuOpen(true)}
         />
       )}
