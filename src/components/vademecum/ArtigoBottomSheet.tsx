@@ -1546,8 +1546,8 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
         </div>
 
         {/* Bottom nav bar — only visible on "artigo" tab */}
-        {activeTab === 'artigo' && (
-        <div className="fixed inset-x-0 bottom-0 z-[55] border-t border-amber-400/30 bg-card/95 backdrop-blur-md px-2 pb-[env(safe-area-inset-bottom)]" style={isDesktop ? { maxWidth: 800, left: '50%', transform: 'translateX(-50%)' } : undefined}>
+        {(activeTab ?? 'artigo') === 'artigo' && (
+        <div className="absolute inset-x-0 bottom-0 z-[55] border-t border-amber-400/30 bg-card/95 backdrop-blur-md px-2 pb-[env(safe-area-inset-bottom)] rounded-t-2xl">
           <div className="grid grid-cols-5 h-16 sm:h-[72px] items-end">
             <button
               onClick={() => setShowEstudarSheet(true)}
