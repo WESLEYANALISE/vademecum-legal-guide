@@ -138,8 +138,8 @@ const Estudar = () => {
             {/* Study tools list */}
             <div className="space-y-2">
               {[
-                { label: 'Questões', desc: '6 tipos de questão por artigo', icon: Target, gradient: 'from-primary to-copper-dark', onClick: () => handleSelectMode('questoes') },
-                { label: 'Flashcards', desc: 'Cards com animação flip', icon: Layers, gradient: 'from-copper to-copper-dark', onClick: () => handleSelectMode('flashcards') },
+                { label: 'Questões', desc: '6 tipos de questão por artigo', icon: Target, gradient: 'from-rose-500 to-red-700', onClick: () => handleSelectMode('questoes') },
+                { label: 'Flashcards', desc: 'Cards com animação flip', icon: Layers, gradient: 'from-amber-500 to-orange-600', onClick: () => handleSelectMode('flashcards') },
                 { label: 'Mapa Mental', desc: 'Visualização hierárquica', icon: Network, gradient: 'from-purple-600 to-purple-900', onClick: () => handleSelectMode('mapa_mental') },
                 { label: 'Simulados', desc: 'Provas completas extraídas por IA', icon: ClipboardList, gradient: 'from-emerald-600 to-emerald-900', onClick: () => navigate('/simulado') },
                 { label: 'Biblioteca', desc: 'PDFs convertidos em e-book', icon: BookOpen, gradient: 'from-amber-600 to-amber-900', onClick: () => setView('biblioteca') },
