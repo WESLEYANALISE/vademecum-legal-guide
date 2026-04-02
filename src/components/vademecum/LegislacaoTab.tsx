@@ -18,6 +18,8 @@ const TIPO_LABELS: Record<string, string> = {
   'lei-ordinaria': 'Leis Ordinárias',
   decreto: 'Decretos',
   sumula: 'Súmulas',
+  'lei-especial': 'Leis Especiais',
+  previdenciario: 'Previdenciário',
 };
 
 const LegislacaoTab = ({ searchQuery, categoriaFiltro, onClearFiltro }: LegislacaoTabProps) => {

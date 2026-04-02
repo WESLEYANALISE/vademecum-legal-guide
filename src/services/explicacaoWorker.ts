@@ -89,6 +89,8 @@ class ExplicacaoWorker {
       ...catalog.filter(l => l.tipo === 'constituicao'),
       ...catalog.filter(l => l.tipo === 'codigo'),
       ...catalog.filter(l => l.tipo === 'estatuto'),
+      ...catalog.filter(l => l.tipo === 'lei-especial'),
+      ...catalog.filter(l => l.tipo === 'previdenciario'),
     ];
     const selectedLaws = allLaws.filter(l => selectedIds.has(l.id));
     if (selectedLaws.length === 0) return;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Scale, BookOpen, FileText, Newspaper, Landmark, Shield, ScrollText, Gavel, Settings, HelpCircle, PanelLeftClose, Radar, RefreshCw, Rss, Bell, Building2, Lightbulb, Mic, BookA, BellRing, MessageCircle, Palette, Info, LogOut, Gamepad2, ClipboardList, ShieldCheck, Brain, Activity } from 'lucide-react';
+import { Scale, BookOpen, FileText, Newspaper, Landmark, Shield, ScrollText, Gavel, Settings, HelpCircle, PanelLeftClose, Radar, RefreshCw, Rss, Bell, Building2, Lightbulb, Mic, BookA, BellRing, MessageCircle, Palette, Info, LogOut, Gamepad2, ClipboardList, ShieldCheck, Brain, Activity, BookMarked, HeartPulse } from 'lucide-react';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,6 +18,8 @@ const CATEGORIAS = [
   { id: 'lei-ordinaria', label: 'Leis Ordinárias', icon: FileText },
   { id: 'decreto', label: 'Decretos', icon: ScrollText },
   { id: 'sumula', label: 'Súmulas', icon: Gavel },
+  { id: 'lei-especial', label: 'Leis Especiais', icon: BookMarked },
+  { id: 'previdenciario', label: 'Previdenciário', icon: HeartPulse },
 ];
 
 const CONTEUDO_ITEMS = [
