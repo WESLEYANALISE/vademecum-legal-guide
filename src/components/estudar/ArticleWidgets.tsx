@@ -117,7 +117,8 @@ export const FlowChartWidget = ({ steps }: { steps: string[] }) => {
       </motion.div>
     ))}
   </div>
-);
+  );
+};
 
 /* ─── ComparisonTable ─── */
 interface ComparisonData {
