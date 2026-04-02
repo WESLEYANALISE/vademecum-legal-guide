@@ -6,7 +6,7 @@ import { Bell } from 'lucide-react';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import { getNoticiasCache, prefetchNoticias, type Noticia } from '@/services/noticiasService';
 import { getLatestDayCount, getResenhaCache, prefetchResenha } from '@/services/atualizacaoService';
-import { cdnImg } from '@/lib/cdnImg';
+import { newsImg } from '@/lib/cdnImg';
 
 const HeroCarousel = () => {
   const navigate = useNavigate();
