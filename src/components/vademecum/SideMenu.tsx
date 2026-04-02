@@ -55,7 +55,7 @@ const MENU_SECTIONS = [
   {
     title: 'Configurações',
     items: [
-      { id: 'paleta-cores', label: 'Paleta de Cores', icon: Palette, disabled: true },
+      { id: 'paleta-cores', label: 'Paleta de Cores', icon: Palette },
       { id: 'personalizar', label: 'Personalizar Atalhos', icon: Settings, disabled: true },
       { id: 'sobre', label: 'Sobre o App', icon: Info },
       { id: 'ajuda', label: 'Ajuda', icon: HelpCircle },
