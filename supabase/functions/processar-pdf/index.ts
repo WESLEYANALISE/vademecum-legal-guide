@@ -670,6 +670,7 @@ async function fetchAmazonCover(
   }
 
   const html = await amazonRes.text();
+  console.log(`Amazon search response size: ${html.length}`);
 
   // 3. Extract first product image (s-image class)
   const imgMatch = html.match(/class="s-image"[^>]*src="([^"]+)"/);
