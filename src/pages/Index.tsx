@@ -422,7 +422,7 @@ const Index = () => {
                       />
                     </div>
                     <div className="flex-1 flex items-center justify-between pl-3 pr-3 relative z-10">
-                      <span className="text-primary-foreground text-[13px] font-display font-semibold tracking-wide italic">
+                      <span className="text-primary-foreground text-[15px] font-display font-semibold tracking-wide italic">
                         Radar de Leis 360°
                       </span>
                       <motion.div
