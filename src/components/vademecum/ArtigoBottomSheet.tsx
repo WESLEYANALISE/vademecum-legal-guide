@@ -1145,7 +1145,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
                   rel="noopener noreferrer"
                   className="mt-6 flex items-center gap-3 rounded-xl border border-border bg-card p-4 hover:border-primary/40 transition-colors group"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-[hsl(40_85%_55%/0.18)] flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-lg <div className="w-10 h-10 rounded-lg bg-[hsl(45_80%_70%/0.22)] flex items-center justify-center shrink-0"> flex items-center justify-center shrink-0">
                     <ExternalLink className="w-5 h-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
