@@ -43,6 +43,28 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Check if this is a resume request (JSON body)
+    const contentType = req.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const body = await req.json();
+      if (body.action === "resume" && body.livro_id) {
+        // Resume cleaning from where it stopped
+        // @ts-ignore
+        EdgeRuntime.waitUntil(
+          resumeCleaning({
+            supabaseUrl,
+            supabaseServiceKey,
+            geminiApiKey,
+            livroId: body.livro_id,
+          })
+        );
+        return new Response(
+          JSON.stringify({ success: true, message: "Retomando processamento" }),
+          { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const titulo = (formData.get("titulo") as string) || "Sem título";
