@@ -48,7 +48,6 @@ Deno.serve(async (req) => {
     if (contentType.includes("application/json")) {
       const body = await req.json();
       if (body.action === "resume" && body.livro_id) {
-        // Resume cleaning from where it stopped
         // @ts-ignore
         EdgeRuntime.waitUntil(
           resumeCleaning({
@@ -147,6 +146,8 @@ Deno.serve(async (req) => {
   }
 });
 
+// ── Types ───────────────────────────────────────────────────────────
+
 interface ProcessPdfInBackgroundParams {
   supabaseUrl: string;
   supabaseServiceKey: string;
@@ -157,6 +158,30 @@ interface ProcessPdfInBackgroundParams {
   livroId: string;
 }
 
+interface GeminiChapter {
+  title: string;
+  start_source_page: number;
+  end_source_page: number;
+  pages: { source_page: number; markdown: string }[];
+}
+
+interface EstruturaLeitura {
+  version: number;
+  title: string;
+  content_start_page?: number;
+  skip_pages?: number[];
+  chapters: GeminiChapter[];
+}
+
+interface ResumeCleaningParams {
+  supabaseUrl: string;
+  supabaseServiceKey: string;
+  geminiApiKey: string;
+  livroId: string;
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────
+
 async function markBookAsError(supabase: any, livroId: string, message: string) {
   await supabase
     .from("biblioteca_livros")
@@ -166,18 +191,32 @@ async function markBookAsError(supabase: any, livroId: string, message: string) 
 
 function buildOcrErrorMessage(errText: string) {
   let userMessage = `OCR: ${errText.slice(0, 500)}`;
-
   try {
     const errJson = JSON.parse(errText);
     if (errJson.type === "document_parser_too_many_pages" || String(errJson.code) === "3730") {
       userMessage = "O PDF tem mais de 1000 páginas, que é o limite máximo do OCR. Tente dividir o PDF em partes menores.";
     }
-  } catch (_) {
-    // ignore parse error
-  }
-
+  } catch (_) { /* ignore */ }
   return userMessage;
 }
+
+function buildFallbackStructure(
+  conteudo: { pagina: number; markdown: string }[],
+  totalPages: number
+): EstruturaLeitura {
+  return {
+    version: 2,
+    title: "Livro",
+    chapters: [{
+      title: "Conteúdo",
+      start_source_page: 1,
+      end_source_page: totalPages,
+      pages: conteudo.map(p => ({ source_page: p.pagina, markdown: p.markdown })),
+    }],
+  };
+}
+
+// ── Background PDF Processing ───────────────────────────────────────
 
 async function processPdfInBackground({
   supabaseUrl,
@@ -264,11 +303,12 @@ async function processPdfInBackground({
       await supabase.from("biblioteca_imagens").insert(imagensToInsert);
     }
 
+    // Fetch book cover from Google Books
     let capaUrl: string | null = null;
     try {
-      capaUrl = await fetchAmazonCover(geminiApiKey, conteudo, supabase, userId, livroId);
+      capaUrl = await fetchBookCover(geminiApiKey, conteudo, supabase, userId, livroId);
     } catch (e) {
-      console.warn("Amazon cover fetch failed, using first page image:", e);
+      console.warn("Book cover fetch failed:", e);
     }
 
     if (!capaUrl) {
@@ -362,32 +402,15 @@ async function processPdfInBackground({
 
 // ── Gemini structuring ──────────────────────────────────────────────
 
-interface GeminiChapter {
-  title: string;
-  start_source_page: number;
-  end_source_page: number;
-  pages: { source_page: number; markdown: string }[];
-}
-
-interface EstruturaLeitura {
-  version: number;
-  title: string;
-  content_start_page?: number;
-  skip_pages?: number[];
-  chapters: GeminiChapter[];
-}
-
 async function structureWithGemini(
   apiKey: string,
   conteudo: { pagina: number; markdown: string }[],
   totalPages: number
 ): Promise<EstruturaLeitura> {
-  // Build a condensed version for Gemini (first 150 chars per page for mapping, full for small books)
   const isLargeBook = totalPages > 60;
 
   let pagesPayload: string;
   if (isLargeBook) {
-    // For large books: send summaries first, then structure
     const summaries = conteudo.map(p =>
       `--- Página ${p.pagina} ---\n${p.markdown.slice(0, 200)}`
     ).join("\n\n");
@@ -412,10 +435,10 @@ REGRAS IMPORTANTES:
 - Páginas iniciais antes do primeiro capítulo devem ir em um capítulo "Páginas Iniciais" ou "Capa / Folha de Rosto"
 - Preserve a ordem original das páginas
 - Os títulos dos capítulos devem seguir EXATAMENTE o que está no sumário do livro
-- IMPORTANTE: Inclua TAMBÉM subtítulos e seções internas como capítulos separados. Por exemplo, se dentro de um capítulo há seções como "Os fatos", "O julgamento e os votos", "Conclusão", cada uma deve ser um capítulo próprio
-- Use TODOS os níveis de divisão encontrados no sumário: capítulos, subcapítulos, seções, subseções
+- IMPORTANTE: Inclua TAMBÉM subtítulos e seções internas como capítulos separados
+- Use TODOS os níveis de divisão encontrados no sumário
 - NÃO reescreva o conteúdo, apenas organize
-- Se não encontrar sumário, divida por títulos/headings visíveis no texto (incluindo subtítulos em negrito ou caixa alta)
+- Se não encontrar sumário, divida por títulos/headings visíveis no texto
 
 PÁGINAS DESCARTÁVEIS (skip_pages):
 Marque como descartáveis páginas que contêm APENAS:
@@ -430,7 +453,7 @@ Marque como descartáveis páginas que contêm APENAS:
 
 NÃO marque como descartáveis: sumário, prefácio, introdução, apresentação, capítulos reais.
 
-CONTENT_START_PAGE: número da página onde começa o primeiro conteúdo real do livro (após sumário, dedicatórias, etc). Geralmente é o primeiro capítulo ou a introdução.
+CONTENT_START_PAGE: número da página onde começa o primeiro conteúdo real do livro (após sumário, dedicatórias, etc).
 
 Retorne APENAS um JSON válido com esta estrutura:
 {
@@ -472,14 +495,11 @@ ${pagesPayload}`;
 
   const geminiData = await response.json();
   let rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-  // Sanitize code fences
   rawText = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
 
   try {
-    const parsed = JSON.parse(rawText) as EstruturaLeitura & { skip_pages?: number[]; content_start_page?: number };
+    const parsed = JSON.parse(rawText) as EstruturaLeitura;
 
-    // Validate: all pages covered
     if (!parsed.chapters || parsed.chapters.length === 0) {
       console.warn("Gemini returned no chapters, using fallback");
       return buildFallbackStructure(conteudo, totalPages);
@@ -488,7 +508,6 @@ ${pagesPayload}`;
     const skipSet = new Set(parsed.skip_pages || []);
     console.log(`Gemini skip_pages: ${parsed.skip_pages?.length || 0}, content_start_page: ${parsed.content_start_page || 'N/A'}`);
 
-    // Populate pages within each chapter, clearing skipped pages
     const result: EstruturaLeitura = {
       version: 2,
       title: parsed.title || "Livro",
@@ -522,7 +541,6 @@ ${pagesPayload}`;
 
     if (missingPages.length > 0) {
       console.warn(`Gemini missed ${missingPages.length} pages, appending to last chapter`);
-      // Add missing pages to last chapter or create an extra one
       const missingContent = conteudo.filter(c => missingPages.includes(c.pagina));
       if (result.chapters.length > 0) {
         const lastCh = result.chapters[result.chapters.length - 1];
@@ -538,6 +556,8 @@ ${pagesPayload}`;
     return buildFallbackStructure(conteudo, totalPages);
   }
 }
+
+// ── Gemini markdown cleaning ────────────────────────────────────────
 
 async function cleanChapterMarkdown(
   apiKey: string,
@@ -578,7 +598,7 @@ Retorne APENAS um JSON válido: array de objetos com "source_page" (número) e "
 PÁGINAS:
 ${pagesText}`;
 
-  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
   try {
     const response = await fetch(geminiUrl, {
@@ -597,16 +617,27 @@ ${pagesText}`;
     if (!response.ok) {
       console.error("Gemini clean error:", await response.text());
       return normalizedPages;
+    }
+
+    const data = await response.json();
+    let rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    rawText = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+
+    const parsed = JSON.parse(rawText) as { source_page: number; markdown: string }[];
+
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      console.warn("Gemini clean returned empty, using originals");
+      return normalizedPages;
+    }
+
+    return mergeCleanedPages(normalizedPages, parsed);
+  } catch (err) {
+    console.error("cleanChapterMarkdown error:", err);
+    return normalizedPages;
+  }
 }
 
-// ── Resume cleaning for interrupted processing ─────────────────────
-
-interface ResumeCleaningParams {
-  supabaseUrl: string;
-  supabaseServiceKey: string;
-  geminiApiKey: string;
-  livroId: string;
-}
+// ── Resume cleaning for interrupted processing ──────────────────────
 
 async function resumeCleaning({
   supabaseUrl,
@@ -637,7 +668,6 @@ async function resumeCleaning({
 
     console.log(`Resuming cleaning for book ${livroId}...`);
 
-    // Detect which chapters still need cleaning by checking if pages have raw OCR markers
     const totalPagesAll = estrutura.chapters.reduce(
       (acc: number, ch: GeminiChapter) => acc + (ch.pages?.length || 0), 0
     );
@@ -648,7 +678,6 @@ async function resumeCleaning({
       const ch = estrutura.chapters[ci];
       if (!ch.pages || ch.pages.length === 0) continue;
 
-      // Check if this chapter looks already cleaned (has markdown headings like ## or **bold**)
       const looksClean = ch.pages.some(p =>
         p.markdown && (p.markdown.includes("## ") || p.markdown.includes("### "))
       );
@@ -701,50 +730,16 @@ async function resumeCleaning({
   }
 }
 
-    const data = await response.json();
-    let rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    rawText = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+// ── Book Cover Fetch (Google Books API) ─────────────────────────────
 
-    const parsed = JSON.parse(rawText) as { source_page: number; markdown: string }[];
-
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      console.warn("Gemini clean returned empty, using originals");
-      return normalizedPages;
-    }
-
-    return mergeCleanedPages(normalizedPages, parsed);
-  } catch (err) {
-    console.error("cleanChapterMarkdown error:", err);
-    return normalizedPages;
-  }
-}
-
-function buildFallbackStructure(
-  conteudo: { pagina: number; markdown: string }[],
-  totalPages: number
-): EstruturaLeitura {
-  return {
-    version: 2,
-    title: "Livro",
-    chapters: [{
-      title: "Conteúdo",
-      start_source_page: 1,
-      end_source_page: totalPages,
-      pages: conteudo.map(p => ({ source_page: p.pagina, markdown: p.markdown })),
-    }],
-  };
-}
-
-// ── Amazon Cover Fetch ──────────────────────────────────────────────
-
-async function fetchAmazonCover(
+async function fetchBookCover(
   geminiApiKey: string,
   conteudo: { pagina: number; markdown: string }[],
   supabase: any,
   userId: string,
   livroId: string
 ): Promise<string | null> {
-  // 1. Use Gemini to extract exact title + author from first pages
+  // 1. Use Gemini to extract exact title + author
   const firstPages = conteudo.slice(0, 5).map(p => p.markdown).join("\n\n");
   const extractPrompt = `Extraia o TÍTULO EXATO e o AUTOR do livro a partir destas primeiras páginas de OCR. Retorne JSON: {"title":"...","author":"..."}. Se não encontrar autor, retorne author como string vazia.\n\nPÁGINAS:\n${firstPages.slice(0, 3000)}`;
 
@@ -777,41 +772,55 @@ async function fetchAmazonCover(
   }
 
   if (!bookTitle) return null;
-  console.log(`Amazon cover search: "${bookTitle}" by "${bookAuthor}"`);
+  console.log(`Book cover search: "${bookTitle}" by "${bookAuthor}"`);
 
-  // 2. Search Amazon.com.br
-  const query = encodeURIComponent(`${bookTitle} ${bookAuthor}`.trim());
-  const amazonUrl = `https://www.amazon.com.br/s?k=${query}&i=stripbooks`;
+  // 2. Search Google Books API (free, no auth required)
+  const query = encodeURIComponent(
+    bookAuthor ? `${bookTitle} inauthor:${bookAuthor}` : bookTitle
+  );
+  const googleBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=${query}&langRestrict=pt&maxResults=3`;
 
-  const amazonRes = await fetch(amazonUrl, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
-      "Accept": "text/html,application/xhtml+xml",
-    },
-  });
-
-  if (!amazonRes.ok) {
-    console.warn("Amazon search failed:", amazonRes.status);
-    return null;
-  }
-
-  const html = await amazonRes.text();
-  console.log(`Amazon search response size: ${html.length}`);
-
-  // 3. Extract first product image (s-image class)
-  const imgMatch = html.match(/class="s-image"[^>]*src="([^"]+)"/);
-  if (!imgMatch?.[1]) {
-    // Try alternative pattern
-    const altMatch = html.match(/src="(https:\/\/m\.media-amazon\.com\/images\/[^"]+)"/);
-    if (!altMatch?.[1]) {
-      console.warn("No Amazon cover image found");
+  try {
+    const gbRes = await fetch(googleBooksUrl);
+    if (!gbRes.ok) {
+      console.warn("Google Books API failed:", gbRes.status);
       return null;
     }
-    return await downloadAndUploadCover(altMatch[1], supabase, userId, livroId);
-  }
 
-  return await downloadAndUploadCover(imgMatch[1], supabase, userId, livroId);
+    const gbData = await gbRes.json();
+    const items = gbData.items || [];
+    if (items.length === 0) {
+      console.warn("Google Books: no results found");
+      return null;
+    }
+
+    // Find first item with a thumbnail
+    let thumbnailUrl: string | null = null;
+    for (const item of items) {
+      const links = item.volumeInfo?.imageLinks;
+      if (links?.thumbnail) {
+        thumbnailUrl = links.thumbnail;
+        break;
+      }
+    }
+
+    if (!thumbnailUrl) {
+      console.warn("Google Books: no cover image in results");
+      return null;
+    }
+
+    // Get higher resolution
+    const hiResUrl = thumbnailUrl
+      .replace("zoom=1", "zoom=2")
+      .replace("&edge=curl", "")
+      .replace("http://", "https://");
+
+    console.log(`Google Books cover URL: ${hiResUrl}`);
+    return await downloadAndUploadCover(hiResUrl, supabase, userId, livroId);
+  } catch (e) {
+    console.warn("Google Books search error:", e);
+    return null;
+  }
 }
 
 async function downloadAndUploadCover(
@@ -821,11 +830,11 @@ async function downloadAndUploadCover(
   livroId: string
 ): Promise<string | null> {
   try {
-    // Get higher resolution version (replace size in Amazon URL)
-    const hiResUrl = imageUrl.replace(/\._[^.]+_\./, "._SL500_.");
-
-    const imgRes = await fetch(hiResUrl);
-    if (!imgRes.ok) return null;
+    const imgRes = await fetch(imageUrl);
+    if (!imgRes.ok) {
+      console.warn("Cover download failed:", imgRes.status);
+      return null;
+    }
 
     const imgBuffer = await imgRes.arrayBuffer();
     const contentType = imgRes.headers.get("content-type") || "image/jpeg";
@@ -842,7 +851,7 @@ async function downloadAndUploadCover(
     }
 
     const { data } = supabase.storage.from("biblioteca").getPublicUrl(coverPath);
-    console.log("Amazon cover uploaded:", data.publicUrl);
+    console.log("Book cover uploaded:", data.publicUrl);
     return data.publicUrl;
   } catch (e) {
     console.warn("Cover download error:", e);
