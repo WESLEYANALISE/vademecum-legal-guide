@@ -24,7 +24,7 @@ import StudyTimer from '@/components/vademecum/StudyTimer';
 import HeroCarousel from '@/components/vademecum/HeroCarousel';
 import { useIsDesktop } from '@/hooks/use-desktop';
 import { prefetchAllArtigos } from '@/services/legislacaoService';
-import { prefetchResenha } from '@/services/atualizacaoService';
+import { prefetchResenha, getLatestDayCount, getResenhaCache } from '@/services/atualizacaoService';
 import { prefetchNoticias } from '@/services/noticiasService';
 
 const HERO_CONFIG: Record<string, { image: string; title: string }> = {
