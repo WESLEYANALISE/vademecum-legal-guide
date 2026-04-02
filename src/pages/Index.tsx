@@ -397,7 +397,7 @@ const Index = () => {
                 </motion.div>
                 <motion.div className="py-4 flex justify-center" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 24 }}>
                   <div
-                    className="relative flex items-center h-11 cursor-pointer w-[280px] rounded-full bg-[hsl(48,95%,54%)] shadow-md shadow-[hsl(48,95%,54%)/0.25] overflow-hidden"
+                    className="relative flex items-center h-11 cursor-pointer w-[280px] rounded-full bg-primary shadow-md shadow-primary/25 overflow-hidden"
                     onClick={() => { navigate('/radar-360'); localStorage.setItem(RADAR_SEEN_KEY, String(Date.now())); setRadarBadge(0); }}
                   >
                     {/* Shimmer reflection */}
