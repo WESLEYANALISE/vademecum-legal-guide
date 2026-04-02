@@ -698,8 +698,9 @@ async function resumeCleaning({
       const ch = estrutura.chapters[ci];
       if (!ch.pages || ch.pages.length === 0) continue;
 
+      // Check if pages already have markdown formatting OR if they've been through cleaning
       const looksClean = ch.pages.some(p =>
-        p.markdown && (p.markdown.includes("## ") || p.markdown.includes("### "))
+        p.markdown && (p.markdown.includes("## ") || p.markdown.includes("### ") || p.markdown.includes("**"))
       );
 
       if (looksClean) {
