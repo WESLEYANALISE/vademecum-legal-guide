@@ -19,6 +19,8 @@ interface Chapter {
 interface EstruturaLeitura {
   version: number;
   title: string;
+  content_start_page?: number;
+  skip_pages?: number[];
   chapters: Chapter[];
 }
 
