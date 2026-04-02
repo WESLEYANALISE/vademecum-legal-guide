@@ -90,7 +90,7 @@ const Noticias = () => {
     <div className="space-y-4">
       {noticia.imagem_url && (
         <img
-          src={cdnImg(noticia.imagem_url!, 640)}
+          src={newsImg(noticia.imagem_url!, 640)}
           alt={noticia.titulo}
           className="w-full h-48 object-cover rounded-lg"
           decoding="async"
@@ -192,8 +192,8 @@ const Noticias = () => {
                 {heroNoticia.imagem_url ? (
                   <div className="relative h-52 overflow-hidden news-cover-shine">
                     <img
-                      src={cdnImg(heroNoticia.imagem_url!, 960)}
-                      srcSet={`${cdnImg(heroNoticia.imagem_url!, 640)} 640w, ${cdnImg(heroNoticia.imagem_url!, 960)} 960w`}
+                      src={newsImg(heroNoticia.imagem_url!, 960)}
+                      srcSet={`${newsImg(heroNoticia.imagem_url!, 640)} 640w, ${newsImg(heroNoticia.imagem_url!, 960)} 960w`}
                       sizes="(max-width: 768px) 640px, 960px"
                       alt={heroNoticia.titulo}
                       className="w-full h-full object-cover"
@@ -277,7 +277,7 @@ const Noticias = () => {
                     {item.imagem_url && (
                       <div className="w-20 h-16 rounded-lg overflow-hidden shrink-0 news-cover-shine">
                         <img
-                          src={cdnImg(item.imagem_url!, 160)}
+                          src={newsImg(item.imagem_url!, 160)}
                           alt={item.titulo}
                           className="w-full h-full object-cover"
                           loading="lazy"
