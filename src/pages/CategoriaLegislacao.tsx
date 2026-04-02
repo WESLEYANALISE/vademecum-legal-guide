@@ -1597,10 +1597,10 @@ const CategoriaLegislacao = () => {
                   setSelectedTabelaNome((lei as any).tabela_nome || null);
                   setSearchQuery('');
                 }}
-                className="w-full text-left rounded-xl p-4 h-20 transition-all group flex items-center overflow-hidden relative"
+                className="w-full text-left rounded-xl p-4 h-20 transition-all group flex items-center overflow-hidden relative bg-card hover:bg-secondary/60 border border-border/50"
                 style={{
-                  borderLeft: `3px solid ${(lei as any).iconColor || 'hsl(var(--primary))'}`,
-                  background: `linear-gradient(135deg, ${(lei as any).iconColor || 'hsl(var(--primary))'}12 0%, ${(lei as any).iconColor || 'hsl(var(--primary))'}06 100%)`,
+                  borderLeftWidth: '3px',
+                  borderLeftColor: (lei as any).iconColor || 'hsl(var(--primary))',
                 }}
               >
                 {/* Background watermark icon */}
