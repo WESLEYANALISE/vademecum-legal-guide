@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Eye, EyeOff, Star, Highlighter, Copy, Plus, Minus, Type, MessageSquare, ChevronUp, ChevronDown, ChevronRight, ExternalLink, Volume2, Pause, Target, StickyNote, MessageCircle, Loader2, Share2, Network, BookOpen, Layers, Sparkles, GraduationCap, Play } from 'lucide-react';
 import AnotacoesSheet from './AnotacoesSheet';
@@ -7,6 +6,7 @@ import PerguntarSheet from './PerguntarSheet';
 import GrafoOverlay from './GrafoOverlay';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import ReactMarkdown from 'react-markdown';
 import type { ArtigoLei } from '@/data/mockData';
@@ -917,31 +917,23 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
 
   const commentsWithText = highlights.filter(h => h.comment && h.comment.trim().length > 0);
 
-  const sheetContent = (
+  return (
     <>
-    <AnimatePresence>
-      <motion.div
-        key="article-sheet-backdrop"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[120] bg-black/60"
-        onClick={onClose}
-      />
-
-      <motion.div
-        key="article-sheet-panel"
-        initial={isDesktop ? { y: '100%', opacity: 0.5 } : { y: '100%' }}
-        animate={isDesktop ? { y: 0, opacity: 1 } : { y: 0 }}
-        exit={isDesktop ? { y: '100%', opacity: 0.5 } : { y: '100%' }}
-        transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+      <Sheet open={Boolean(artigo)} onOpenChange={(open) => { if (!open) onClose(); }}>
+        <SheetContent
+          side="bottom"
+          className={
+            isDesktop
+              ? "z-[9999] flex min-h-0 flex-col gap-0 border border-border bg-card p-0 shadow-2xl [&>button:last-child]:hidden left-1/2 right-auto top-[5%] bottom-0 w-[800px] -translate-x-1/2 rounded-t-2xl"
+              : "z-[9999] flex min-h-0 flex-col gap-0 rounded-t-3xl border-t border-border bg-card p-0 [&>button:last-child]:hidden top-8"
+          }
+        >
         className={
           isDesktop
             ? "fixed z-[130] bottom-0 top-[5%] left-0 right-0 mx-auto bg-card border border-border rounded-t-2xl relative flex flex-col w-[800px] shadow-2xl"
             : "fixed inset-x-0 bottom-0 top-8 z-[130] rounded-t-3xl bg-card border-t border-border relative flex flex-col"
         }
-      >
+        >
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
         </div>
@@ -1826,10 +1818,10 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
           artigoNumero={artigo.numero}
           artigoTexto={artigo.caput}
         />
-      </motion.div>
-    </AnimatePresence>
+        </SheetContent>
+      </Sheet>
 
-    {tabelaNome && artigo && (
+      {tabelaNome && artigo && (
       <GrafoOverlay
         open={showGrafo}
         onClose={() => setShowGrafo(false)}
@@ -1838,10 +1830,8 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
         artigoNumero={artigo.numero}
       />
     )}
-    </>
+      </>
   );
-
-  return typeof document === 'undefined' ? sheetContent : createPortal(sheetContent, document.body);
 };
 
 export default ArtigoBottomSheet;
