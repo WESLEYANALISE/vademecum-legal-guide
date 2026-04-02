@@ -187,11 +187,18 @@ Deno.serve(async (req) => {
       await supabase.from("biblioteca_imagens").insert(imagensToInsert);
     }
 
-    // Extract cover from first page image
+    // Extract cover: try Amazon first, fallback to first page image
     let capaUrl: string | null = null;
-    const firstPageImages = imagensToInsert.filter(img => img.pagina === 1);
-    if (firstPageImages.length > 0) {
-      capaUrl = firstPageImages[0].url;
+    try {
+      capaUrl = await fetchAmazonCover(geminiApiKey, conteudo, supabase, user.id, livro.id);
+    } catch (e) {
+      console.warn("Amazon cover fetch failed, using first page image:", e);
+    }
+    if (!capaUrl) {
+      const firstPageImages = imagensToInsert.filter(img => img.pagina === 1);
+      if (firstPageImages.length > 0) {
+        capaUrl = firstPageImages[0].url;
+      }
     }
 
     // Save raw OCR content
