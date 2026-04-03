@@ -247,10 +247,18 @@ const KanbanLegislativo = () => {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await supabase.functions.invoke('atualizar-kanban');
+      const { data, error } = await supabase.functions.invoke('atualizar-kanban');
+      if (error) {
+        toast.error('Erro ao atualizar kanban');
+        console.error(error);
+      } else {
+        const msg = data?.message || 'Atualizado';
+        toast.success(msg);
+      }
       await fetchItems();
     } catch (e) {
       console.error(e);
+      toast.error('Erro de conexão');
     }
     setRefreshing(false);
   };
