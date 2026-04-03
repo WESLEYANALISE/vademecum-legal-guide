@@ -154,17 +154,14 @@ const Biblioteca = () => {
         Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)
       ) : (
         CATEGORIES.map((cat) => {
-          const Icon = cat.icon;
           const livros = getLivros(cat.id);
           return (
             <button
               key={cat.id}
               onClick={() => handleSelectCategory(cat.id)}
-              className="w-full flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left"
+              className="w-full flex items-center gap-4 p-3 rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden"
             >
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${cat.gradient} flex items-center justify-center shadow-lg`}>
-                <Icon className="w-6 h-6 text-white" />
-              </div>
+              <img src={cat.img} alt={cat.label} className="w-14 h-14 rounded-xl object-cover shadow-lg flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{cat.label}</p>
                 <p className="text-xs text-muted-foreground">{cat.desc}</p>
