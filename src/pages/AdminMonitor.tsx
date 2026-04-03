@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, RefreshCw, CheckCircle2, XCircle, AlertTriangle, Clock, Play, Loader2, Activity, Key, Zap, MinusCircle } from 'lucide-react';
+import { ArrowLeft, RefreshCw, CheckCircle2, XCircle, AlertTriangle, Clock, Play, Loader2, Activity, Key, Zap, MinusCircle, ShieldCheck, Eye, Check, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+/* ── Types ── */
 
 interface CronJob {
   jobid: number;
@@ -27,6 +29,19 @@ interface MonitorData {
   timestamp: string;
 }
 
+interface Alteracao {
+  id: string;
+  tabela_nome: string;
+  tipo_alteracao: string;
+  artigo_numero: string | null;
+  texto_anterior: string | null;
+  texto_atual: string | null;
+  detectado_em: string;
+  revisado: boolean;
+}
+
+/* ── Shared UI ── */
+
 const StatusIcon = ({ status }: { status: string }) => {
   switch (status) {
     case 'ok': return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
@@ -46,11 +61,28 @@ const statusBadgeVariant = (status: string) => {
   }
 };
 
+const tipoBadge = (tipo: string) => {
+  switch (tipo) {
+    case 'artigo_novo': return { label: 'Novo', variant: 'default' as const, color: 'bg-emerald-500/20 text-emerald-400' };
+    case 'artigo_revogado': return { label: 'Revogado', variant: 'destructive' as const, color: 'bg-red-500/20 text-red-400' };
+    case 'texto_alterado': return { label: 'Alterado', variant: 'secondary' as const, color: 'bg-amber-500/20 text-amber-400' };
+    default: return { label: tipo, variant: 'outline' as const, color: '' };
+  }
+};
+
+/* ── Main ── */
+
 const AdminMonitor = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<MonitorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [invoking, setInvoking] = useState<string | null>(null);
+
+  // Alterações state
+  const [alteracoes, setAlteracoes] = useState<Alteracao[]>([]);
+  const [altLoading, setAltLoading] = useState(true);
+  const [verificando, setVerificando] = useState(false);
+  const [expandedAlt, setExpandedAlt] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -65,16 +97,34 @@ const AdminMonitor = () => {
     }
   }, []);
 
+  const fetchAlteracoes = useCallback(async () => {
+    setAltLoading(true);
+    try {
+      const { data: rows, error } = await supabase
+        .from('legislacao_alteracoes' as any)
+        .select('*')
+        .eq('revisado', false)
+        .order('detectado_em', { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      setAlteracoes((rows as any as Alteracao[]) || []);
+    } catch (e: any) {
+      console.error('Erro ao buscar alterações:', e);
+    } finally {
+      setAltLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchData();
+    fetchAlteracoes();
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
-  }, [fetchData]);
+  }, [fetchData, fetchAlteracoes]);
 
   const invokeFunction = async (fnName: string) => {
     setInvoking(fnName);
     try {
-      // Some functions require specific payloads to avoid validation errors
       const payloads: Record<string, object> = {
         'otimizar-imagem': { url: 'https://via.placeholder.com/1' },
       };
@@ -88,6 +138,68 @@ const AdminMonitor = () => {
       setInvoking(null);
     }
   };
+
+  const verificarAgora = async (tabela_nome?: string) => {
+    setVerificando(true);
+    try {
+      const body = tabela_nome ? { tabela_nome } : { batch_size: 60 };
+      const { data: result, error } = await supabase.functions.invoke('monitorar-legislacao', { body });
+      if (error) throw error;
+      toast.success(`Verificação concluída: ${result?.total_alteracoes || 0} alterações encontradas`);
+      fetchAlteracoes();
+    } catch (e: any) {
+      toast.error('Erro na verificação: ' + (e.message || ''));
+    } finally {
+      setVerificando(false);
+    }
+  };
+
+  const marcarRevisado = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('legislacao_alteracoes' as any)
+        .update({ revisado: true } as any)
+        .eq('id', id);
+      if (error) throw error;
+      setAlteracoes(prev => prev.filter(a => a.id !== id));
+      toast.success('Marcado como revisado');
+    } catch (e: any) {
+      toast.error('Erro: ' + (e.message || ''));
+    }
+  };
+
+  const aplicarAlteracao = async (alt: Alteracao) => {
+    setInvoking(alt.id);
+    try {
+      const { error } = await supabase.functions.invoke('scrape-legislacao', {
+        body: {
+          url: '', // Will be resolved from catalog
+          nome: alt.tabela_nome,
+          sigla: alt.tabela_nome,
+          tipo: 'auto',
+          tabela_nome: alt.tabela_nome,
+        },
+      });
+      // Mark all alterations for this law as reviewed
+      await supabase
+        .from('legislacao_alteracoes' as any)
+        .update({ revisado: true } as any)
+        .eq('tabela_nome', alt.tabela_nome);
+      setAlteracoes(prev => prev.filter(a => a.tabela_nome !== alt.tabela_nome));
+      toast.success(`${alt.tabela_nome} atualizada com sucesso`);
+    } catch (e: any) {
+      toast.error('Erro ao aplicar: ' + (e.message || ''));
+    } finally {
+      setInvoking(null);
+    }
+  };
+
+  // Group alterações by law
+  const altByLei = alteracoes.reduce((acc, alt) => {
+    if (!acc[alt.tabela_nome]) acc[alt.tabela_nome] = [];
+    acc[alt.tabela_nome].push(alt);
+    return acc;
+  }, {} as Record<string, Alteracao[]>);
 
   return (
     <div className="min-h-screen bg-background">
@@ -115,6 +227,96 @@ const AdminMonitor = () => {
       </div>
 
       <div className="max-w-4xl mx-auto p-4 space-y-5">
+        {/* Alterações Legislativas */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ShieldCheck className="w-5 h-5 text-primary" />
+                Alterações Legislativas
+                {alteracoes.length > 0 && (
+                  <Badge variant="destructive" className="text-[10px] ml-1">{alteracoes.length}</Badge>
+                )}
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => verificarAgora()}
+                disabled={verificando}
+              >
+                {verificando ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <RefreshCw className="w-3.5 h-3.5 mr-1" />}
+                Verificar agora
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {altLoading ? (
+              <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+            ) : Object.keys(altByLei).length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Nenhuma alteração pendente. Todas as leis estão atualizadas. ✅
+              </p>
+            ) : (
+              Object.entries(altByLei).map(([lei, alts]) => (
+                <div key={lei} className="rounded-lg bg-secondary/30 overflow-hidden">
+                  <div
+                    className="flex items-center justify-between py-2.5 px-3 cursor-pointer"
+                    onClick={() => setExpandedAlt(expandedAlt === lei ? null : lei)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-400" />
+                      <span className="text-sm font-medium text-foreground">{lei.replace(/_/g, ' ')}</span>
+                      <Badge variant="outline" className="text-[10px]">{alts.length} alterações</Badge>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={(e) => { e.stopPropagation(); aplicarAlteracao(alts[0]); }}
+                        disabled={invoking === alts[0].id}
+                      >
+                        {invoking === alts[0].id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3 mr-1" />}
+                        Aplicar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          alts.forEach(a => marcarRevisado(a.id));
+                        }}
+                      >
+                        <X className="w-3 h-3 mr-1" />
+                        Ignorar
+                      </Button>
+                    </div>
+                  </div>
+                  {expandedAlt === lei && (
+                    <div className="border-t border-border px-3 py-2 space-y-2">
+                      {alts.map(alt => {
+                        const badge = tipoBadge(alt.tipo_alteracao);
+                        return (
+                          <div key={alt.id} className="flex items-start gap-2 py-1.5">
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${badge.color}`}>{badge.label}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-foreground">{alt.artigo_numero || '—'}</p>
+                              {alt.texto_atual && (
+                                <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">{alt.texto_atual.substring(0, 200)}</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
         {/* API Keys */}
         <Card>
           <CardHeader className="pb-3">
@@ -214,7 +416,7 @@ const AdminMonitor = () => {
               ))
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4">
-                Nenhum cron job encontrado. Os jobs podem não estar acessíveis via API.
+                Nenhum cron job encontrado.
               </p>
             )}
           </CardContent>
