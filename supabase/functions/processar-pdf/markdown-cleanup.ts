@@ -85,7 +85,15 @@ export function normalizeOcrMarkdown(markdown: string): string {
   const baseLines = markdown
     .replace(/\r\n?/g, "\n")
     .replace(/\u00A0/g, " ")
-    .replace(/([A-Za-zÀ-ÿ])\-\n([a-zà-ÿ])/g, "$1$2")
+    // Strip inline LaTeX: $_{\text{X}}$ → X, $\text{X}$ → X, etc.
+    .replace(/\$[_^]?\{?\\text\{([^}]*)\}\}?\$/g, "$1")
+    .replace(/\$[_^]?\{([^}]*)\}\$/g, "$1")
+    .replace(/\$\\?([A-Za-zÀ-ÿ]+)\$/g, "$1")
+    // Remove remaining isolated $ signs from broken LaTeX
+    .replace(/\$\s*/g, "")
+    // Fix hyphenation at line breaks (word-\nword → word)
+    .replace(/([A-Za-zÀ-ÿ])-\n([a-zà-ÿ])/g, "$1$2")
+    .replace(/([A-Za-zÀ-ÿ])­\n([a-zà-ÿ])/g, "$1$2") // soft hyphen
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .split("\n")
