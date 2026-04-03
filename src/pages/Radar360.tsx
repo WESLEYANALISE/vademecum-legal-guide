@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ScanEye, Calendar, ChevronRight, Loader2, FileText, Scale, TrendingUp, Gavel, ScrollText } from 'lucide-react';
+import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';

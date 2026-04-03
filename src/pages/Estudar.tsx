@@ -141,7 +141,7 @@ const Estudar = () => {
         {view === 'menu' && (
           <>
             {/* Study tools list */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2">
+            <div className="space-y-2">
               {[
                 { label: 'Questões', desc: '6 tipos de questão por artigo', icon: Target, gradient: 'from-rose-500 to-red-700', onClick: () => handleSelectMode('questoes') },
                 { label: 'Flashcards', desc: 'Cards com animação flip', icon: Layers, gradient: 'from-amber-500 to-orange-600', onClick: () => handleSelectMode('flashcards') },

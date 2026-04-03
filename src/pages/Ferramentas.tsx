@@ -121,7 +121,7 @@ const Ferramentas = () => {
   );
 
   const toolsList = (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+    <div className="space-y-3">
       {TOOLS.map((tool, i) => {
         const Icon = tool.icon;
         return (
