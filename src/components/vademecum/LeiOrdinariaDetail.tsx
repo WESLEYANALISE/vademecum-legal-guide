@@ -160,14 +160,23 @@ function parseTextoCompleto(texto: string): ParsedLei {
   
   assinatura = assinatura.replace(/Este texto n(?:ã|a)o substitui[\s\S]*/i, '').replace(/\*+\s*$/, '').trim();
 
-  // Normalize signature: join broken lines that aren't standalone names
+  // Normalize signature: join broken name lines (e.g. "LUIZ" + "INÁCIO LULA DA SILVA" → single line)
   const sigLines = assinatura.split('\n').filter(l => l.trim());
   const mergedSigLines: string[] = [];
-  for (const line of sigLines) {
-    const trimmed = line.trim();
+  for (let i = 0; i < sigLines.length; i++) {
+    const trimmed = sigLines[i].trim();
     const isName = /^[A-ZÁÀÂÃÉÈÊÍÏÓÔÕÚÜÇ\s]+$/.test(trimmed) && trimmed.length > 3;
     const startsWithBrasilia = /^Bras[ií]lia/i.test(trimmed);
-    if (isName || startsWithBrasilia) {
+    
+    // Check if next line is also an ALL-CAPS name — merge them
+    const nextTrimmed = i + 1 < sigLines.length ? sigLines[i + 1].trim() : '';
+    const nextIsName = /^[A-ZÁÀÂÃÉÈÊÍÏÓÔÕÚÜÇ\s]+$/.test(nextTrimmed) && nextTrimmed.length > 3;
+    
+    if (isName && nextIsName && !startsWithBrasilia) {
+      // Merge current + next as one name line
+      mergedSigLines.push(trimmed + ' ' + nextTrimmed);
+      i++; // skip next
+    } else if (isName || startsWithBrasilia) {
       mergedSigLines.push(trimmed);
     } else if (mergedSigLines.length > 0) {
       mergedSigLines[mergedSigLines.length - 1] += ' ' + trimmed;
