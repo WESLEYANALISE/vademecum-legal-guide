@@ -232,7 +232,7 @@ Deno.serve(async (req) => {
             mistralApiKey,
             geminiApiKey,
             livroId: livro.id,
-            pdfUrl: pdfPublicUrl,
+            pdfPublicUrl,
             userId: user.id,
           })
         );
