@@ -120,12 +120,40 @@ const AdminMonitor = () => {
     }
   }, []);
 
+  const fetchKanban = useCallback(async () => {
+    setKanbanLoading(true);
+    try {
+      const { data: rows } = await supabase
+        .from('kanban_proposicoes')
+        .select('*')
+        .order('atualizado_em', { ascending: false })
+        .limit(100);
+      setKanbanItems(rows || []);
+    } catch (e) {
+      console.error(e);
+    }
+    setKanbanLoading(false);
+  }, []);
+
+  const refreshKanban = async () => {
+    setKanbanRefreshing(true);
+    try {
+      await supabase.functions.invoke('atualizar-kanban');
+      await fetchKanban();
+      toast.success('Kanban atualizado');
+    } catch (e: any) {
+      toast.error('Erro: ' + (e.message || ''));
+    }
+    setKanbanRefreshing(false);
+  };
+
   useEffect(() => {
     fetchData();
     fetchAlteracoes();
+    fetchKanban();
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
-  }, [fetchData, fetchAlteracoes]);
+  }, [fetchData, fetchAlteracoes, fetchKanban]);
 
   const invokeFunction = async (fnName: string) => {
     setInvoking(fnName);
