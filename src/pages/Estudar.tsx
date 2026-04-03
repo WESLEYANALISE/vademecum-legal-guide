@@ -78,8 +78,7 @@ const Estudar = () => {
       case 'questoes':
       case 'flashcards':
       case 'mapa_mental': setView('select-artigo'); break;
-      case 'desempenho':
-      case 'biblioteca': setView('menu'); break;
+      case 'desempenho': setView('menu'); break;
       default: navigate(-1);
     }
   };
