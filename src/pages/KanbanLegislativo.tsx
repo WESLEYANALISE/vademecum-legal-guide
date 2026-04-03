@@ -274,6 +274,16 @@ const KanbanLegislativo = () => {
     return Array.from(tipos).sort();
   }, [items]);
 
+  const leisDisponiveis = useMemo(() => {
+    const leis = new Set<string>();
+    items.forEach(i => {
+      if (i.lei_afetada) {
+        i.lei_afetada.split(', ').forEach(l => leis.add(l));
+      }
+    });
+    return Array.from(leis).sort();
+  }, [items]);
+
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const item = event.active.data.current?.item as KanbanItem;
     if (item) setActiveItem(item);
