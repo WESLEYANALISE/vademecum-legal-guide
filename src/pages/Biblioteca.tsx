@@ -251,10 +251,35 @@ const Biblioteca = () => {
       className="space-y-6"
     >
       {areasByCategory.length <= 1 ? (
-        <div className="grid grid-cols-3 gap-3">
-          {areasByCategory[0]?.items.map((livro) => (
-            <LivroCard key={`${livro.categoria}-${livro.id}`} livro={livro} onClick={() => handleSelect(livro)} />
-          ))}
+        <div className="space-y-3">
+          {areasByCategory[0]?.items.map((livro) => {
+            const capaUrl = livro.capa ? cdnImg(livro.capa, 300) : '';
+            return (
+              <button
+                key={`${livro.categoria}-${livro.id}`}
+                onClick={() => handleSelect(livro)}
+                className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden relative"
+              >
+                <div className="w-20 flex-shrink-0 relative overflow-hidden">
+                  {capaUrl ? (
+                    <img src={capaUrl} alt={livro.titulo} className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center p-1">
+                      <span className="text-[9px] text-muted-foreground text-center line-clamp-3">{livro.titulo}</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+                </div>
+                <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm line-clamp-2">{livro.titulo}</p>
+                    {livro.autor && <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{livro.autor}</p>}
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                </div>
+              </button>
+            );
+          })}
         </div>
       ) : (
         <div className="space-y-3">
