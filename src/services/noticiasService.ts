@@ -44,6 +44,7 @@ export async function prefetchNoticias(): Promise<void> {
     if (!error && data) {
       const filtered = (data as unknown as Noticia[]).filter(n => n.imagem_url?.trim());
       noticiasCache = sortNoticias(filtered);
+      lastFetchTime = Date.now();
     }
     fetchPromise = null;
   })();
