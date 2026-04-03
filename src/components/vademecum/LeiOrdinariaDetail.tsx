@@ -15,14 +15,22 @@ interface ParsedLei {
   assinatura: string;
 }
 
-function normalizeLegislativeText(text: string): string {
+function normalizeOrdinals(text: string): string {
   return text
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/\u00A0/g, ' ')
-    .replace(/\r/g, '')
-    .trim();
+    .replace(/(\d+)o\b/g, '$1º')
+    .replace(/(\d+)a\b(?=\s+da\b)/g, '$1ª');
+}
+
+function normalizeLegislativeText(text: string): string {
+  return normalizeOrdinals(
+    text
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/\u00A0/g, ' ')
+      .replace(/\r/g, '')
+      .trim()
+  );
 }
 
 /**
