@@ -108,11 +108,11 @@ function LogoLockup({ isLight }: { isLight: boolean }) {
   const textColor = isLight ? BRAND_DARK : '#fff';
   const subColor = isLight ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.5)';
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-      <img src={logoImg} alt="Vacatio" style={{ width: 40, height: 40, borderRadius: '50%' }} crossOrigin="anonymous" />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+      <img src={logoImg} alt="Vacatio" style={{ width: 32, height: 32, borderRadius: '50%' }} crossOrigin="anonymous" />
       <div>
-        <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: 0.5, color: textColor, fontFamily: "'DM Sans', sans-serif" }}>Vacatio</div>
-        <div style={{ fontSize: 10, color: subColor, fontFamily: "'DM Sans', sans-serif" }}>@vacatio.app</div>
+        <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: 0.5, color: textColor, fontFamily: "'DM Sans', sans-serif" }}>Vacatio</div>
+        <div style={{ fontSize: 9, color: subColor, fontFamily: "'DM Sans', sans-serif" }}>@vacatio.app</div>
       </div>
     </div>
   );
@@ -137,18 +137,18 @@ function SlideRenderer({ slide, index, total }: { slide: SlideData; index: numbe
 
   const contentStyle: React.CSSProperties = {
     flex: 1, display: 'flex', flexDirection: 'column',
-    justifyContent: slide.tipo === 'hero' || slide.tipo === 'cta' ? 'center' : 'flex-end',
-    padding: '36px 36px 52px',
+    justifyContent: slide.tipo === 'hero' || slide.tipo === 'cta' ? 'center' : 'flex-start',
+    padding: '28px 32px 48px',
   };
 
   const headingStyle: React.CSSProperties = {
-    fontSize: slide.tipo === 'hero' ? 32 : 28, fontWeight: 600, color: textColor,
-    lineHeight: 1.12, letterSpacing: -0.4, fontFamily: "'Playfair Display', Georgia, serif", marginBottom: 12,
+    fontSize: slide.tipo === 'hero' ? 28 : 22, fontWeight: 600, color: textColor,
+    lineHeight: 1.15, letterSpacing: -0.3, fontFamily: "'Playfair Display', Georgia, serif", marginBottom: 10, marginTop: 0,
   };
 
   const bodyStyle: React.CSSProperties = {
-    fontSize: 14, fontWeight: 400, lineHeight: 1.5, color: bodyColor,
-    fontFamily: "'DM Sans', sans-serif",
+    fontSize: 13, fontWeight: 400, lineHeight: 1.5, color: bodyColor,
+    fontFamily: "'DM Sans', sans-serif", margin: 0,
   };
 
   // ── Hero slide
@@ -281,14 +281,14 @@ function SlideRenderer({ slide, index, total }: { slide: SlideData; index: numbe
   if (slide.tipo === 'cta') {
     return (
       <div style={baseStyle}>
-        <div style={{ ...contentStyle, alignItems: 'center', textAlign: 'center' }}>
+        <div style={{ ...contentStyle, alignItems: 'center', textAlign: 'center', padding: '28px 32px 48px' }}>
           <LogoLockup isLight={false} />
           <TagLabel text={slide.tag} isLight={false} isGradient={true} />
-          <h2 style={{ ...headingStyle, color: '#fff', fontSize: 28 }}>{slide.texto_engajamento}</h2>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 28px', background: LIGHT_BG, color: BRAND_DARK, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 14, borderRadius: 28, marginTop: 20 }}>
+          <h2 style={{ ...headingStyle, color: '#fff', fontSize: 22 }}>{slide.texto_engajamento}</h2>
+          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 24px', background: LIGHT_BG, color: BRAND_DARK, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 12, borderRadius: 24, marginTop: 16 }}>
             {slide.cta_texto || 'Salve para revisar!'}
           </div>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 16, fontFamily: "'DM Sans', sans-serif" }}>Siga @vacatio.app para mais conteúdo jurídico</p>
+          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 12, fontFamily: "'DM Sans', sans-serif" }}>@vacatio.app</p>
         </div>
         <ProgressBar index={index} total={total} isLight={false} />
       </div>
@@ -491,22 +491,20 @@ const GeradorPost = () => {
                 <ChevronLeft className="w-5 h-5" />
               </button>
 
-              <div className="flex-1 overflow-hidden rounded-xl border border-border bg-card">
-                <div className="relative w-full" style={{ paddingBottom: `${(SLIDE_H / SLIDE_W) * 100}%` }}>
-                  <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-                    <div style={{ transform: `scale(${Math.min(1, 350 / SLIDE_W)})`, transformOrigin: 'top center' }}>
-                      {carrossel.slides.map((slide, i) => (
-                        <div
-                          key={i}
-                          className={i === currentSlide ? 'block' : 'hidden'}
-                          style={{ width: SLIDE_W, height: SLIDE_H }}
-                        >
-                          <SlideRenderer slide={slide} index={i} total={carrossel.slides.length} />
-                        </div>
-                      ))}
-                    </div>
+              <div className="flex-1 overflow-hidden rounded-xl border border-border bg-card" style={{ aspectRatio: `${SLIDE_W}/${SLIDE_H}`, position: 'relative' }}>
+                {carrossel.slides.map((slide, i) => (
+                  <div
+                    key={i}
+                    className={i === currentSlide ? 'block' : 'hidden'}
+                    style={{
+                      position: 'absolute', top: 0, left: 0, width: SLIDE_W, height: SLIDE_H,
+                      transform: `scale(${1 / (SLIDE_W / 280)})`,
+                      transformOrigin: 'top left',
+                    }}
+                  >
+                    <SlideRenderer slide={slide} index={i} total={carrossel.slides.length} />
                   </div>
-                </div>
+                ))}
               </div>
 
               <button
