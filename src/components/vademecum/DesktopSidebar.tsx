@@ -34,6 +34,7 @@ const ADMIN_FUNCTIONS = [
   { id: 'admin-monitor', label: 'Monitoramento', icon: Activity, route: '/admin-monitor' },
   { id: 'geracao-admin', label: 'Geração Admin', icon: ShieldCheck, route: '/geracao-admin' },
   { id: 'simulado-admin', label: 'Simulado Admin', icon: ClipboardList, route: '/simulado-admin' },
+  { id: 'biblioteca-admin', label: 'Biblioteca Admin', icon: BookOpen, route: '/biblioteca-admin' },
   { id: 'gamificacao', label: 'Gamificação', icon: Gamepad2, route: '/gamificacao' },
   { id: 'mapa-mental', label: 'Mapa Mental', icon: Brain, route: '/mapa-mental' },
   { id: 'dicionario', label: 'Dicionário Jurídico', icon: BookA },

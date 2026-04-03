@@ -7,7 +7,7 @@ import QuizView from '@/components/estudar/QuizView';
 import FlashcardView from '@/components/estudar/FlashcardView';
 import DesempenhoView from '@/components/estudar/DesempenhoView';
 import MindMapView from '@/components/estudar/MindMapView';
-import BibliotecaView from '@/components/estudar/BibliotecaView';
+
 import { Input } from '@/components/ui/input';
 import { useStudyStats } from '@/hooks/useStudyStats';
 import { Progress } from '@/components/ui/progress';
@@ -15,7 +15,7 @@ import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
 
 import { LEIS_COMPACTAS as LEIS } from '@/data/leisCatalog';
 
-type View = 'menu' | 'select-lei' | 'select-artigo' | 'questoes' | 'flashcards' | 'mapa_mental' | 'desempenho' | 'biblioteca';
+type View = 'menu' | 'select-lei' | 'select-artigo' | 'questoes' | 'flashcards' | 'mapa_mental' | 'desempenho';
 
 const Estudar = () => {
   const navigate = useNavigate();
@@ -78,8 +78,7 @@ const Estudar = () => {
       case 'questoes':
       case 'flashcards':
       case 'mapa_mental': setView('select-artigo'); break;
-      case 'desempenho':
-      case 'biblioteca': setView('menu'); break;
+      case 'desempenho': setView('menu'); break;
       default: navigate(-1);
     }
   };
@@ -104,9 +103,6 @@ const Estudar = () => {
   }
   if (view === 'desempenho') {
     return <DesempenhoView onBack={handleBack} />;
-  }
-  if (view === 'biblioteca') {
-    return <BibliotecaView onBack={handleBack} />;
   }
 
   const topLaws = lawStats.slice(0, 3);
@@ -151,7 +147,7 @@ const Estudar = () => {
                 { label: 'Flashcards', desc: 'Cards com animação flip', icon: Layers, gradient: 'from-amber-500 to-orange-600', onClick: () => handleSelectMode('flashcards') },
                 { label: 'Mapa Mental', desc: 'Visualização hierárquica', icon: Network, gradient: 'from-purple-600 to-purple-900', onClick: () => handleSelectMode('mapa_mental') },
                 { label: 'Simulados', desc: 'Provas completas extraídas por IA', icon: ClipboardList, gradient: 'from-emerald-600 to-emerald-900', onClick: () => navigate('/simulado') },
-                { label: 'Biblioteca', desc: 'PDFs convertidos em e-book', icon: BookOpen, gradient: 'from-amber-600 to-amber-900', onClick: () => setView('biblioteca') },
+                
               ].map((item, i) => (
                 <motion.button
                   key={item.label}
