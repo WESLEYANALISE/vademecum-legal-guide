@@ -1,20 +1,29 @@
-import { ArrowLeft, BookOpen, Download } from 'lucide-react';
+import { ArrowLeft, BookOpen, Download, FileText, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { LivroUnificado } from './LivroCard';
 import { cdnImg } from '@/lib/cdnImg';
 
+export type ReadMode = 'fliphtml5' | 'vertical' | 'dinamico';
+
 interface LivroDetailSheetProps {
   livro: LivroUnificado | null;
   open: boolean;
   onClose: () => void;
-  onRead: (livro: LivroUnificado) => void;
+  onRead: (livro: LivroUnificado, mode: ReadMode) => void;
+}
+
+function extractDriveFileId(url: string): string | null {
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  return match?.[1] ?? null;
 }
 
 const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProps) => {
   if (!livro && !open) return null;
 
   const capaUrl = livro?.capa ? cdnImg(livro.capa, 400) : '';
+  const hasFliphtml5 = !!livro?.link;
+  const hasDrivePreview = !!livro?.download && !!extractDriveFileId(livro.download);
 
   return (
     <AnimatePresence>
@@ -69,27 +78,40 @@ const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProp
                 </div>
               </div>
 
-              {/* Action buttons - BEFORE synopsis */}
-              <div className="flex gap-3 pt-2">
-                {livro.link && (
-                  <Button className="flex-1 gap-2 h-12 text-base" onClick={() => onRead(livro)}>
+              {/* 3 Reading mode buttons */}
+              <div className="space-y-2 pt-2">
+                {hasFliphtml5 && (
+                  <Button className="w-full gap-2 h-12 text-base" onClick={() => onRead(livro, 'fliphtml5')}>
                     <BookOpen className="w-5 h-5" />
-                    Ler agora
+                    Empaginação
                   </Button>
                 )}
+
+                {hasDrivePreview && (
+                  <Button variant="outline" className="w-full gap-2 h-12 text-base" onClick={() => onRead(livro, 'vertical')}>
+                    <FileText className="w-5 h-5" />
+                    Na vertical
+                  </Button>
+                )}
+
+                <Button variant="outline" className="w-full gap-2 h-12 text-base" onClick={() => onRead(livro, 'dinamico')}>
+                  <Smartphone className="w-5 h-5" />
+                  Modo dinâmico
+                </Button>
+
                 {livro.download && (
                   <Button
-                    variant="outline"
-                    className="flex-1 gap-2 h-12 text-base"
+                    variant="ghost"
+                    className="w-full gap-2 h-10 text-sm text-muted-foreground"
                     onClick={() => window.open(livro.download!, '_blank')}
                   >
-                    <Download className="w-5 h-5" />
-                    Download
+                    <Download className="w-4 h-4" />
+                    Download PDF
                   </Button>
                 )}
               </div>
 
-              {!livro.link && !livro.download && (
+              {!hasFliphtml5 && !hasDrivePreview && !livro.download && (
                 <p className="text-sm text-muted-foreground text-center">Nenhum link disponível</p>
               )}
 
