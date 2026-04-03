@@ -38,47 +38,12 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
     limit: 20,
   });
 
-  // Search artigos using FTS RPC
-  useEffect(() => {
-    if (mode !== 'artigo' || query.trim().length < 1) {
-      setArtigoResults([]);
-      return;
-    }
-
-    const timeout = setTimeout(async () => {
-      setSearching(true);
-      try {
-        const { data, error } = await supabase.rpc('buscar_artigos_global', {
-          search_query: query.trim(),
-          max_results: 30,
-        });
-
-        if (!error && data) {
-          const results: ArtigoResult[] = (data as any[]).map((row: any) => {
-            const lei = LEIS_CATALOG.find(l => l.tabela_nome === row.tabela_nome);
-            return {
-              numero: row.numero,
-              texto: row.caput,
-              lei_nome: lei?.nome || row.tabela_nome,
-              lei_sigla: lei?.sigla || '',
-              tabela_nome: row.tabela_nome,
-              tipo: lei?.tipo || 'codigo',
-              leiId: lei?.id || '',
-            };
-          });
-          results.sort((a, b) => a.lei_nome.localeCompare(b.lei_nome));
-          setArtigoResults(results.slice(0, 30));
-        } else {
-          setArtigoResults([]);
-        }
-      } catch {
-        setArtigoResults([]);
-      }
-      setSearching(false);
-    }, 400);
-
-    return () => clearTimeout(timeout);
-  }, [query, mode]);
+  // Fuzzy search for leis by number (descricao contains "Lei nº X.XXX/YYYY")
+  const filteredByNumero = useFuzzySearch(LEIS_CATALOG, mode === 'numero' ? query : '', {
+    keys: ['descricao', 'sigla', 'nome'],
+    threshold: 0.3,
+    limit: 20,
+  });
 
   // Get matching tags for a lei given the current query
   const getMatchingTags = (tags?: string[]) => {
