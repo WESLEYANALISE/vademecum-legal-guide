@@ -265,7 +265,7 @@ async function scrapeCamara(_browserlessUrl: string): Promise<NewsItem[]> {
         const articleHtml = artResp.ok ? await artResp.text() : '';
         const conteudo = articleHtml ? parseCamaraArticleContent(articleHtml) : '';
         const dataPublicacao = articleHtml ? parseCamaraArticleDate(articleHtml) : null;
-        const imagemUrl = item.imagemUrl || (articleHtml ? parseCamaraArticleImage(articleHtml) : '');
+        const imagemUrl = (articleHtml ? parseCamaraArticleImage(articleHtml) : '') || item.imagemUrl;
 
         results.push({
           titulo: item.titulo,
