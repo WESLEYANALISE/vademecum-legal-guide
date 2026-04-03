@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ScanEye, Calendar, ChevronRight, Loader2, FileText, Scale, TrendingUp, Gavel, ScrollText } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -13,6 +13,7 @@ import { getResenhaCache, prefetchResenha, type ResenhaItem } from '@/services/a
 import { getLeisCatalog, fetchArtigosLei, getCachedArtigos, fetchLeisOrdinariasPorAno, fetchDecretosPorAno, type LeiOrdinaria } from '@/services/legislacaoService';
 import AlteracaoDetailSheet from '@/components/vademecum/AlteracaoDetailSheet';
 import { buildContextualTitle } from '@/components/vademecum/RadarLegislacaoContent';
+import LeiOrdinariaDetail from '@/components/vademecum/LeiOrdinariaDetail';
 
 /* ── LEI_REFS for "O que pode mudar" tab (PLs) ── */
 const LEI_REFS: Record<string, { label: string; refs: string[]; tipos: string[] }> = {
