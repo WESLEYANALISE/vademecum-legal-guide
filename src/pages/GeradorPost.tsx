@@ -43,7 +43,7 @@ interface SlideData {
   texto_engajamento?: string;
   cta_texto?: string;
   imagem_prompt?: string;
-  imagem_url?: string; // filled after image generation
+  imagem_url?: string;
 }
 
 interface CarrosselData {
@@ -62,8 +62,9 @@ const BG_ALT: Record<string, string> = {
   features: bgLightCourthouse, detalhes: bgDarkScroll, passos: bgLightPillars, cta: bgDarkColumns,
 };
 
-const SLIDE_W = 420;
-const SLIDE_H = 525;
+// ─── Real Instagram dimensions (4:5) ───
+const SLIDE_W = 1080;
+const SLIDE_H = 1350;
 
 const TIPOS_CONTEUDO = [
   { value: 'curiosidade', label: 'Curiosidade', desc: '"Você sabia que..." — fatos surpreendentes' },
@@ -86,11 +87,10 @@ function isDark(tipo: string): boolean {
   return ['hero', 'problema', 'solucao', 'detalhes', 'cta'].includes(tipo);
 }
 
-// ─── Slide Renderer ───
+// ─── Slide Renderer (1080×1350 real pixels) ───
 
 function SlideRenderer({ slide, index, useImages }: { slide: SlideData; index: number; useImages: boolean }) {
   const dark = isDark(slide.tipo);
-  // If slide has a generated image, always treat as dark (image has overlay)
   const effectiveDark = (useImages && slide.imagem_url) ? true : dark;
   const textColor = effectiveDark ? '#fff' : '#2d0a12';
   const subColor = effectiveDark ? 'rgba(255,255,255,0.75)' : '#5a3040';
@@ -121,36 +121,36 @@ function SlideRenderer({ slide, index, useImages }: { slide: SlideData; index: n
 
   const headingFont: React.CSSProperties = {
     fontFamily: "'Merriweather', 'Georgia', serif",
-    fontWeight: 700, lineHeight: 1.25, letterSpacing: -0.2,
+    fontWeight: 700, lineHeight: 1.2, letterSpacing: -0.5,
     color: textColor, margin: 0,
-    textShadow: effectiveDark ? '0 1px 6px rgba(0,0,0,0.5)' : 'none',
+    textShadow: effectiveDark ? '0 2px 12px rgba(0,0,0,0.5)' : 'none',
   };
 
   const bodyFont: React.CSSProperties = {
     fontFamily: "'Inter', 'Segoe UI', Arial, sans-serif",
-    fontWeight: 400, lineHeight: 1.6, color: subColor, margin: 0,
-    textShadow: effectiveDark ? '0 1px 3px rgba(0,0,0,0.4)' : 'none',
+    fontWeight: 400, lineHeight: 1.55, color: subColor, margin: 0,
+    textShadow: effectiveDark ? '0 1px 6px rgba(0,0,0,0.4)' : 'none',
   };
 
   const Logo = () => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-      <img src={logoImg} alt="" style={{ width: 28, height: 28, borderRadius: '50%', border: '1.5px solid rgba(184,134,11,0.4)' }} crossOrigin="anonymous" />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 32 }}>
+      <img src={logoImg} alt="" style={{ width: 64, height: 64, borderRadius: '50%', border: '3px solid rgba(184,134,11,0.4)' }} crossOrigin="anonymous" />
       <div>
-        <div style={{ fontSize: 11, fontWeight: 700, color: textColor, textShadow: effectiveDark ? '0 1px 3px rgba(0,0,0,0.3)' : 'none' }}>Vacatio</div>
-        <div style={{ fontSize: 8, color: effectiveDark ? 'rgba(255,255,255,0.5)' : GOLD }}>Vade Mecum 2026</div>
+        <div style={{ fontSize: 26, fontWeight: 700, color: textColor, textShadow: effectiveDark ? '0 1px 6px rgba(0,0,0,0.3)' : 'none' }}>Vacatio</div>
+        <div style={{ fontSize: 18, color: effectiveDark ? 'rgba(255,255,255,0.5)' : GOLD }}>Vade Mecum 2026</div>
       </div>
     </div>
   );
 
   const Tag = () => (
-    <span style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, letterSpacing: 2.5, color: GOLD, textTransform: 'uppercase', marginBottom: 10, textShadow: effectiveDark ? '0 1px 3px rgba(0,0,0,0.3)' : 'none' }}>
+    <span style={{ display: 'inline-block', fontSize: 22, fontWeight: 700, letterSpacing: 5, color: GOLD, textTransform: 'uppercase', marginBottom: 24, textShadow: effectiveDark ? '0 1px 4px rgba(0,0,0,0.3)' : 'none' }}>
       {slide.tag}
     </span>
   );
 
   const BottomBar = () => (
-    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 30, background: 'rgba(20,5,10,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
-      <span style={{ color: '#d4c9a8', fontSize: 10, letterSpacing: 1.5 }}>@vacatio.app</span>
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 72, background: 'rgba(20,5,10,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
+      <span style={{ color: '#d4c9a8', fontSize: 22, letterSpacing: 3 }}>@vacatio.app</span>
     </div>
   );
 
@@ -158,11 +158,11 @@ function SlideRenderer({ slide, index, useImages }: { slide: SlideData; index: n
     return (
       <div style={baseStyle}>
         <div style={overlayStyle} />
-        <div style={{ ...contentStyle, justifyContent: 'center', padding: '40px 36px 48px' }}>
+        <div style={{ ...contentStyle, justifyContent: 'center', padding: '100px 90px 120px' }}>
           <Logo />
           <Tag />
-          <h1 style={{ ...headingFont, fontSize: 23 }}>{slide.titulo}</h1>
-          {slide.subtitulo && <p style={{ ...bodyFont, fontSize: 13, marginTop: 10 }}>{slide.subtitulo}</p>}
+          <h1 style={{ ...headingFont, fontSize: 64 }}>{slide.titulo}</h1>
+          {slide.subtitulo && <p style={{ ...bodyFont, fontSize: 32, marginTop: 24 }}>{slide.subtitulo}</p>}
         </div>
         <BottomBar />
       </div>
@@ -173,14 +173,14 @@ function SlideRenderer({ slide, index, useImages }: { slide: SlideData; index: n
     return (
       <div style={baseStyle}>
         <div style={overlayStyle} />
-        <div style={{ ...contentStyle, padding: '36px 36px 48px' }}>
+        <div style={{ ...contentStyle, padding: '90px 90px 120px' }}>
           <Tag />
-          <h2 style={{ ...headingFont, fontSize: 18, marginBottom: 16 }}>{slide.titulo}</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <h2 style={{ ...headingFont, fontSize: 48, marginBottom: 40 }}>{slide.titulo}</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {slide.itens?.map((item, i) => (
-              <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                <span style={{ color: GOLD, fontSize: 13, marginTop: 1, flexShrink: 0 }}>⚠</span>
-                <p style={{ ...bodyFont, fontSize: 12 }}>{item}</p>
+              <div key={i} style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+                <span style={{ color: GOLD, fontSize: 30, marginTop: 2, flexShrink: 0 }}>⚠</span>
+                <p style={{ ...bodyFont, fontSize: 28 }}>{item}</p>
               </div>
             ))}
           </div>
@@ -194,13 +194,13 @@ function SlideRenderer({ slide, index, useImages }: { slide: SlideData; index: n
     return (
       <div style={baseStyle}>
         <div style={overlayStyle} />
-        <div style={{ ...contentStyle, padding: '36px 36px 48px' }}>
+        <div style={{ ...contentStyle, padding: '90px 90px 120px' }}>
           <Tag />
-          <h2 style={{ ...headingFont, fontSize: 18, marginBottom: 12 }}>{slide.titulo}</h2>
-          {slide.texto && <p style={{ ...bodyFont, fontSize: 12, marginBottom: 14 }}>{slide.texto}</p>}
+          <h2 style={{ ...headingFont, fontSize: 48, marginBottom: 30 }}>{slide.titulo}</h2>
+          {slide.texto && <p style={{ ...bodyFont, fontSize: 30, marginBottom: 36 }}>{slide.texto}</p>}
           {slide.citacao && (
-            <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 8, padding: 14, borderLeft: `3px solid ${GOLD}` }}>
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.9)', fontStyle: 'italic', lineHeight: 1.6, fontFamily: "'Merriweather', serif", margin: 0 }}>
+            <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 16, padding: 36, borderLeft: `6px solid ${GOLD}` }}>
+              <p style={{ fontSize: 26, color: 'rgba(255,255,255,0.9)', fontStyle: 'italic', lineHeight: 1.55, fontFamily: "'Merriweather', serif", margin: 0 }}>
                 "{slide.citacao}"
               </p>
             </div>
@@ -218,16 +218,16 @@ function SlideRenderer({ slide, index, useImages }: { slide: SlideData; index: n
     return (
       <div style={baseStyle}>
         <div style={overlayStyle} />
-        <div style={{ ...contentStyle, padding: '36px 32px 48px' }}>
+        <div style={{ ...contentStyle, padding: '90px 80px 120px' }}>
           <Tag />
-          <h2 style={{ ...headingFont, fontSize: 17, marginBottom: 14 }}>{slide.titulo}</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {slide.features?.map((f, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: cardBg, borderRadius: 8, padding: '8px 10px' }}>
-                <span style={{ fontSize: 16, flexShrink: 0 }}>{f.icone}</span>
+          <h2 style={{ ...headingFont, fontSize: 44, marginBottom: 36 }}>{slide.titulo}</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {slide.features?.slice(0, 3).map((f, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 24, background: cardBg, borderRadius: 16, padding: '24px 28px' }}>
+                <span style={{ fontSize: 40, flexShrink: 0 }}>{f.icone}</span>
                 <div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: labelColor, display: 'block' }}>{f.label}</span>
-                  <span style={{ fontSize: 10, color: descColor }}>{f.desc}</span>
+                  <span style={{ fontSize: 28, fontWeight: 700, color: labelColor, display: 'block', marginBottom: 4 }}>{f.label}</span>
+                  <span style={{ fontSize: 24, color: descColor }}>{f.desc}</span>
                 </div>
               </div>
             ))}
@@ -242,14 +242,14 @@ function SlideRenderer({ slide, index, useImages }: { slide: SlideData; index: n
     return (
       <div style={baseStyle}>
         <div style={overlayStyle} />
-        <div style={{ ...contentStyle, padding: '36px 36px 48px' }}>
+        <div style={{ ...contentStyle, padding: '90px 90px 120px' }}>
           <Tag />
-          <h2 style={{ ...headingFont, fontSize: 18, marginBottom: 12 }}>{slide.titulo}</h2>
-          {slide.texto && <p style={{ ...bodyFont, fontSize: 12, marginBottom: 12 }}>{slide.texto}</p>}
+          <h2 style={{ ...headingFont, fontSize: 48, marginBottom: 30 }}>{slide.titulo}</h2>
+          {slide.texto && <p style={{ ...bodyFont, fontSize: 30, marginBottom: 30 }}>{slide.texto}</p>}
           {slide.itens?.map((item, i) => (
-            <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 6 }}>
-              <span style={{ color: GOLD, fontSize: 12, marginTop: 1, flexShrink: 0 }}>●</span>
-              <p style={{ ...bodyFont, fontSize: 12 }}>{item}</p>
+            <div key={i} style={{ display: 'flex', gap: 20, alignItems: 'flex-start', marginBottom: 16 }}>
+              <span style={{ color: GOLD, fontSize: 28, marginTop: 2, flexShrink: 0 }}>●</span>
+              <p style={{ ...bodyFont, fontSize: 28 }}>{item}</p>
             </div>
           ))}
         </div>
@@ -264,18 +264,18 @@ function SlideRenderer({ slide, index, useImages }: { slide: SlideData; index: n
     return (
       <div style={baseStyle}>
         <div style={overlayStyle} />
-        <div style={{ ...contentStyle, padding: '36px 32px 48px' }}>
+        <div style={{ ...contentStyle, padding: '90px 80px 120px' }}>
           <Tag />
-          <h2 style={{ ...headingFont, fontSize: 17, marginBottom: 14 }}>{slide.titulo}</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <h2 style={{ ...headingFont, fontSize: 44, marginBottom: 36 }}>{slide.titulo}</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {slide.passos?.map((p, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                <span style={{ fontFamily: "'Merriweather', serif", fontSize: 20, fontWeight: 300, color: GOLD, minWidth: 28, textShadow: effectiveDark ? '0 1px 3px rgba(0,0,0,0.3)' : 'none' }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 28 }}>
+                <span style={{ fontFamily: "'Merriweather', serif", fontSize: 48, fontWeight: 300, color: GOLD, minWidth: 64, textShadow: effectiveDark ? '0 1px 6px rgba(0,0,0,0.3)' : 'none' }}>
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: labelColor, display: 'block' }}>{p.titulo}</span>
-                  <span style={{ fontSize: 10, color: descColor }}>{p.desc}</span>
+                  <span style={{ fontSize: 28, fontWeight: 700, color: labelColor, display: 'block', marginBottom: 4 }}>{p.titulo}</span>
+                  <span style={{ fontSize: 24, color: descColor }}>{p.desc}</span>
                 </div>
               </div>
             ))}
@@ -290,11 +290,11 @@ function SlideRenderer({ slide, index, useImages }: { slide: SlideData; index: n
     return (
       <div style={baseStyle}>
         <div style={overlayStyle} />
-        <div style={{ ...contentStyle, justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '40px 36px 48px' }}>
+        <div style={{ ...contentStyle, justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '100px 90px 120px' }}>
           <Logo />
           <Tag />
-          <h2 style={{ ...headingFont, fontSize: 18, color: '#fff', marginBottom: 18 }}>{slide.texto_engajamento}</h2>
-          <div style={{ display: 'inline-flex', padding: '10px 24px', background: GOLD, color: '#fff', fontWeight: 700, fontSize: 12, borderRadius: 20 }}>
+          <h2 style={{ ...headingFont, fontSize: 48, color: '#fff', marginBottom: 48 }}>{slide.texto_engajamento}</h2>
+          <div style={{ display: 'inline-flex', padding: '24px 60px', background: GOLD, color: '#fff', fontWeight: 700, fontSize: 32, borderRadius: 48 }}>
             {slide.cta_texto || 'Salve para revisar!'}
           </div>
         </div>
@@ -307,10 +307,10 @@ function SlideRenderer({ slide, index, useImages }: { slide: SlideData; index: n
   return (
     <div style={baseStyle}>
       <div style={overlayStyle} />
-      <div style={{ ...contentStyle, padding: '36px 36px 48px' }}>
+      <div style={{ ...contentStyle, padding: '90px 90px 120px' }}>
         <Tag />
-        {slide.titulo && <h2 style={{ ...headingFont, fontSize: 18 }}>{slide.titulo}</h2>}
-        {slide.texto && <p style={{ ...bodyFont, fontSize: 12, marginTop: 8 }}>{slide.texto}</p>}
+        {slide.titulo && <h2 style={{ ...headingFont, fontSize: 48 }}>{slide.titulo}</h2>}
+        {slide.texto && <p style={{ ...bodyFont, fontSize: 30, marginTop: 20 }}>{slide.texto}</p>}
       </div>
       <BottomBar />
     </div>
@@ -411,7 +411,8 @@ const GeradorPost = () => {
   const downloadSlide = async (index: number) => {
     const el = slidesRef.current[index];
     if (!el) return;
-    const canvas = await html2canvas(el, { scale: 3, useCORS: true, backgroundColor: null });
+    // Already at 1080×1350, export at scale 1
+    const canvas = await html2canvas(el, { scale: 1, useCORS: true, backgroundColor: null });
     canvas.toBlob((blob) => {
       if (!blob) return;
       const url = URL.createObjectURL(blob);

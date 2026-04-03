@@ -1780,6 +1780,45 @@ export type Database = {
         }
         Relationships: []
       }
+      instagram_posts: {
+        Row: {
+          created_at: string
+          descricao: string
+          hashtags: string[] | null
+          headline: string
+          id: string
+          imagem_url: string | null
+          titulo_artigo: string
+          updated_at: string
+          url_artigo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string
+          hashtags?: string[] | null
+          headline?: string
+          id?: string
+          imagem_url?: string | null
+          titulo_artigo?: string
+          updated_at?: string
+          url_artigo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          hashtags?: string[] | null
+          headline?: string
+          id?: string
+          imagem_url?: string | null
+          titulo_artigo?: string
+          updated_at?: string
+          url_artigo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       L8112_SERVIDORES_FEDERAIS: {
         Row: {
           capitulo: string | null

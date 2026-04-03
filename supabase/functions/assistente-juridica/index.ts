@@ -380,14 +380,24 @@ Regras OBRIGATÓRIAS de formato:
 - Responda SOMENTE com JSON válido, sem markdown, sem texto extra
 - O JSON deve ter: "titulo_viral" (string chamativa de até 60 caracteres) e "slides" (array de 5-7 objetos)
 
+REGRAS DE BREVIDADE (os slides são 1080×1350px — texto grande, pouco espaço):
+- TÍTULOS: máximo 8 palavras
+- SUBTÍTULOS: máximo 15 palavras
+- TEXTO/CORPO: máximo 3 linhas (~120 caracteres)
+- ITENS DE LISTA: máximo 4 itens, cada um com máximo 12 palavras
+- FEATURES: máximo 3 cards, label de 3 palavras, desc de 10 palavras
+- PASSOS: máximo 4 passos, titulo de 2-3 palavras, desc de 10 palavras
+- CITAÇÃO: máximo 2 linhas (~100 caracteres)
+- CTA: texto_engajamento máximo 10 palavras
+
 Tipos de slides disponíveis:
-1. "hero" — slide de abertura (OBRIGATÓRIO como primeiro): { "tipo": "hero", "bg": "light", "tag": "LABEL UPPERCASE", "titulo": "Título viral impactante", "subtitulo": "Contexto breve" }
+1. "hero" — slide de abertura (OBRIGATÓRIO como primeiro): { "tipo": "hero", "bg": "light", "tag": "LABEL UPPERCASE", "titulo": "Título viral curto", "subtitulo": "Contexto breve" }
 2. "problema" — pain point (fundo escuro): { "tipo": "problema", "bg": "dark", "tag": "O PROBLEMA", "titulo": "O que muita gente erra", "itens": ["Erro comum 1", "Erro comum 2", "Erro comum 3"] }
-3. "solucao" — a resposta (fundo gradiente): { "tipo": "solucao", "bg": "gradient", "tag": "A RESPOSTA", "titulo": "O que a lei diz", "texto": "Explicação clara...", "citacao": "Trecho literal do artigo" }
-4. "features" — pontos-chave com ícones: { "tipo": "features", "bg": "light", "tag": "PONTOS-CHAVE", "titulo": "O que você precisa saber", "features": [{"icone": "⚖️", "label": "Requisito X", "desc": "Explicação curta"}] }
-5. "detalhes" — aprofundamento (fundo escuro): { "tipo": "detalhes", "bg": "dark", "tag": "APROFUNDANDO", "titulo": "Detalhes importantes", "texto": "Contexto...", "itens": ["Detalhe 1", "Detalhe 2"] }
+3. "solucao" — a resposta (fundo gradiente): { "tipo": "solucao", "bg": "gradient", "tag": "A RESPOSTA", "titulo": "O que a lei diz", "texto": "Explicação curta...", "citacao": "Trecho do artigo" }
+4. "features" — pontos-chave com ícones: { "tipo": "features", "bg": "light", "tag": "PONTOS-CHAVE", "titulo": "O que saber", "features": [{"icone": "⚖️", "label": "Requisito", "desc": "Explicação curta"}] }
+5. "detalhes" — aprofundamento (fundo escuro): { "tipo": "detalhes", "bg": "dark", "tag": "APROFUNDANDO", "titulo": "Detalhes", "texto": "Contexto...", "itens": ["Detalhe 1", "Detalhe 2"] }
 6. "passos" — how-to numerado: { "tipo": "passos", "bg": "light", "tag": "COMO APLICAR", "titulo": "Passo a passo", "passos": [{"titulo": "Identifique", "desc": "Verifique se..."}, {"titulo": "Aplique", "desc": "Use o artigo..."}] }
-7. "cta" — slide final (OBRIGATÓRIO como último): { "tipo": "cta", "bg": "gradient", "tag": "SALVE ESTE POST", "texto_engajamento": "Pergunta envolvente?", "cta_texto": "Salve para revisar antes da prova!" }
+7. "cta" — slide final (OBRIGATÓRIO como último): { "tipo": "cta", "bg": "gradient", "tag": "SALVE ESTE POST", "texto_engajamento": "Pergunta curta?", "cta_texto": "Salve para revisar!" }
 
 Regras de design narrativo:
 - O primeiro slide DEVE ser tipo "hero" com bg "light"
@@ -395,11 +405,11 @@ Regras de design narrativo:
 - Alterne fundos: light → dark → gradient → light para ritmo visual
 - Use pelo menos 4 tipos diferentes de slides
 - O campo "bg" deve ser "light", "dark" ou "gradient"
-- O campo "tag" deve ser UPPERCASE e ter no máximo 25 caracteres
-- Cada item de lista deve ter no máximo 80 caracteres
+- O campo "tag" deve ser UPPERCASE e ter no máximo 20 caracteres
 - Use emojis nos ícones do tipo "features" (⚖️, 📌, ⚠️, 💡, 📋, 🔍, etc.)
-- Títulos devem ser curtos, impactantes e em tom viral
-- Tom: professor descontraído mas preciso, estilo Instagram jurídico${imagemInstrucao}`;
+- Títulos devem ser CURTOS, impactantes e em tom viral
+- Tom: professor descontraído mas preciso, estilo Instagram jurídico
+- MENOS É MAIS: prefira frases curtas e impactantes a textos longos${imagemInstrucao}`;
 
       const prompt = `Lei: ${leiNome || ''}\nArtigo: ${artigoNumero || ''}\nTipo de conteúdo: ${tipoConteudo}\nTexto completo:\n\n${artText}`;
       contents = [{ role: 'user', parts: [{ text: prompt }] }];
