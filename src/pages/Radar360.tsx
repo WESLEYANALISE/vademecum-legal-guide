@@ -36,10 +36,12 @@ const LEI_REFS: Record<string, { label: string; refs: string[]; tipos: string[] 
 
 
 const TIPO_COLORS: Record<string, string> = {
-  'Lei': 'bg-primary/15 text-primary border-primary/20',
-  'Lei Complementar': 'bg-copper-light/15 text-copper-light border-copper-light/20',
-  'Decreto': 'bg-copper/15 text-copper border-copper/20',
-  'Medida Provisória': 'bg-copper-dark/15 text-copper-dark border-copper-dark/20',
+  'Lei': 'bg-violet-500/15 text-violet-400 border-violet-500/25',
+  'Lei Complementar': 'bg-amber-500/15 text-amber-400 border-amber-500/25',
+  'Decreto': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+  'Medida Provisória': 'bg-rose-500/15 text-rose-400 border-rose-500/25',
+  'Emenda Constitucional': 'bg-sky-500/15 text-sky-400 border-sky-500/25',
+  'Resolução': 'bg-orange-500/15 text-orange-400 border-orange-500/25',
 };
 
 interface GroupedPL {
