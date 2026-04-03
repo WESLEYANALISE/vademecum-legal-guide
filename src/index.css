@@ -6,49 +6,49 @@
 
 @layer base {
   :root {
-    --background: 340 55% 12%;
-    --foreground: 0 0% 92%;
+    --background: 280 15% 6%;
+    --foreground: 220 5% 89%;
 
-    --card: 340 50% 16%;
-    --card-foreground: 0 0% 92%;
+    --card: 280 12% 10%;
+    --card-foreground: 220 5% 89%;
 
-    --popover: 340 50% 16%;
-    --popover-foreground: 0 0% 92%;
+    --popover: 280 12% 10%;
+    --popover-foreground: 220 5% 89%;
 
-    --primary: 0 0% 88%;
-    --primary-foreground: 340 55% 14%;
-    --primary-light: 0 0% 94%;
+    --primary: 220 4% 84%;
+    --primary-foreground: 280 15% 7%;
+    --primary-light: 220 5% 91%;
 
-    --secondary: 340 40% 21%;
-    --secondary-foreground: 0 0% 85%;
+    --secondary: 280 10% 19%;
+    --secondary-foreground: 220 3% 81%;
 
-    --muted: 340 40% 18%;
-    --muted-foreground: 340 20% 52%;
+    --muted: 280 10% 13%;
+    --muted-foreground: 280 8% 46%;
 
-    --accent: 0 0% 78%;
-    --accent-foreground: 340 50% 14%;
+    --accent: 220 4% 72%;
+    --accent-foreground: 280 12% 7%;
 
     --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 340 35% 24%;
-    --input: 340 35% 24%;
-    --ring: 0 0% 88%;
+    --border: 280 8% 17%;
+    --input: 280 8% 17%;
+    --ring: 220 4% 84%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 340 55% 12%;
-    --sidebar-foreground: 0 0% 85%;
-    --sidebar-primary: 0 0% 88%;
-    --sidebar-primary-foreground: 340 55% 14%;
-    --sidebar-accent: 340 40% 18%;
-    --sidebar-accent-foreground: 0 0% 85%;
-    --sidebar-border: 340 35% 24%;
-    --sidebar-ring: 0 0% 88%;
+    --sidebar-background: 280 15% 6%;
+    --sidebar-foreground: 220 3% 81%;
+    --sidebar-primary: 220 4% 84%;
+    --sidebar-primary-foreground: 280 15% 7%;
+    --sidebar-accent: 280 10% 13%;
+    --sidebar-accent-foreground: 220 3% 81%;
+    --sidebar-border: 280 8% 17%;
+    --sidebar-ring: 220 4% 84%;
 
-    --copper: 0 0% 88%;
-    --copper-light: 0 0% 94%;
-    --copper-dark: 0 0% 68%;
+    --copper: 220 4% 84%;
+    --copper-light: 220 5% 91%;
+    --copper-dark: 220 3% 63%;
     --signature: 0 70% 68%;
     --gold-accent: 45 65% 62%;
   }
