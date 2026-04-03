@@ -179,12 +179,11 @@ const Index = () => {
                   <button
                     key={tab.id}
                     onClick={() => {
-                      // Navigate to dedicated pages for non-legislacao tabs
                       const routes: Record<string, string> = {
-                        noticias: '/aprender',
+                        noticias: '/noticias',
                         estudar: '/estudar',
                         ferramentas: '/ferramentas',
-                        radar: '/radar-legislativo',
+                        radar: '/radar/proposicoes',
                       };
                       if (routes[tab.id]) {
                         if (tab.id === 'radar') {
