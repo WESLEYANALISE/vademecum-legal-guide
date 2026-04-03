@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Timer, BookOpenText, ScanEye, Sparkles, Wrench, ChevronRight, Gamepad2, FileText } from 'lucide-react';
+import { ArrowLeft, Timer, BookOpenText, ScanEye, Sparkles, Wrench, ChevronRight, Gamepad2, FileText, Newspaper } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import StudyTimer from '@/components/vademecum/StudyTimer';
@@ -50,6 +50,13 @@ const TOOLS = [
     icon: FileText,
     gradient: 'from-sky-500 to-indigo-600',
   },
+  {
+    id: 'noticias',
+    label: 'Notícias',
+    desc: 'Notícias jurídicas e atualizações',
+    icon: Newspaper,
+    gradient: 'from-blue-500 to-cyan-600',
+  },
 ];
 
 const Ferramentas = () => {
@@ -66,6 +73,7 @@ const Ferramentas = () => {
       case 'assistente': setAssistenteOpen(true); break;
       case 'gamificacao': navigate('/gamificacao'); break;
       case 'resumos': navigate('/resumos'); break;
+      case 'noticias': navigate('/noticias'); break;
       case 'gerador-post': navigate('/gerador-post'); break;
     }
   };
