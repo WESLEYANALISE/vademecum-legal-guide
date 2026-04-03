@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import brasaoImg from '@/assets/brasao-republica.png';
 import { supabase } from '@/integrations/supabase/client';
 import { getResenhaCache, prefetchResenha, type ResenhaItem } from '@/services/atualizacaoService';
-import { getLeisCatalog, fetchArtigosLei, getCachedArtigos } from '@/services/legislacaoService';
+import { getLeisCatalog, fetchArtigosLei, getCachedArtigos, fetchLeisOrdinariasPorAno, fetchDecretosPorAno, type LeiOrdinaria } from '@/services/legislacaoService';
 import AlteracaoDetailSheet from '@/components/vademecum/AlteracaoDetailSheet';
 import { buildContextualTitle } from '@/components/vademecum/RadarLegislacaoContent';
 
