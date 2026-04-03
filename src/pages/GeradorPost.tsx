@@ -108,11 +108,11 @@ function LogoLockup({ isLight }: { isLight: boolean }) {
   const textColor = isLight ? BRAND_DARK : '#fff';
   const subColor = isLight ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.5)';
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-      <img src={logoImg} alt="Vacatio" style={{ width: 40, height: 40, borderRadius: '50%' }} crossOrigin="anonymous" />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+      <img src={logoImg} alt="Vacatio" style={{ width: 32, height: 32, borderRadius: '50%' }} crossOrigin="anonymous" />
       <div>
-        <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: 0.5, color: textColor, fontFamily: "'DM Sans', sans-serif" }}>Vacatio</div>
-        <div style={{ fontSize: 10, color: subColor, fontFamily: "'DM Sans', sans-serif" }}>@vacatio.app</div>
+        <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: 0.5, color: textColor, fontFamily: "'DM Sans', sans-serif" }}>Vacatio</div>
+        <div style={{ fontSize: 9, color: subColor, fontFamily: "'DM Sans', sans-serif" }}>@vacatio.app</div>
       </div>
     </div>
   );
