@@ -62,12 +62,12 @@ const ArtigoTrail = ({ artigos, loading, loadingGame, onSelect }: ArtigoTrailPro
 
       {/* Trail area */}
       <div
-        className="relative w-full rounded-2xl overflow-hidden"
+        className="relative w-full rounded-2xl overflow-hidden border border-border/50"
         style={{
           background:
-            'radial-gradient(ellipse at 25% 15%, hsl(var(--primary) / 0.1) 0%, transparent 50%), ' +
-            'radial-gradient(ellipse at 75% 50%, hsl(var(--primary) / 0.06) 0%, transparent 50%), ' +
-            'hsl(var(--background))',
+            'radial-gradient(ellipse at 30% 10%, hsl(var(--signature) / 0.06) 0%, transparent 50%), ' +
+            'radial-gradient(ellipse at 70% 60%, hsl(var(--signature) / 0.04) 0%, transparent 50%), ' +
+            'hsl(var(--card))',
         }}
       >
         {/* Animated background shine */}
@@ -77,9 +77,9 @@ const ArtigoTrail = ({ artigos, loading, loadingGame, onSelect }: ArtigoTrailPro
           transition={{ repeat: Infinity, duration: 10, ease: 'linear' }}
           style={{
             backgroundImage:
-              'radial-gradient(circle at 20% 20%, hsl(var(--primary) / 0.08) 0, transparent 30%), ' +
-              'radial-gradient(circle at 80% 60%, hsl(var(--primary) / 0.06) 0, transparent 30%)',
-            backgroundSize: '150% 150%',
+              'radial-gradient(circle at 20% 20%, hsl(var(--signature) / 0.05) 0, transparent 35%), ' +
+              'radial-gradient(circle at 80% 60%, hsl(var(--signature) / 0.04) 0, transparent 35%)',
+            backgroundSize: '200% 200%',
           }}
         />
 
@@ -90,6 +90,12 @@ const ArtigoTrail = ({ artigos, loading, loadingGame, onSelect }: ArtigoTrailPro
             style={{ height: totalH }}
             overflow="visible"
           >
+            <defs>
+              <linearGradient id="artigo-trail-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="hsl(var(--signature))" stopOpacity="0.6" />
+                <stop offset="100%" stopColor="hsl(var(--signature))" stopOpacity="0.2" />
+              </linearGradient>
+            </defs>
             {filtered.map((_, i) => {
               if (i === 0) return null;
               const x1 = X_POINTS[(i - 1) % 4];
@@ -103,12 +109,11 @@ const ArtigoTrail = ({ artigos, loading, loadingGame, onSelect }: ArtigoTrailPro
                   key={`line-${i}`}
                   d={`M ${x1}% ${y1} C ${x1}% ${midY}, ${x2}% ${midY}, ${x2}% ${y2}`}
                   fill="none"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="2"
-                  strokeDasharray="8 6"
-                  strokeOpacity="0.45"
-                  animate={{ strokeDashoffset: [0, -28] }}
-                  transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
+                  stroke="url(#artigo-trail-grad)"
+                  strokeWidth="2.5"
+                  strokeDasharray="10 6"
+                  animate={{ strokeDashoffset: [0, -32] }}
+                  transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
                 />
               );
             })}
@@ -145,21 +150,21 @@ const ArtigoTrail = ({ artigos, loading, loadingGame, onSelect }: ArtigoTrailPro
                 >
                   {/* Glow */}
                   <div className="relative">
-                    <div className="absolute -inset-2 rounded-full bg-primary/15 blur-lg group-hover:bg-primary/25 transition-all" />
+                    <div className="absolute -inset-2 rounded-full bg-signature/15 blur-lg group-hover:bg-signature/25 transition-all" />
                     <div
-                      className="relative rounded-full border-[3px] border-primary bg-primary/10
+                      className="relative rounded-full border-[3px] border-signature bg-signature/10
                         flex items-center justify-center
-                        group-hover:bg-primary/20 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-primary/30
+                        group-hover:bg-signature/20 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-signature/30
                         transition-all duration-300"
                       style={{ width: NODE_PX, height: NODE_PX }}
                     >
-                      <span className="text-sm font-display font-bold text-primary leading-none">
+                      <span className="text-sm font-display font-bold text-signature leading-none">
                         {shortNum}
                       </span>
                     </div>
                   </div>
 
-                  <span className="text-[10px] font-display font-semibold text-foreground/60 group-hover:text-primary transition-colors">
+                  <span className="text-[10px] font-display font-semibold text-muted-foreground group-hover:text-signature transition-colors">
                     {label}
                   </span>
                 </motion.button>
