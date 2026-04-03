@@ -54,6 +54,9 @@ const Radar360 = () => {
   /* ── Alterações Recentes ── */
   const [resenha, setResenha] = useState<ResenhaItem[]>([]);
   const [loadingResenha, setLoadingResenha] = useState(true);
+  const [leisRecentes, setLeisRecentes] = useState<LeiOrdinaria[]>([]);
+  const [decretosRecentes, setDecretosRecentes] = useState<LeiOrdinaria[]>([]);
+  const [loadingLeisDec, setLoadingLeisDec] = useState(true);
 
   useEffect(() => {
     const cached = getResenhaCache();
@@ -67,6 +70,21 @@ const Radar360 = () => {
         setLoadingResenha(false);
       });
     }
+
+    // Fetch recent leis ordinárias and decretos
+    (async () => {
+      try {
+        const [leis, decs] = await Promise.all([
+          fetchLeisOrdinariasPorAno(2026),
+          fetchDecretosPorAno(2026),
+        ]);
+        setLeisRecentes(leis.slice(0, 10));
+        setDecretosRecentes(decs.slice(0, 10));
+      } catch (e) {
+        console.error('Erro ao buscar leis/decretos recentes:', e);
+      }
+      setLoadingLeisDec(false);
+    })();
   }, []);
 
   const groupedResenha = useMemo(() => {
