@@ -733,7 +733,7 @@ const Radar360 = () => {
       <AnimatePresence>
         {selectedLei && (
           <motion.div
-            className="fixed inset-0 z-50 bg-background"
+            className="fixed inset-0 z-50 bg-background overflow-y-auto"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
