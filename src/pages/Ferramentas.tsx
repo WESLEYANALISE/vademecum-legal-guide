@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Timer, BookOpenText, ScanEye, Sparkles, Wrench, ChevronRight, Gamepad2, FileText, Newspaper, Mail } from 'lucide-react';
+import { ArrowLeft, Timer, BookOpenText, ScanEye, Sparkles, Wrench, ChevronRight, Gamepad2, FileText, Newspaper, Mail, Library } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import StudyTimer from '@/components/vademecum/StudyTimer';
@@ -64,6 +64,13 @@ const TOOLS = [
     icon: Mail,
     gradient: 'from-red-500 to-rose-600',
   },
+  {
+    id: 'biblioteca',
+    label: 'Biblioteca',
+    desc: 'Livros e materiais de estudo para leitura',
+    icon: Library,
+    gradient: 'from-teal-500 to-emerald-600',
+  },
 ];
 
 const Ferramentas = () => {
@@ -83,6 +90,7 @@ const Ferramentas = () => {
       case 'noticias': navigate('/noticias'); break;
       case 'newsletter': navigate('/newsletter'); break;
       case 'gerador-post': navigate('/gerador-post'); break;
+      case 'biblioteca': navigate('/biblioteca'); break;
     }
   };
 

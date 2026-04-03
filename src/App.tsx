@@ -51,6 +51,7 @@ const SobreApp = lazy(() => import("./pages/SobreApp.tsx"));
 const GeradorPost = lazy(() => import("./pages/GeradorPost.tsx"));
 const KanbanLegislativo = lazy(() => import("./pages/KanbanLegislativo.tsx"));
 const Newsletter = lazy(() => import("./pages/Newsletter.tsx"));
+const Biblioteca = lazy(() => import("./pages/Biblioteca.tsx"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -152,6 +153,7 @@ function AnimatedRoutes() {
           <Route path="/gerador-post" element={<ProtectedRoute><PageTransition><GeradorPost /></PageTransition></ProtectedRoute>} />
           <Route path="/kanban-legislativo" element={<ProtectedRoute><PageTransition><KanbanLegislativo /></PageTransition></ProtectedRoute>} />
           <Route path="/newsletter" element={<ProtectedRoute><PageTransition><Newsletter /></PageTransition></ProtectedRoute>} />
+          <Route path="/biblioteca" element={<ProtectedRoute><PageTransition><Biblioteca /></PageTransition></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
