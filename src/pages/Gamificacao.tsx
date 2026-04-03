@@ -179,19 +179,24 @@ const Gamificacao = () => {
         {/* Category tabs + Lei trail */}
         {view === 'select-lei' && (
           <>
-            <Tabs value={selectedCategoria} onValueChange={setSelectedCategoria} className="mb-4">
-              <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1">
-                {CATEGORIAS.map(cat => (
-                  <TabsTrigger
+            <div className="flex flex-wrap gap-2 mb-5">
+              {CATEGORIAS.map(cat => {
+                const active = selectedCategoria === cat.id;
+                return (
+                  <button
                     key={cat.id}
-                    value={cat.id}
-                    className="text-[11px] px-2.5 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    onClick={() => setSelectedCategoria(cat.id)}
+                    className={`text-[11px] px-3 py-1.5 rounded-full font-display font-bold border transition-all ${
+                      active
+                        ? 'bg-signature/20 border-signature text-signature'
+                        : 'bg-card border-border text-muted-foreground hover:border-signature/40 hover:text-foreground'
+                    }`}
                   >
                     {cat.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+                  </button>
+                );
+              })}
+            </div>
 
             <AnimatePresence mode="wait">
               <motion.div
