@@ -281,14 +281,14 @@ function SlideRenderer({ slide, index, total }: { slide: SlideData; index: numbe
   if (slide.tipo === 'cta') {
     return (
       <div style={baseStyle}>
-        <div style={{ ...contentStyle, alignItems: 'center', textAlign: 'center' }}>
+        <div style={{ ...contentStyle, alignItems: 'center', textAlign: 'center', padding: '28px 32px 48px' }}>
           <LogoLockup isLight={false} />
           <TagLabel text={slide.tag} isLight={false} isGradient={true} />
-          <h2 style={{ ...headingStyle, color: '#fff', fontSize: 28 }}>{slide.texto_engajamento}</h2>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 28px', background: LIGHT_BG, color: BRAND_DARK, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 14, borderRadius: 28, marginTop: 20 }}>
+          <h2 style={{ ...headingStyle, color: '#fff', fontSize: 22 }}>{slide.texto_engajamento}</h2>
+          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 24px', background: LIGHT_BG, color: BRAND_DARK, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 12, borderRadius: 24, marginTop: 16 }}>
             {slide.cta_texto || 'Salve para revisar!'}
           </div>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 16, fontFamily: "'DM Sans', sans-serif" }}>Siga @vacatio.app para mais conteúdo jurídico</p>
+          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 12, fontFamily: "'DM Sans', sans-serif" }}>@vacatio.app</p>
         </div>
         <ProgressBar index={index} total={total} isLight={false} />
       </div>
