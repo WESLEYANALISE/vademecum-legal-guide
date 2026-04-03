@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ScanEye, Calendar, ChevronRight, Loader2, FileText, Scale, TrendingUp } from 'lucide-react';
+import { ArrowLeft, ScanEye, Calendar, ChevronRight, Loader2, FileText, Scale, TrendingUp, Gavel, ScrollText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import brasaoImg from '@/assets/brasao-republica.png';
 import { supabase } from '@/integrations/supabase/client';
 import { getResenhaCache, prefetchResenha, type ResenhaItem } from '@/services/atualizacaoService';
-import { getLeisCatalog, fetchArtigosLei, getCachedArtigos } from '@/services/legislacaoService';
+import { getLeisCatalog, fetchArtigosLei, getCachedArtigos, fetchLeisOrdinariasPorAno, fetchDecretosPorAno, type LeiOrdinaria } from '@/services/legislacaoService';
 import AlteracaoDetailSheet from '@/components/vademecum/AlteracaoDetailSheet';
 import { buildContextualTitle } from '@/components/vademecum/RadarLegislacaoContent';
 
@@ -54,6 +54,9 @@ const Radar360 = () => {
   /* ── Alterações Recentes ── */
   const [resenha, setResenha] = useState<ResenhaItem[]>([]);
   const [loadingResenha, setLoadingResenha] = useState(true);
+  const [leisRecentes, setLeisRecentes] = useState<LeiOrdinaria[]>([]);
+  const [decretosRecentes, setDecretosRecentes] = useState<LeiOrdinaria[]>([]);
+  const [loadingLeisDec, setLoadingLeisDec] = useState(true);
 
   useEffect(() => {
     const cached = getResenhaCache();
@@ -67,6 +70,21 @@ const Radar360 = () => {
         setLoadingResenha(false);
       });
     }
+
+    // Fetch recent leis ordinárias and decretos
+    (async () => {
+      try {
+        const [leis, decs] = await Promise.all([
+          fetchLeisOrdinariasPorAno(2026),
+          fetchDecretosPorAno(2026),
+        ]);
+        setLeisRecentes(leis.slice(0, 10));
+        setDecretosRecentes(decs.slice(0, 10));
+      } catch (e) {
+        console.error('Erro ao buscar leis/decretos recentes:', e);
+      }
+      setLoadingLeisDec(false);
+    })();
   }, []);
 
   const groupedResenha = useMemo(() => {
@@ -393,6 +411,79 @@ const Radar360 = () => {
                 })}
               </div>
             ))}
+            {/* ── Leis Ordinárias Recentes ── */}
+            {!loadingLeisDec && leisRecentes.length > 0 && (
+              <div className="space-y-2 mt-2">
+                <div className="flex items-center gap-2 px-1">
+                  <ScrollText className="w-3.5 h-3.5 text-violet-500" />
+                  <span className="text-xs font-display text-violet-500 font-semibold">Leis Ordinárias Recentes</span>
+                </div>
+                {leisRecentes.map((lei, i) => (
+                  <motion.div
+                    key={lei.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.02 }}
+                    onClick={() => navigate(`/legislacao/lei-ordinaria?id=${lei.id}`)}
+                    className="border border-border rounded-lg p-3 bg-card hover:border-violet-500/30 transition-colors cursor-pointer flex gap-3 items-start"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <ScrollText className="w-4 h-4 text-violet-500" />
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-display text-sm text-foreground font-semibold">{lei.numero_lei}</span>
+                        {lei.data_publicacao && (
+                          <span className="text-[10px] text-muted-foreground">{lei.data_publicacao}</span>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground text-xs line-clamp-2 leading-relaxed">{lei.ementa}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {/* ── Decretos Recentes ── */}
+            {!loadingLeisDec && decretosRecentes.length > 0 && (
+              <div className="space-y-2 mt-2">
+                <div className="flex items-center gap-2 px-1">
+                  <Gavel className="w-3.5 h-3.5 text-emerald-500" />
+                  <span className="text-xs font-display text-emerald-500 font-semibold">Decretos Recentes</span>
+                </div>
+                {decretosRecentes.map((dec, i) => (
+                  <motion.div
+                    key={dec.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.02 }}
+                    onClick={() => navigate(`/legislacao/decreto?id=${dec.id}`)}
+                    className="border border-border rounded-lg p-3 bg-card hover:border-emerald-500/30 transition-colors cursor-pointer flex gap-3 items-start"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <Gavel className="w-4 h-4 text-emerald-500" />
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-display text-sm text-foreground font-semibold">{dec.numero_lei}</span>
+                        {dec.data_publicacao && (
+                          <span className="text-[10px] text-muted-foreground">{dec.data_publicacao}</span>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground text-xs line-clamp-2 leading-relaxed">{dec.ementa}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {loadingLeisDec && (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            )}
           </TabsContent>
 
           {/* ── Tab: Novidades ── */}
