@@ -6,9 +6,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
 import LivroCard, { type LivroUnificado } from '@/components/biblioteca/LivroCard';
-import LivroDetailSheet from '@/components/biblioteca/LivroDetailSheet';
+import LivroDetailSheet, { type ReadMode } from '@/components/biblioteca/LivroDetailSheet';
 import LeitorWebView from '@/components/biblioteca/LeitorWebView';
+import LeitorEbook from '@/components/estudar/LeitorEbook';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 
 import capaEstudos from '@/assets/biblioteca/capa-estudos.jpg';
 import capaClassicos from '@/assets/biblioteca/capa-classicos.jpg';
