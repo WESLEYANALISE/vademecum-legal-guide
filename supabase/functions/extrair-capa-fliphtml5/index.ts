@@ -5,6 +5,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function extractDriveFileId(url: string): string | null {
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  return match?.[1] ?? null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -14,12 +19,15 @@ Deno.serve(async (req) => {
   const SB_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(SB_URL, SB_KEY);
 
-  // Fetch all estudos without capa_livro but with a fliphtml5 link
+  const url = new URL(req.url);
+  const limit = parseInt(url.searchParams.get("limit") || "5");
+
   const { data: livros, error } = await supabase
     .from("biblioteca_estudos")
-    .select("id, link, capa_livro")
+    .select("id, link, download, capa_livro")
     .is("capa_livro", null)
-    .not("link", "is", null);
+    .not("download", "is", null)
+    .limit(limit);
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
@@ -31,27 +39,48 @@ Deno.serve(async (req) => {
   const results: { id: number; status: string; url?: string }[] = [];
 
   for (const livro of livros || []) {
-    if (!livro.link?.includes("fliphtml5.com")) {
-      results.push({ id: livro.id, status: "skipped" });
-      continue;
-    }
-
     try {
-      const base = livro.link.replace(/\/$/, "");
-      const thumbUrl = `${base}/files/large/1.jpg`;
+      let imgBytes: Uint8Array | null = null;
+      let contentType = "image/jpeg";
 
-      const imgRes = await fetch(thumbUrl);
-      if (!imgRes.ok) {
-        results.push({ id: livro.id, status: `fetch_failed_${imgRes.status}` });
+      // Strategy 1: Google Drive thumbnail from download link
+      if (livro.download) {
+        const fileId = extractDriveFileId(livro.download);
+        if (fileId) {
+          const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`;
+          const res = await fetch(thumbUrl, {
+            headers: { "User-Agent": "Mozilla/5.0" },
+            redirect: "follow",
+          });
+          if (res.ok) {
+            imgBytes = new Uint8Array(await res.arrayBuffer());
+            contentType = res.headers.get("content-type") || "image/png";
+          }
+        }
+      }
+
+      // Strategy 2: FlipHTML5 thumbnail from reading link
+      if (!imgBytes && livro.link?.includes("fliphtml5.com")) {
+        const base = livro.link.replace(/\/$/, "");
+        const thumbUrl = `${base}/files/large/1.jpg`;
+        const res = await fetch(thumbUrl);
+        if (res.ok) {
+          imgBytes = new Uint8Array(await res.arrayBuffer());
+          contentType = "image/jpeg";
+        }
+      }
+
+      if (!imgBytes || imgBytes.length < 1000) {
+        results.push({ id: livro.id, status: "no_image_found" });
         continue;
       }
 
-      const imgBytes = new Uint8Array(await imgRes.arrayBuffer());
-      const path = `capas-estudos/${livro.id}.jpg`;
+      const ext = contentType.includes("png") ? "png" : "jpg";
+      const path = `capas-estudos/${livro.id}.${ext}`;
 
       const { error: uploadErr } = await supabase.storage
         .from("biblioteca")
-        .upload(path, imgBytes, { contentType: "image/jpeg", upsert: true });
+        .upload(path, imgBytes, { contentType, upsert: true });
 
       if (uploadErr) {
         results.push({ id: livro.id, status: `upload_error: ${uploadErr.message}` });
