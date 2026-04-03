@@ -100,6 +100,8 @@ const Biblioteca = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [readerUrl, setReaderUrl] = useState<string | null>(null);
   const [readerTitle, setReaderTitle] = useState('');
+  const [ebookId, setEbookId] = useState<string | null>(null);
+  const [ebookTitle, setEbookTitle] = useState('');
 
   useEffect(() => {
     const load = async () => {
