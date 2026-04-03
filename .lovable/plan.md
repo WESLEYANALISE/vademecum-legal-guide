@@ -1,65 +1,83 @@
 
 
-## Plano: Monitoramento Diário de Alterações Legislativas
+## Plano: Gerador de Posts Instagram Carrossel
 
-### Como funciona
+### Resumo
 
-Uma Edge Function nova (`monitorar-legislacao`) vai, para cada lei do catálogo:
+Nova funcionalidade "Gerador de Post" acessível via Ferramentas. O usuário seleciona um artigo de lei e a IA gera um carrossel de imagens Instagram (1080×1350px — formato 4:5) com conteúdo educativo viral, usando a paleta vinho/marfim do Vacatio.
 
-1. Buscar o HTML atual do Planalto (`url_planalto`)
-2. Parsear os artigos (reutilizando a lógica do `scrape-legislacao`)
-3. Comparar com o que já está no banco (quantidade de artigos, textos dos artigos)
-4. Registrar diferenças encontradas numa tabela `legislacao_alteracoes`
+### Fluxo do Usuário
 
-### Tabela nova: `legislacao_alteracoes`
+1. Acessar via Ferramentas → "Gerador de Post"
+2. Selecionar lei (ex: CLT, CP, CF/88)
+3. Selecionar artigo específico
+4. Clicar "Gerar Carrossel"
+5. A IA gera o conteúdo (título viral, slides explicativos, CTA final)
+6. Preview dos slides renderizados em canvas
+7. Botão para baixar cada slide como PNG ou todos como ZIP
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid PK | |
-| tabela_nome | text | Ex: CP_CODIGO_PENAL |
-| tipo_alteracao | text | `artigo_novo`, `artigo_revogado`, `texto_alterado`, `contagem_diferente` |
-| artigo_numero | text | Ex: "Art. 121" |
-| texto_anterior | text | Trecho antigo (ou null se novo) |
-| texto_atual | text | Trecho novo (ou null se revogado) |
-| detectado_em | timestamptz | Quando foi detectado |
-| revisado | boolean | Se o admin já viu |
+### Edge Function: novo modo `carrossel_post` na `assistente-juridica`
 
-### Edge Function: `monitorar-legislacao`
+Recebe `{ mode: 'carrossel_post', tabelaNome, artigoNumero }` e retorna JSON com:
 
-- Recebe `{ tabela_nome, url_planalto }` opcionalmente (para rodar uma lei específica) ou roda todas
-- Busca HTML do Planalto → parseia artigos
-- Busca artigos atuais do banco (`SELECT numero, texto FROM tabela`)
-- Compara:
-  - Artigos no Planalto que não existem no banco → `artigo_novo`
-  - Artigos no banco que não existem no Planalto → `artigo_revogado`
-  - Artigos com texto diferente → `texto_alterado`
-- Insere diferenças na tabela `legislacao_alteracoes`
-- Retorna resumo: `{ total_leis_verificadas, alteracoes_encontradas, detalhes[] }`
+```json
+{
+  "titulo_viral": "CLT na OAB: O que você não pode confundir!",
+  "slides": [
+    {
+      "tipo": "capa",
+      "titulo": "CLT na OAB: O que você não pode confundir!",
+      "subtitulo": "Art. 2º e Art. 3º"
+    },
+    {
+      "tipo": "comparacao",
+      "titulo_esquerda": "EMPREGADOR (Art. 2º)",
+      "itens_esquerda": ["Assume os riscos...", "Dirige a prestação..."],
+      "titulo_direita": "EMPREGADO (Art. 3º)",
+      "itens_direita": ["Pessoa Física", "Não Eventualidade", ...]
+    },
+    {
+      "tipo": "destaque",
+      "titulo": "Nota de Alerta Jurídico",
+      "texto": "Responsabilidade solidária..."
+    },
+    {
+      "tipo": "cta",
+      "texto_engajamento": "Você já domina os requisitos...",
+      "texto_salvar": "Salve para revisar antes da prova!"
+    }
+  ]
+}
+```
 
-### Cron Job
+### Frontend: `src/pages/GeradorPost.tsx`
 
-Rodar diariamente às 04:00 (horário de baixo tráfego). Processa ~5 leis por execução para não estourar timeout, com auto-enfileiramento para as demais.
+- Seletor de lei + artigo (reutilizando `LEIS_CATALOG` e `fetchArtigosLei`)
+- Renderização dos slides via **HTML/CSS com refs** + `html2canvas` para exportar PNG (mesma lib já usada no MindMapPdfExport)
+- Dimensão de cada slide: **1080×1350px** (ratio 4:5 Instagram)
+- Paleta: fundo marfim `hsl(40, 15%, 92%)`, textos vinho `hsl(340, 55%, 12%)`, acentos dourados `#B8860B`
+- Logo Vacatio no canto superior de cada slide
+- Tipografia: serif para títulos (Georgia/Playfair), sans para corpo
 
-### Painel no Admin
+### Formato Visual (baseado na imagem de referência)
 
-Nova seção no `AdminMonitor.tsx` ou página dedicada `/admin-monitor-leis` com:
-
-- Lista de alterações detectadas com filtro por lei e tipo
-- Badge mostrando quantidade de alterações não revisadas
-- Botão "Verificar agora" para rodar manualmente uma lei específica
-- Botão "Aplicar" que chama `scrape-legislacao` para atualizar o banco com a versão nova
-- Botão "Ignorar" para marcar como revisado sem alterar
+- **Slide 1 (Capa)**: Título viral grande, ícone temático, nome da lei
+- **Slides 2-4 (Conteúdo)**: Colunas comparativas, bullet points com ícones, destaques em cards dourados
+- **Slide Final (CTA)**: Pergunta de engajamento + "Salve para revisar"
 
 ### Arquivos
 
 | Arquivo | Mudança |
 |---------|---------|
-| Migração SQL | Criar tabela `legislacao_alteracoes` com RLS |
-| `supabase/functions/monitorar-legislacao/index.ts` | Nova Edge Function com lógica de comparação |
-| `src/pages/AdminMonitor.tsx` | Adicionar seção de alterações legislativas |
-| Cron job SQL | Agendar execução diária |
+| `src/pages/GeradorPost.tsx` | Nova página com seletor + renderizador de slides + export PNG |
+| `src/pages/Ferramentas.tsx` | Adicionar item "Gerador de Post" na lista |
+| `src/App.tsx` | Rota `/gerador-post` |
+| `supabase/functions/assistente-juridica/index.ts` | Novo modo `carrossel_post` com prompt especializado |
 
 ### Detalhes Técnicos
 
-A lógica de parsing será extraída do `scrape-legislacao` e copiada para a nova função (Edge Functions não compartilham módulos facilmente). A comparação usa normalização de whitespace antes de diff para evitar falsos positivos. Para leis grandes (CF/88, CC), o texto é comparado artigo a artigo via hash MD5 para performance.
+- `html2canvas` já é dependência do projeto (usada em `MindMapPdfExport.ts`)
+- Cada slide é um `div` oculto de 1080×1350px renderizado via `html2canvas` com `scale: 2` para alta resolução
+- O download usa `canvas.toBlob()` → `URL.createObjectURL()` → link download
+- O prompt da IA instrui a gerar exatamente 4-6 slides em formato JSON estruturado
 
