@@ -14,6 +14,64 @@ import capaClassicos from '@/assets/biblioteca/capa-classicos.jpg';
 import capaLideranca from '@/assets/biblioteca/capa-lideranca.jpg';
 import capaForaDaToga from '@/assets/biblioteca/capa-fora-da-toga.jpg';
 
+import areaAdministrativo from '@/assets/biblioteca/areas/direito-administrativo.jpg';
+import areaAmbiental from '@/assets/biblioteca/areas/direito-ambiental.jpg';
+import areaCivil from '@/assets/biblioteca/areas/direito-civil.jpg';
+import areaConcorrencial from '@/assets/biblioteca/areas/direito-concorrencial.jpg';
+import areaConstitucional from '@/assets/biblioteca/areas/direito-constitucional.jpg';
+import areaDesportivo from '@/assets/biblioteca/areas/direito-desportivo.jpg';
+import areaTrabalho from '@/assets/biblioteca/areas/direito-do-trabalho.jpg';
+import areaEmpresarial from '@/assets/biblioteca/areas/direito-empresarial.jpg';
+import areaFinanceiro from '@/assets/biblioteca/areas/direito-financeiro.jpg';
+import areaIntPrivado from '@/assets/biblioteca/areas/direito-internacional-privado.jpg';
+import areaIntPublico from '@/assets/biblioteca/areas/direito-internacional-publico.jpg';
+import areaPenal from '@/assets/biblioteca/areas/direito-penal.jpg';
+import areaPrevidenciario from '@/assets/biblioteca/areas/direito-previdenciario.jpg';
+import areaProcCivil from '@/assets/biblioteca/areas/direito-processual-civil.jpg';
+import areaProcTrabalho from '@/assets/biblioteca/areas/direito-processual-do-trabalho.jpg';
+import areaProcPenal from '@/assets/biblioteca/areas/direito-processual-penal.jpg';
+import areaTributario from '@/assets/biblioteca/areas/direito-tributario.jpg';
+import areaUrbanistico from '@/assets/biblioteca/areas/direito-urbanistico.jpg';
+import areaDireitosHumanos from '@/assets/biblioteca/areas/direitos-humanos.jpg';
+import areaFormacao from '@/assets/biblioteca/areas/formacao-complementar.jpg';
+import areaLeiPenal from '@/assets/biblioteca/areas/lei-penal-especial.jpg';
+import areaPesquisa from '@/assets/biblioteca/areas/pesquisa-cientifica.jpg';
+import areaPoliticas from '@/assets/biblioteca/areas/politicas-publicas.jpg';
+import areaPortugues from '@/assets/biblioteca/areas/portugues.jpg';
+import areaPratica from '@/assets/biblioteca/areas/pratica-profissional.jpg';
+import areaOab from '@/assets/biblioteca/areas/revisao-oab.jpg';
+import areaTeoria from '@/assets/biblioteca/areas/teoria-filosofia-direito.jpg';
+
+const AREA_IMAGES: Record<string, string> = {
+  'Direito Administrativo': areaAdministrativo,
+  'Direito Ambiental': areaAmbiental,
+  'Direito Civil': areaCivil,
+  'Direito Concorrencial': areaConcorrencial,
+  'Direito Constitucional': areaConstitucional,
+  'Direito Desportivo': areaDesportivo,
+  'Direito Do Trabalho': areaTrabalho,
+  'Direito Empresarial': areaEmpresarial,
+  'Direito Financeiro': areaFinanceiro,
+  'Direito Internacional Privado': areaIntPrivado,
+  'Direito Internacional Público': areaIntPublico,
+  'Direito Penal': areaPenal,
+  'Direito Previndenciario': areaPrevidenciario,
+  'Direito Processual Civil': areaProcCivil,
+  'Direito Processual Do Trabalho': areaProcTrabalho,
+  'Direito Processual Penal': areaProcPenal,
+  'Direito Tributario': areaTributario,
+  'Direito Urbanistico': areaUrbanistico,
+  'Direitos Humanos': areaDireitosHumanos,
+  'Formação Complementar': areaFormacao,
+  'Lei Penal Especial': areaLeiPenal,
+  'Pesquisa Científica': areaPesquisa,
+  'Politicas Publicas': areaPoliticas,
+  'Portugues': areaPortugues,
+  'Pratica Profissional': areaPratica,
+  'Revisão Oab': areaOab,
+  'Teoria E Filosofia Do Direito': areaTeoria,
+};
+
 type View = 'menu' | 'category' | 'area-detail';
 
 const CATEGORIES = [
