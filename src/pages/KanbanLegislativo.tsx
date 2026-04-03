@@ -491,7 +491,8 @@ const KanbanLegislativo = () => {
           </Select>
         )}
 
-          <Button
+        <Button
+          variant="ghost"
           size="sm"
           className="ml-auto h-8 text-xs gap-1"
           onClick={handleRefresh}
