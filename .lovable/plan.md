@@ -1,83 +1,90 @@
 
 
-## Plano: Gerador de Posts Instagram Carrossel
+## Plano: Redesign Completo do Gerador de Post com Design System Profissional
 
 ### Resumo
 
-Nova funcionalidade "Gerador de Post" acessível via Ferramentas. O usuário seleciona um artigo de lei e a IA gera um carrossel de imagens Instagram (1080×1350px — formato 4:5) com conteúdo educativo viral, usando a paleta vinho/marfim do Vacatio.
+Reescrever o `GeradorPost.tsx` e o prompt da Edge Function para gerar carrosséis Instagram com o design system profissional descrito nas instruções: progress bar, seta de swipe, alternância light/dark, tipografia Playfair Display + DM Sans, e paleta derivada da cor vinho do Vacatio. Adicionar seletor de **tipo de conteúdo** (Curiosidade, Explicação, Resumo pra Prova, Dica Prática, Comparação).
 
-### Fluxo do Usuário
+### Paleta Derivada (da cor vinho `hsl(340, 55%, 12%)`)
 
-1. Acessar via Ferramentas → "Gerador de Post"
-2. Selecionar lei (ex: CLT, CP, CF/88)
-3. Selecionar artigo específico
-4. Clicar "Gerar Carrossel"
-5. A IA gera o conteúdo (título viral, slides explicativos, CTA final)
-6. Preview dos slides renderizados em canvas
-7. Botão para baixar cada slide como PNG ou todos como ZIP
+| Token | Valor | Uso |
+|-------|-------|-----|
+| BRAND_PRIMARY | `hsl(340, 55%, 22%)` | Ícones, tags, progress bar |
+| BRAND_LIGHT | `hsl(340, 40%, 45%)` | Tags em fundo escuro |
+| BRAND_DARK | `hsl(340, 55%, 12%)` | CTA, gradiente |
+| LIGHT_BG | `hsl(40, 15%, 95%)` | Fundo slides claros |
+| LIGHT_BORDER | `hsl(40, 10%, 88%)` | Divisores |
+| DARK_BG | `hsl(340, 30%, 8%)` | Fundo slides escuros |
+| Gradiente | `linear-gradient(165deg, DARK 0%, PRIMARY 50%, LIGHT 100%)` | Slides CTA/solução |
 
-### Edge Function: novo modo `carrossel_post` na `assistente-juridica`
+### Tipos de Conteúdo (novo seletor)
 
-Recebe `{ mode: 'carrossel_post', tabelaNome, artigoNumero }` e retorna JSON com:
+1. **Curiosidade** — "Você sabia que..." com fatos surpreendentes sobre o artigo
+2. **Explicação** — Explicação didática com exemplos
+3. **Resumo pra Prova** — Pontos-chave para OAB/concursos
+4. **Dica Prática** — Aplicação no dia-a-dia
+5. **Comparação** — Antes vs Depois / Artigo X vs Y
 
+### Mudanças
+
+**1. `src/pages/GeradorPost.tsx` — Reescrita completa**
+
+- Adicionar seletor de "Tipo de conteúdo" com as 5 opções acima (radio group ou select)
+- Enviar o `tipoConteudo` na chamada da Edge Function
+- Novo `SlideRenderer` com o design system completo:
+  - Cada slide renderizado a 420px de largura (ratio 4:5 = 525px)
+  - Progress bar em cada slide (track + fill + counter "1/7")
+  - Seta de swipe na borda direita (exceto último slide)
+  - Alternância LIGHT_BG / DARK_BG / Gradiente entre slides
+  - Logo lockup (logo Vacatio + "Vacatio" + handle) no primeiro e último slides
+  - Tag/categoria (ex: "CURIOSIDADE JURÍDICA") uppercase acima dos títulos
+  - Tipografia: Google Fonts Playfair Display (títulos) + DM Sans (corpo)
+  - Componentes reutilizáveis: feature list, numbered steps, quote box, tag pills, CTA button
+- Para export PNG: manter `html2canvas` com `scale: Math.ceil(1080/420)` = scale 3 para alta resolução
+- Os slides off-screen para export ficam a 420x525px (não 1080x1350) e o scale do html2canvas faz o upscale
+
+**2. `supabase/functions/assistente-juridica/index.ts` — Prompt atualizado**
+
+- Receber `tipoConteudo` no body
+- Novo prompt com tipos de slides expandidos baseados no design system:
+  - `hero` (capa com hook viral)
+  - `problema` (pain point, fundo escuro)
+  - `solucao` (fundo gradiente, resposta)
+  - `features` (lista de features/pontos com ícones)
+  - `detalhes` (profundidade, fundo escuro)
+  - `passos` (how-to numerado)
+  - `cta` (call to action final)
+- O prompt adapta o conteúdo ao `tipoConteudo` selecionado
+- Gerar 5-7 slides seguindo a sequência narrativa (hook → problema → solução → detalhes → CTA)
+- Cada slide inclui `tag` (label uppercase), `bg` (light/dark/gradient), e conteúdo específico
+
+**Novo formato JSON dos slides:**
 ```json
 {
-  "titulo_viral": "CLT na OAB: O que você não pode confundir!",
+  "titulo_viral": "...",
   "slides": [
-    {
-      "tipo": "capa",
-      "titulo": "CLT na OAB: O que você não pode confundir!",
-      "subtitulo": "Art. 2º e Art. 3º"
-    },
-    {
-      "tipo": "comparacao",
-      "titulo_esquerda": "EMPREGADOR (Art. 2º)",
-      "itens_esquerda": ["Assume os riscos...", "Dirige a prestação..."],
-      "titulo_direita": "EMPREGADO (Art. 3º)",
-      "itens_direita": ["Pessoa Física", "Não Eventualidade", ...]
-    },
-    {
-      "tipo": "destaque",
-      "titulo": "Nota de Alerta Jurídico",
-      "texto": "Responsabilidade solidária..."
-    },
-    {
-      "tipo": "cta",
-      "texto_engajamento": "Você já domina os requisitos...",
-      "texto_salvar": "Salve para revisar antes da prova!"
-    }
+    { "tipo": "hero", "bg": "light", "tag": "CURIOSIDADE JURÍDICA", "titulo": "...", "subtitulo": "..." },
+    { "tipo": "problema", "bg": "dark", "tag": "O PROBLEMA", "titulo": "...", "itens": ["..."] },
+    { "tipo": "solucao", "bg": "gradient", "tag": "A RESPOSTA", "titulo": "...", "texto": "...", "citacao": "..." },
+    { "tipo": "features", "bg": "light", "tag": "PONTOS-CHAVE", "titulo": "...", "features": [{"icone": "...", "label": "...", "desc": "..."}] },
+    { "tipo": "passos", "bg": "light", "tag": "COMO APLICAR", "titulo": "...", "passos": [{"titulo": "...", "desc": "..."}] },
+    { "tipo": "cta", "bg": "gradient", "tag": "SALVE ESTE POST", "texto_engajamento": "...", "cta_texto": "..." }
   ]
 }
 ```
 
-### Frontend: `src/pages/GeradorPost.tsx`
-
-- Seletor de lei + artigo (reutilizando `LEIS_CATALOG` e `fetchArtigosLei`)
-- Renderização dos slides via **HTML/CSS com refs** + `html2canvas` para exportar PNG (mesma lib já usada no MindMapPdfExport)
-- Dimensão de cada slide: **1080×1350px** (ratio 4:5 Instagram)
-- Paleta: fundo marfim `hsl(40, 15%, 92%)`, textos vinho `hsl(340, 55%, 12%)`, acentos dourados `#B8860B`
-- Logo Vacatio no canto superior de cada slide
-- Tipografia: serif para títulos (Georgia/Playfair), sans para corpo
-
-### Formato Visual (baseado na imagem de referência)
-
-- **Slide 1 (Capa)**: Título viral grande, ícone temático, nome da lei
-- **Slides 2-4 (Conteúdo)**: Colunas comparativas, bullet points com ícones, destaques em cards dourados
-- **Slide Final (CTA)**: Pergunta de engajamento + "Salve para revisar"
-
-### Arquivos
+### Arquivos Editados
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/GeradorPost.tsx` | Nova página com seletor + renderizador de slides + export PNG |
-| `src/pages/Ferramentas.tsx` | Adicionar item "Gerador de Post" na lista |
-| `src/App.tsx` | Rota `/gerador-post` |
-| `supabase/functions/assistente-juridica/index.ts` | Novo modo `carrossel_post` com prompt especializado |
+| `src/pages/GeradorPost.tsx` | Reescrita completa com novo design system e seletor de tipo |
+| `supabase/functions/assistente-juridica/index.ts` | Prompt expandido com novos tipos de slides e `tipoConteudo` |
 
-### Detalhes Técnicos
+### Detalhes Tecnicoss
 
-- `html2canvas` já é dependência do projeto (usada em `MindMapPdfExport.ts`)
-- Cada slide é um `div` oculto de 1080×1350px renderizado via `html2canvas` com `scale: 2` para alta resolução
-- O download usa `canvas.toBlob()` → `URL.createObjectURL()` → link download
-- O prompt da IA instrui a gerar exatamente 4-6 slides em formato JSON estruturado
+- Google Fonts (Playfair Display + DM Sans) carregadas via `@import` no `<style>` embutido nos slides ou via `<link>` no index.html
+- O preview no app mostra os slides a ~350px de largura (escala proporcional) com navegação por setas
+- O export usa `html2canvas` com `scale: 3` nos divs de 420x525px, resultando em PNGs de ~1260x1575px (suficiente para Instagram 1080x1350)
+- A progress bar e seta são renderizados como parte do slide HTML, não como overlay do app
 
