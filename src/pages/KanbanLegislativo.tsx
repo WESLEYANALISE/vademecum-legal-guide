@@ -205,6 +205,7 @@ const KanbanLegislativo = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [filterTipo, setFilterTipo] = useState<string>('all');
   const [filterLei, setFilterLei] = useState<string>('all');
+  const [selectedItem, setSelectedItem] = useState<KanbanItem | null>(null);
   const [activeItem, setActiveItem] = useState<KanbanItem | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
