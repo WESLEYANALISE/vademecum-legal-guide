@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Library, ChevronRight, BookOpen, GraduationCap, Award, Coffee } from 'lucide-react';
+import { ArrowLeft, Library, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
@@ -8,15 +8,19 @@ import LivroCard, { type LivroUnificado } from '@/components/biblioteca/LivroCar
 import LivroDetailSheet from '@/components/biblioteca/LivroDetailSheet';
 import LeitorWebView from '@/components/biblioteca/LeitorWebView';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cdnImg } from '@/lib/cdnImg';
+
+import capaEstudos from '@/assets/biblioteca/capa-estudos.jpg';
+import capaClassicos from '@/assets/biblioteca/capa-classicos.jpg';
+import capaLideranca from '@/assets/biblioteca/capa-lideranca.jpg';
+import capaForaDaToga from '@/assets/biblioteca/capa-fora-da-toga.jpg';
 
 type View = 'menu' | 'category' | 'area-detail';
 
 const CATEGORIES = [
-  { id: 'estudos', label: 'Estudos', desc: 'Materiais organizados por área do Direito', icon: GraduationCap, gradient: 'from-blue-600 to-blue-900' },
-  { id: 'classicos', label: 'Clássicos', desc: 'Obras fundamentais do Direito', icon: BookOpen, gradient: 'from-red-700 to-red-950' },
-  { id: 'lideranca', label: 'Liderança', desc: 'Desenvolvimento pessoal e profissional', icon: Award, gradient: 'from-amber-600 to-amber-900' },
-  { id: 'fora-da-toga', label: 'Fora da Toga', desc: 'Leituras complementares', icon: Coffee, gradient: 'from-purple-600 to-purple-900' },
+  { id: 'estudos', label: 'Estudos', desc: 'Materiais organizados por área do Direito', img: capaEstudos },
+  { id: 'classicos', label: 'Clássicos', desc: 'Obras fundamentais do Direito', img: capaClassicos },
+  { id: 'lideranca', label: 'Liderança', desc: 'Desenvolvimento pessoal e profissional', img: capaLideranca },
+  { id: 'fora-da-toga', label: 'Fora da Toga', desc: 'Leituras complementares', img: capaForaDaToga },
 ];
 
 const Biblioteca = () => {
@@ -150,17 +154,14 @@ const Biblioteca = () => {
         Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)
       ) : (
         CATEGORIES.map((cat) => {
-          const Icon = cat.icon;
           const livros = getLivros(cat.id);
           return (
             <button
               key={cat.id}
               onClick={() => handleSelectCategory(cat.id)}
-              className="w-full flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left"
+              className="w-full flex items-center gap-4 p-3 rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden"
             >
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${cat.gradient} flex items-center justify-center shadow-lg`}>
-                <Icon className="w-6 h-6 text-white" />
-              </div>
+              <img src={cat.img} alt={cat.label} className="w-14 h-14 rounded-xl object-cover shadow-lg flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{cat.label}</p>
                 <p className="text-xs text-muted-foreground">{cat.desc}</p>
