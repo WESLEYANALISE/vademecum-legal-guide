@@ -52,6 +52,7 @@ const GeradorPost = lazy(() => import("./pages/GeradorPost.tsx"));
 const KanbanLegislativo = lazy(() => import("./pages/KanbanLegislativo.tsx"));
 const Newsletter = lazy(() => import("./pages/Newsletter.tsx"));
 const Biblioteca = lazy(() => import("./pages/Biblioteca.tsx"));
+const BibliotecaAdmin = lazy(() => import("./pages/BibliotecaAdmin.tsx"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
