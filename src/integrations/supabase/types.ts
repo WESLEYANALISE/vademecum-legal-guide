@@ -1819,6 +1819,66 @@ export type Database = {
         }
         Relationships: []
       }
+      kanban_proposicoes: {
+        Row: {
+          ano: number
+          atualizado_em: string | null
+          autor: string | null
+          dados_json: Json | null
+          data_publicacao: string | null
+          data_ultima_acao: string | null
+          data_votacao: string | null
+          ementa: string | null
+          id: string
+          id_externo: string
+          lei_afetada: string | null
+          numero: number
+          numero_lei_publicada: string | null
+          resultado_votacao: string | null
+          sigla_tipo: string
+          situacao_camara: string | null
+          status_kanban: string
+        }
+        Insert: {
+          ano: number
+          atualizado_em?: string | null
+          autor?: string | null
+          dados_json?: Json | null
+          data_publicacao?: string | null
+          data_ultima_acao?: string | null
+          data_votacao?: string | null
+          ementa?: string | null
+          id?: string
+          id_externo: string
+          lei_afetada?: string | null
+          numero: number
+          numero_lei_publicada?: string | null
+          resultado_votacao?: string | null
+          sigla_tipo: string
+          situacao_camara?: string | null
+          status_kanban?: string
+        }
+        Update: {
+          ano?: number
+          atualizado_em?: string | null
+          autor?: string | null
+          dados_json?: Json | null
+          data_publicacao?: string | null
+          data_ultima_acao?: string | null
+          data_votacao?: string | null
+          ementa?: string | null
+          id?: string
+          id_externo?: string
+          lei_afetada?: string | null
+          numero?: number
+          numero_lei_publicada?: string | null
+          resultado_votacao?: string | null
+          sigla_tipo?: string
+          situacao_camara?: string | null
+          status_kanban?: string
+        }
+        Relationships: []
+      }
       L8112_SERVIDORES_FEDERAIS: {
         Row: {
           capitulo: string | null

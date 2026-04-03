@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Timer, BookOpenText, ScanEye, Sparkles, Wrench, ChevronRight, Gamepad2, FileText, ImageIcon } from 'lucide-react';
+import { ArrowLeft, Timer, BookOpenText, ScanEye, Sparkles, Wrench, ChevronRight, Gamepad2, FileText, ImageIcon, Kanban } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import StudyTimer from '@/components/vademecum/StudyTimer';
@@ -49,6 +49,13 @@ const TOOLS = [
     icon: FileText,
     gradient: 'from-sky-500 to-indigo-600',
   },
+  {
+    id: 'kanban',
+    label: 'Kanban Legislativo',
+    desc: 'Acompanhe o ciclo de vida das proposições',
+    icon: Kanban,
+    gradient: 'from-indigo-500 to-violet-600',
+  },
 ];
 
 const Ferramentas = () => {
@@ -79,6 +86,9 @@ const Ferramentas = () => {
         break;
       case 'gerador-post':
         navigate('/gerador-post');
+        break;
+      case 'kanban':
+        navigate('/kanban-legislativo');
         break;
     }
   };
