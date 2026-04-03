@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, RefreshCw, CheckCircle2, XCircle, AlertTriangle, Clock, Play, Loader2, Activity, Key, Zap, MinusCircle, ShieldCheck, Eye, Check, X } from 'lucide-react';
+import { ArrowLeft, RefreshCw, CheckCircle2, XCircle, AlertTriangle, Clock, Play, Loader2, Activity, Key, Zap, MinusCircle, ShieldCheck, Eye, Check, X, Kanban } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -84,6 +84,11 @@ const AdminMonitor = () => {
   const [verificando, setVerificando] = useState(false);
   const [expandedAlt, setExpandedAlt] = useState<string | null>(null);
 
+  // Kanban state
+  const [kanbanItems, setKanbanItems] = useState<any[]>([]);
+  const [kanbanLoading, setKanbanLoading] = useState(true);
+  const [kanbanRefreshing, setKanbanRefreshing] = useState(false);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -115,12 +120,40 @@ const AdminMonitor = () => {
     }
   }, []);
 
+  const fetchKanban = useCallback(async () => {
+    setKanbanLoading(true);
+    try {
+      const { data: rows } = await supabase
+        .from('kanban_proposicoes')
+        .select('*')
+        .order('atualizado_em', { ascending: false })
+        .limit(100);
+      setKanbanItems(rows || []);
+    } catch (e) {
+      console.error(e);
+    }
+    setKanbanLoading(false);
+  }, []);
+
+  const refreshKanban = async () => {
+    setKanbanRefreshing(true);
+    try {
+      await supabase.functions.invoke('atualizar-kanban');
+      await fetchKanban();
+      toast.success('Kanban atualizado');
+    } catch (e: any) {
+      toast.error('Erro: ' + (e.message || ''));
+    }
+    setKanbanRefreshing(false);
+  };
+
   useEffect(() => {
     fetchData();
     fetchAlteracoes();
+    fetchKanban();
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
-  }, [fetchData, fetchAlteracoes]);
+  }, [fetchData, fetchAlteracoes, fetchKanban]);
 
   const invokeFunction = async (fnName: string) => {
     setInvoking(fnName);
@@ -313,6 +346,76 @@ const AdminMonitor = () => {
                   )}
                 </div>
               ))
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Kanban Legislativo */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Kanban className="w-5 h-5 text-primary" />
+                Kanban Legislativo
+                {kanbanItems.length > 0 && (
+                  <Badge variant="secondary" className="text-[10px] ml-1">{kanbanItems.length}</Badge>
+                )}
+              </CardTitle>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => navigate('/kanban-legislativo')}>
+                  <Eye className="w-3.5 h-3.5 mr-1" />
+                  Ver board
+                </Button>
+                <Button variant="outline" size="sm" onClick={refreshKanban} disabled={kanbanRefreshing}>
+                  {kanbanRefreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <RefreshCw className="w-3.5 h-3.5 mr-1" />}
+                  Atualizar
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {kanbanLoading ? (
+              <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+            ) : kanbanItems.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Nenhuma proposição monitorada. Clique em "Atualizar" para popular.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {/* Status summary */}
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { key: 'tramitando', label: 'Tramitando', icon: '📋' },
+                    { key: 'votacao', label: 'Votação', icon: '🗳️' },
+                    { key: 'sancao', label: 'Sanção', icon: '✍️' },
+                    { key: 'publicada', label: 'Publicada', icon: '✅' },
+                  ].map(col => {
+                    const count = kanbanItems.filter(i => i.status_kanban === col.key).length;
+                    return (
+                      <div key={col.key} className="rounded-lg bg-secondary/30 p-2.5 text-center">
+                        <span className="text-lg">{col.icon}</span>
+                        <p className="text-lg font-bold text-foreground mt-1">{count}</p>
+                        <p className="text-[10px] text-muted-foreground">{col.label}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Recent items */}
+                <div className="mt-3 space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Últimas atualizações</p>
+                  {kanbanItems.slice(0, 5).map(item => (
+                    <div key={item.id} className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-secondary/30">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Badge variant="outline" className="text-[10px] shrink-0">{item.sigla_tipo}</Badge>
+                        <span className="text-xs font-medium text-foreground truncate">
+                          {item.sigla_tipo} {item.numero}/{item.ano}
+                        </span>
+                      </div>
+                      <Badge variant="secondary" className="text-[9px] capitalize shrink-0">{item.status_kanban}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
