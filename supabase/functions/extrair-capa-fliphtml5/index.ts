@@ -20,14 +20,24 @@ Deno.serve(async (req) => {
   const supabase = createClient(SB_URL, SB_KEY);
 
   const url = new URL(req.url);
-  const limit = parseInt(url.searchParams.get("limit") || "5");
+  const limit = parseInt(url.searchParams.get("limit") || "10");
+  const mode = url.searchParams.get("mode") || "missing";
 
-  const { data: livros, error } = await supabase
+  // mode=missing → only NULL capa_livro
+  // mode=reprocess → re-extract for books with Drive thumbnails (akaeinqkhdwzopfsckgg)
+  let query = supabase
     .from("biblioteca_estudos")
-    .select("id, link, download, capa_livro")
-    .is("capa_livro", null)
-    .not("download", "is", null)
-    .limit(limit);
+    .select("id, link, download, capa_livro");
+
+  if (mode === "reprocess") {
+    query = query.like("capa_livro", "%akaeinqkhdwzopfsckgg%");
+  } else {
+    query = query.is("capa_livro", null);
+  }
+
+  query = query.not("download", "is", null).limit(limit);
+
+  const { data: livros, error } = await query;
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
@@ -43,11 +53,11 @@ Deno.serve(async (req) => {
       let imgBytes: Uint8Array | null = null;
       let contentType = "image/jpeg";
 
-      // Strategy 1: Google Drive thumbnail from download link
+      // Strategy 1: Google Drive thumbnail at high resolution
       if (livro.download) {
         const fileId = extractDriveFileId(livro.download);
         if (fileId) {
-          const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`;
+          const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200`;
           const res = await fetch(thumbUrl, {
             headers: { "User-Agent": "Mozilla/5.0" },
             redirect: "follow",
