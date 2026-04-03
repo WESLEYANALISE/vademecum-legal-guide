@@ -60,6 +60,7 @@ const Radar360 = () => {
   const [leisRecentes, setLeisRecentes] = useState<LeiOrdinaria[]>([]);
   const [decretosRecentes, setDecretosRecentes] = useState<LeiOrdinaria[]>([]);
   const [loadingLeisDec, setLoadingLeisDec] = useState(true);
+  const [selectedLei, setSelectedLei] = useState<LeiOrdinaria | null>(null);
 
   useEffect(() => {
     const cached = getResenhaCache();
