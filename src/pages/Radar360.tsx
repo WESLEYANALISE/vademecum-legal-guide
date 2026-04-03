@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ScanEye, Calendar, ChevronRight, Loader2, FileText, Scale, TrendingUp, Gavel, ScrollText } from 'lucide-react';
+import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -406,50 +407,51 @@ const Radar360 = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="relative bg-gradient-to-br from-card to-secondary overflow-hidden px-4 pt-8 pb-6 sm:px-6">
-        {/* Decorative circle */}
-        <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/5" />
-        <ScanEye className="absolute top-5 right-5 w-10 h-10 text-white/15 rotate-12" />
-
-        <div className="relative max-w-2xl mx-auto z-10">
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-3"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center">
-              <ScanEye className="w-5 h-5 text-white" />
+    <DesktopPageLayout
+      activeId="ferramentas"
+      title="Radar 360"
+      subtitle="Alterações recentes e projetos que podem mudar as leis"
+      mobileHeader={
+        <div className="relative bg-gradient-to-br from-card to-secondary overflow-hidden px-4 pt-8 pb-6 sm:px-6">
+          <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/5" />
+          <ScanEye className="absolute top-5 right-5 w-10 h-10 text-white/15 rotate-12" />
+          <div className="relative max-w-2xl mx-auto z-10">
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-3"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Voltar
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center">
+                <ScanEye className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="font-display text-xl text-white font-bold">Radar 360</h1>
+                <p className="text-white/70 text-xs">
+                  Alterações recentes e projetos que podem mudar as leis
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-display text-xl text-white font-bold">Radar 360</h1>
-              <p className="text-white/70 text-xs">
-                Alterações recentes e projetos que podem mudar as leis
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mt-4 bg-black/20 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/10"
+            >
+              <p className="text-white font-display text-sm font-semibold mb-0.5">
+                {TAB_DESCRIPTIONS[activeTab]?.title}
               </p>
-            </div>
+              <p className="text-white/70 text-xs leading-relaxed">
+                {TAB_DESCRIPTIONS[activeTab]?.description}
+              </p>
+            </motion.div>
           </div>
-
-          {/* Contextual description card */}
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="mt-4 bg-black/20 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/10"
-          >
-            <p className="text-white font-display text-sm font-semibold mb-0.5">
-              {TAB_DESCRIPTIONS[activeTab]?.title}
-            </p>
-            <p className="text-white/70 text-xs leading-relaxed">
-              {TAB_DESCRIPTIONS[activeTab]?.description}
-            </p>
-          </motion.div>
         </div>
-      </div>
+      }
+    >
 
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 sm:px-6 -mt-3 relative z-10">
@@ -746,7 +748,7 @@ const Radar360 = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </DesktopPageLayout>
   );
 };
 
