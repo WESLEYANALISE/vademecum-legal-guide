@@ -175,11 +175,52 @@ const Biblioteca = () => {
     setDetailOpen(true);
   };
 
-  const handleRead = (livro: LivroUnificado) => {
-    if (!livro.link) return;
+  const handleRead = async (livro: LivroUnificado, mode: ReadMode) => {
     setDetailOpen(false);
-    setReaderTitle(livro.titulo);
-    setReaderUrl(livro.link);
+
+    if (mode === 'fliphtml5') {
+      if (!livro.link) return;
+      setReaderTitle(livro.titulo);
+      setReaderUrl(livro.link);
+    } else if (mode === 'vertical') {
+      if (!livro.download) return;
+      const match = livro.download.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (!match) { toast.error('Link do Drive inválido'); return; }
+      const previewUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
+      setReaderTitle(livro.titulo);
+      setReaderUrl(previewUrl);
+    } else if (mode === 'dinamico') {
+      // Check if ebook exists in biblioteca_livros
+      const { data } = await supabase
+        .from('biblioteca_livros')
+        .select('id,status')
+        .ilike('titulo', livro.titulo.trim())
+        .limit(1)
+        .maybeSingle();
+
+      if (data && data.status === 'ready') {
+        setEbookTitle(livro.titulo);
+        setEbookId(data.id);
+      } else if (data && data.status === 'processing') {
+        toast.info('Este livro ainda está sendo formatado...');
+      } else {
+        // Start formatting
+        toast.info('Iniciando formatação do e-book...');
+        try {
+          await supabase.functions.invoke('processar-pdf', {
+            body: {
+              url: livro.download,
+              titulo: livro.titulo,
+              autor: livro.autor || undefined,
+              capa_url: livro.capa || undefined,
+            },
+          });
+          toast.success('Formatação iniciada! Volte em alguns minutos.');
+        } catch {
+          toast.error('Erro ao iniciar formatação');
+        }
+      }
+    }
   };
 
   const catMeta = CATEGORIES.find(c => c.id === activeCategory);
