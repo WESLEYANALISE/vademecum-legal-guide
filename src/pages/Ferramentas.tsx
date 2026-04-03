@@ -71,6 +71,13 @@ const TOOLS = [
     icon: Library,
     gradient: 'from-teal-500 to-emerald-600',
   },
+  {
+    id: 'aprender',
+    label: 'Aprender',
+    desc: 'Artigos educacionais e conteúdos complementares',
+    icon: Brain,
+    gradient: 'from-indigo-500 to-purple-600',
+  },
 ];
 
 const Ferramentas = () => {
