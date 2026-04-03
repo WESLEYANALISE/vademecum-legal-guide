@@ -115,7 +115,7 @@ const Estudar = () => {
       {/* Header */}
       <div className="bg-gradient-to-br from-card to-secondary px-4 pt-10 pb-8 sm:px-6">
         <div className="max-w-2xl mx-auto">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm mb-4">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-4">
             <ArrowLeft className="w-4 h-4" />
             Voltar
           </button>

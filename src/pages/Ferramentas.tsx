@@ -94,7 +94,7 @@ const Ferramentas = () => {
         <div className="relative max-w-2xl mx-auto z-10">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm mb-4"
+            className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar

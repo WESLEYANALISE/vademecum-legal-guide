@@ -171,7 +171,7 @@ const Resumos = () => {
         <FileText className="absolute top-5 right-5 w-10 h-10 text-primary-foreground/25 rotate-12" />
         <div className="relative max-w-2xl mx-auto z-10">
           <button onClick={handleBack}
-            className="flex items-center gap-2 bg-primary-foreground/15 hover:bg-primary-foreground/25 backdrop-blur-sm text-primary-foreground font-medium transition-all text-sm mb-4 px-3 py-1.5 rounded-lg">
+            className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-4">
             <ArrowLeft className="w-4 h-4" /> Voltar
           </button>
           <h1 className="font-display text-2xl text-primary-foreground font-bold">{headerTitle}</h1>

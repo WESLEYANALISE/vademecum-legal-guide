@@ -443,7 +443,7 @@ const GeradorPost = () => {
       <div className="relative overflow-hidden px-4 pt-10 pb-8 sm:px-6" style={{ background: `linear-gradient(135deg, ${WINE}, hsl(340, 45%, 18%))` }}>
         <ImageIcon className="absolute top-5 right-5 w-10 h-10 text-white/15 rotate-12" />
         <div className="relative max-w-2xl mx-auto z-10">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm mb-4">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-4">
             <ArrowLeft className="w-4 h-4" /> Voltar
           </button>
           <h1 className="text-2xl text-white font-bold" style={{ fontFamily: "'Merriweather', serif" }}>Gerador de Post</h1>
