@@ -346,7 +346,7 @@ const Radar360 = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 -mt-3">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 -mt-3 relative z-10">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full bg-card border border-border rounded-xl h-11">
             <TabsTrigger value="alteracoes" className="flex-1 rounded-lg text-[11px] font-display data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
