@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Timer, BookOpenText, ScanEye, Sparkles, Wrench, ChevronRight, Gamepad2, FileText, ImageIcon, Kanban } from 'lucide-react';
+import { ArrowLeft, Timer, BookOpenText, ScanEye, Sparkles, Wrench, ChevronRight, Gamepad2, FileText, ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import StudyTimer from '@/components/vademecum/StudyTimer';
