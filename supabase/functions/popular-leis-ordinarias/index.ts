@@ -42,22 +42,29 @@ function extractLeiData(html: string, num: number): {
     .replace(/\s+/g, " ")
     .trim();
 
-  // Extract title + ementa
-  const m = bodyClean.match(
-    /LEI\s+N[ºo°]\s*[\d.]+,?\s*DE\s+(\d{1,2})\s+DE\s+(\w+)\s+DE\s+(\d{4})\s*(.+?)\s*O\s+PRESIDENTE/i
+  // Extract title line specifically — match the law's OWN title
+  const titleMatch = bodyClean.match(
+    /LEI\s+N[ºo°]\s*[\d.]+,?\s*DE\s+(\d{1,2})\s+DE\s+(\w+)\s+DE\s+(\d{4})/i
   );
 
   let data_publicacao = "";
-  let ementa = "";
 
-  if (m) {
+  if (titleMatch) {
     const meses: Record<string, string> = {
       janeiro: "1", fevereiro: "2", "março": "3", marco: "3",
       abril: "4", maio: "5", junho: "6", julho: "7",
       agosto: "8", setembro: "9", outubro: "10", novembro: "11", dezembro: "12",
     };
-    data_publicacao = `${m[1]}.${meses[m[2].toLowerCase()] || "0"}.${m[3]}`;
-    ementa = m[4].replace(/^Mensagem de veto\s*/i, "").trim();
+    data_publicacao = `${titleMatch[1]}.${meses[titleMatch[2].toLowerCase()] || "0"}.${titleMatch[3]}`;
+  }
+
+  // Extract ementa: text between the title+date and "O PRESIDENTE"
+  const ementaMatch = bodyClean.match(
+    /LEI\s+N[ºo°]\s*[\d.]+,?\s*DE\s+\d{1,2}\s+DE\s+\w+\s+DE\s+\d{4}\s+(.+?)\s*O\s+PRESIDENTE/i
+  );
+  let ementa = "";
+  if (ementaMatch) {
+    ementa = ementaMatch[1].replace(/^Mensagem de veto\s*/i, "").trim();
   }
 
   // Build numero_lei
