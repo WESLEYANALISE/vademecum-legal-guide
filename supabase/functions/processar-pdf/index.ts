@@ -160,6 +160,88 @@ Deno.serve(async (req) => {
           { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+
+      // URL-based processing: download PDF from URL (e.g. Google Drive) and process
+      if (body.url && body.titulo) {
+        const pdfUrl = body.url as string;
+        const titulo = body.titulo as string;
+        const autor = (body.autor as string) || null;
+        const capaUrl = (body.capa_url as string) || null;
+
+        // Download PDF from URL (handle Google Drive confirm)
+        let downloadUrl = pdfUrl;
+        const driveMatch = pdfUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (driveMatch) {
+          downloadUrl = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}&confirm=t`;
+        }
+
+        console.log(`URL processing: downloading from ${downloadUrl}`);
+        const pdfRes = await fetch(downloadUrl, {
+          headers: { "User-Agent": "Mozilla/5.0" },
+        });
+        if (!pdfRes.ok) {
+          return new Response(JSON.stringify({ error: "Falha ao baixar PDF", status: pdfRes.status }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const pdfBuffer = await pdfRes.arrayBuffer();
+
+        // Upload to storage
+        const filePath = `${user.id}/${crypto.randomUUID()}.pdf`;
+        const { error: uploadError } = await supabase.storage
+          .from("biblioteca")
+          .upload(filePath, pdfBuffer, { contentType: "application/pdf" });
+
+        if (uploadError) {
+          console.error("Upload error:", uploadError);
+          return new Response(JSON.stringify({ error: "Falha no upload" }), {
+            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const { data: publicUrlData } = supabase.storage.from("biblioteca").getPublicUrl(filePath);
+        const pdfPublicUrl = publicUrlData.publicUrl;
+
+        const { data: livro, error: insertError } = await supabase
+          .from("biblioteca_livros")
+          .insert({
+            user_id: user.id,
+            titulo,
+            autor,
+            capa_url: capaUrl,
+            status: "ocr",
+            tamanho_bytes: pdfBuffer.byteLength,
+            conteudo: [],
+            versao_processamento: 2,
+          })
+          .select("id")
+          .single();
+
+        if (insertError || !livro) {
+          console.error("Insert error:", insertError);
+          return new Response(JSON.stringify({ error: "Falha ao criar registro" }), {
+            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // @ts-ignore
+        EdgeRuntime.waitUntil(
+          processPdfInBackground({
+            supabaseUrl,
+            supabaseServiceKey,
+            mistralApiKey,
+            geminiApiKey,
+            livroId: livro.id,
+            pdfUrl: pdfPublicUrl,
+            userId: user.id,
+          })
+        );
+
+        return new Response(
+          JSON.stringify({ success: true, livro_id: livro.id, message: "Processamento iniciado" }),
+          { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const formData = await req.formData();
