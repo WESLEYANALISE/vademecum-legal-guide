@@ -198,8 +198,12 @@ const Biblioteca = () => {
         .maybeSingle();
 
       if (data && data.status === 'ready') {
-        setEbookTitle(livro.titulo);
-        setEbookId(data.id);
+        const { data: full } = await supabase
+          .from('biblioteca_livros')
+          .select('id,titulo,total_paginas,ultima_pagina,conteudo,estrutura_leitura')
+          .eq('id', data.id)
+          .single();
+        if (full) setEbookData(full);
       } else if (data && data.status === 'processing') {
         toast.info('Este livro ainda está sendo formatado...');
       } else {
