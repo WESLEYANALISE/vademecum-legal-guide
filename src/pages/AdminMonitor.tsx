@@ -84,6 +84,11 @@ const AdminMonitor = () => {
   const [verificando, setVerificando] = useState(false);
   const [expandedAlt, setExpandedAlt] = useState<string | null>(null);
 
+  // Kanban state
+  const [kanbanItems, setKanbanItems] = useState<any[]>([]);
+  const [kanbanLoading, setKanbanLoading] = useState(true);
+  const [kanbanRefreshing, setKanbanRefreshing] = useState(false);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
