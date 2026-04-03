@@ -80,9 +80,6 @@ const Ferramentas = () => {
       case 'gerador-post':
         navigate('/gerador-post');
         break;
-      case 'kanban':
-        navigate('/kanban-legislativo');
-        break;
     }
   };
 
