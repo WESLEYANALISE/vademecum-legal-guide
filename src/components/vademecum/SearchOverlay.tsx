@@ -84,7 +84,7 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={mode === 'artigo' ? 'Digite número ou texto do artigo...' : 'Pesquise por nome, sigla ou tema...'}
+                placeholder={mode === 'numero' ? 'Digite o nº da lei (ex: 8.078, 13.105)...' : 'Pesquise por nome, sigla ou tema...'}
                 className="pl-9 h-10 bg-muted border-none text-sm"
               />
             </div>
