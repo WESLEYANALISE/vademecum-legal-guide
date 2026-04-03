@@ -728,6 +728,24 @@ const Radar360 = () => {
           onClose={() => setOpenAlteracao(null)}
         />
       )}
+
+      {/* Detail overlay for lei/decreto */}
+      <AnimatePresence>
+        {selectedLei && (
+          <motion.div
+            className="fixed inset-0 z-50 bg-background"
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+          >
+            <LeiOrdinariaDetail
+              lei={selectedLei}
+              onBack={() => setSelectedLei(null)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
