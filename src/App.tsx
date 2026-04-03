@@ -51,7 +51,7 @@ const SobreApp = lazy(() => import("./pages/SobreApp.tsx"));
 const GeradorPost = lazy(() => import("./pages/GeradorPost.tsx"));
 const KanbanLegislativo = lazy(() => import("./pages/KanbanLegislativo.tsx"));
 const Newsletter = lazy(() => import("./pages/Newsletter.tsx"));
-const Biblioteca = lazy(() => import("./pages/Biblioteca.tsx"));
+import Biblioteca from "./pages/Biblioteca.tsx";
 const BibliotecaAdmin = lazy(() => import("./pages/BibliotecaAdmin.tsx"));
 
 const queryClient = new QueryClient({
@@ -154,7 +154,7 @@ function AnimatedRoutes() {
           <Route path="/gerador-post" element={<ProtectedRoute><PageTransition><GeradorPost /></PageTransition></ProtectedRoute>} />
           <Route path="/kanban-legislativo" element={<ProtectedRoute><PageTransition><KanbanLegislativo /></PageTransition></ProtectedRoute>} />
           <Route path="/newsletter" element={<ProtectedRoute><PageTransition><Newsletter /></PageTransition></ProtectedRoute>} />
-          <Route path="/biblioteca" element={<ProtectedRoute><PageTransition><Biblioteca /></PageTransition></ProtectedRoute>} />
+          <Route path="/biblioteca" element={<ProtectedRoute><Biblioteca /></ProtectedRoute>} />
           <Route path="/biblioteca-admin" element={<ProtectedRoute><PageTransition><BibliotecaAdmin /></PageTransition></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

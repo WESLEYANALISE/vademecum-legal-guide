@@ -84,7 +84,7 @@ const CATEGORIES = [
 
 const Biblioteca = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [classicos, setClassicos] = useState<LivroUnificado[]>([]);
   const [lideranca, setLideranca] = useState<LivroUnificado[]>([]);
   const [estudos, setEstudos] = useState<LivroUnificado[]>([]);
@@ -209,11 +209,9 @@ const Biblioteca = () => {
 
   const renderMenu = () => (
     <motion.div key="menu" initial={false} animate={{ opacity: 1 }} className="space-y-3">
-      {loading ? (
-        Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)
-      ) : (
-        CATEGORIES.map((cat) => {
+      {CATEGORIES.map((cat) => {
           const livros = getLivros(cat.id);
+          const count = livros.length;
           return (
             <button
               key={cat.id}
@@ -230,14 +228,13 @@ const Biblioteca = () => {
                   <p className="text-xs text-muted-foreground">{cat.desc}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-xs text-muted-foreground">{livros.length}</span>
+                  <span className="text-xs text-muted-foreground">{count > 0 ? count : '...'}</span>
                   <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
               </div>
             </button>
           );
-        })
-      )}
+        })}
     </motion.div>
   );
 
