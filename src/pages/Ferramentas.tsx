@@ -49,6 +49,13 @@ const TOOLS = [
     icon: FileText,
     gradient: 'from-sky-500 to-indigo-600',
   },
+  {
+    id: 'gerador-post',
+    label: 'Gerador de Post',
+    desc: 'Crie carrosséis Instagram com artigos de lei',
+    icon: ImageIcon,
+    gradient: 'from-pink-500 to-rose-600',
+  },
 ];
 
 const Ferramentas = () => {
