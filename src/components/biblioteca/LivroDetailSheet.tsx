@@ -50,7 +50,7 @@ const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProp
               </div>
             )}
 
-            <div className="px-5 pb-8 space-y-5">
+            <div className="px-5 pb-8 space-y-5 max-w-2xl mx-auto">
               {/* Title & Author */}
               <div className="text-center space-y-1">
                 <h2 className="text-xl font-bold text-foreground">{livro.titulo}</h2>
