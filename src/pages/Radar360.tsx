@@ -89,15 +89,96 @@ const Radar360 = () => {
     })();
   }, []);
 
-  const groupedResenha = useMemo(() => {
-    const map = new Map<string, ResenhaItem[]>();
+  // Helper: normalize text to sentence case (no ALL CAPS)
+  const normalizeCase = (text: string) => {
+    if (!text) return text;
+    // If more than 60% uppercase letters, convert to sentence case
+    const letters = text.replace(/[^a-zA-ZÀ-ÿ]/g, '');
+    const upper = letters.replace(/[^A-ZÀ-Ý]/g, '');
+    if (letters.length > 3 && upper.length / letters.length > 0.6) {
+      return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
+        .replace(/\b(lei|decreto|nº|art\.|de|do|da|dos|das|no|na|nos|nas|em|por|para|com|sem|sob|que|e|ou|a|o|ao|à|um|uma)\b/gi, m => m.toLowerCase())
+        .replace(/^./, c => c.toUpperCase());
+    }
+    return text;
+  };
+
+  // Unified item type for the "Recentes" tab
+  type UnifiedItem = {
+    id: string;
+    tipo: string; // 'Lei', 'Decreto', etc.
+    titulo: string;
+    ementa: string;
+    data: string; // sortable date string
+    dataDisplay: string;
+    source: 'resenha' | 'lei' | 'decreto';
+  };
+
+  const allRecentes = useMemo(() => {
+    const items: UnifiedItem[] = [];
+
+    // From resenha (DOU)
     for (const item of resenha) {
-      const key = item.data_publicacao;
+      items.push({
+        id: `r-${item.id}`,
+        tipo: item.tipo_ato,
+        titulo: normalizeCase(item.numero_ato),
+        ementa: normalizeCase(item.ementa),
+        data: item.data_publicacao,
+        dataDisplay: item.data_publicacao,
+        source: 'resenha',
+      });
+    }
+
+    // From leis ordinárias
+    for (const lei of leisRecentes) {
+      items.push({
+        id: `l-${lei.id}`,
+        tipo: 'Lei',
+        titulo: normalizeCase(lei.numero_lei),
+        ementa: normalizeCase(lei.ementa),
+        data: lei.data_publicacao || '',
+        dataDisplay: lei.data_publicacao || '',
+        source: 'lei',
+      });
+    }
+
+    // From decretos
+    for (const dec of decretosRecentes) {
+      items.push({
+        id: `d-${dec.id}`,
+        tipo: 'Decreto',
+        titulo: normalizeCase(dec.numero_lei),
+        ementa: normalizeCase(dec.ementa),
+        data: dec.data_publicacao || '',
+        dataDisplay: dec.data_publicacao || '',
+        source: 'decreto',
+      });
+    }
+
+    // Deduplicate by titulo similarity (resenha may repeat leis/decretos)
+    const seen = new Set<string>();
+    const deduped: UnifiedItem[] = [];
+    for (const item of items) {
+      const key = item.titulo.toLowerCase().replace(/\s+/g, '');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      deduped.push(item);
+    }
+
+    // Group by date
+    const map = new Map<string, UnifiedItem[]>();
+    for (const item of deduped) {
+      const key = item.dataDisplay || 'Sem data';
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(item);
     }
-    return Array.from(map.entries()).slice(0, 10);
-  }, [resenha]);
+
+    // Sort groups by date descending
+    return Array.from(map.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .slice(0, 15);
+  }, [resenha, leisRecentes, decretosRecentes]);
 
   /* ── Novidades (modificações extraídas do texto dos artigos) ── */
   const TIPO_ORDER: Record<string, number> = { constituicao: 0, codigo: 1, estatuto: 2 };
