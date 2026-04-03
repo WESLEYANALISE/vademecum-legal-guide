@@ -111,9 +111,9 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
               Palavra-chave
             </button>
             <button
-              onClick={() => setMode('artigo')}
+              onClick={() => setMode('numero')}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                mode === 'artigo'
+                mode === 'numero'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-muted-foreground'
               }`}
