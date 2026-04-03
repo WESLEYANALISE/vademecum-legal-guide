@@ -12,6 +12,7 @@ export interface LeiCatalogItem {
   tabela_nome: string;
   iconColor?: string;
   url_planalto?: string;
+  tags?: string[];
 }
 
 /** Versão compacta usada em Estudar, Gamificação, etc. */
