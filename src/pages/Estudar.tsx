@@ -104,9 +104,6 @@ const Estudar = () => {
   if (view === 'desempenho') {
     return <DesempenhoView onBack={handleBack} />;
   }
-  if (view === 'biblioteca') {
-    return <BibliotecaView onBack={handleBack} />;
-  }
 
   const topLaws = lawStats.slice(0, 3);
 
