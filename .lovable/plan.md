@@ -1,67 +1,53 @@
 
 
-## Plano: Lista na Área de Estudos + Extração de Capas dos PDFs
+## Plano: Extrair Capas dos PDFs do Google Drive
 
-### Problema Atual
-
-1. Quando o usuário clica em uma área (ex: "Direito Administrativo"), os livros aparecem em **grid 3 colunas** — o pedido é que seja em **lista** (mesmo padrão das categorias e áreas).
-2. **45 de 490 livros** não têm `capa_livro` no banco. Os links apontam para FlipHTML5 (ex: `https://online.fliphtml5.com/zmzll/rjbr/`), que armazena thumbnails de páginas em URLs previsíveis.
+### Situação Atual
+- **45 livros** sem `capa_livro` no banco (de 490 total)
+- Todos têm link `download` do Google Drive (ex: `https://drive.google.com/file/d/1hko_t1lM4oa5IuvfeaBY2VYTmdKVa5tE/view`)
+- A Edge Function atual tenta extrair do FlipHTML5, mas não funciona para todos
 
 ### Solução
 
-#### 1. Área Detail em Lista
+Reescrever a Edge Function `extrair-capa-fliphtml5` para extrair a **primeira página do PDF** via Google Drive como imagem de capa.
 
-Trocar o `grid grid-cols-3` do `renderAreaDetail()` por uma lista vertical com capa à esquerda (mesmo layout das áreas/categorias):
+#### Fluxo técnico:
 
+1. Buscar os 45 livros sem `capa_livro`
+2. Para cada um, converter o link do Drive para URL de download direto: `https://drive.google.com/uc?export=download&id={FILE_ID}`
+3. Baixar o PDF
+4. Usar a API do **Browserless** (já temos a key `BROWSERLESS_API_KEY`) para renderizar a primeira página do PDF como screenshot — OU usar uma abordagem mais simples: converter o link do Drive para preview de thumbnail via `https://drive.google.com/thumbnail?id={FILE_ID}&sz=w800`
+5. Fazer upload da imagem para o bucket `biblioteca` no Storage
+6. Atualizar `capa_livro` na tabela
+
+#### Abordagem escolhida: Google Drive Thumbnail API
+
+O Google Drive gera thumbnails automaticamente para PDFs. A URL é:
 ```
-[Capa 60px] | Título do livro
-            | Sobre (1 linha)       [>]
+https://drive.google.com/thumbnail?id={FILE_ID}&sz=w800
 ```
 
-Com shimmer animation no hover, igual aos outros itens de lista.
+Isso retorna uma imagem PNG da primeira página sem precisar baixar o PDF inteiro — é instantâneo e leve.
 
-**Arquivo**: `src/pages/Biblioteca.tsx` — função `renderAreaDetail()`
+### Alterações
 
-#### 2. Edge Function para Extrair Capas
+| Arquivo | O que muda |
+|---------|-----------|
+| `supabase/functions/extrair-capa-fliphtml5/index.ts` | Reescrever: extrair `FILE_ID` do link do Drive → buscar thumbnail → upload no Storage → atualizar `capa_livro` |
 
-Nova Edge Function `extrair-capa-fliphtml5`:
-- Recebe o `id` do livro e a URL do FlipHTML5
-- Constrói a URL do thumbnail: `{fliphtml5_url}/files/large/1.jpg`
-- Baixa a imagem e faz upload para o bucket `CAPAS` no Supabase Storage (caminho: `biblioteca-estudos/{id}-{timestamp}.webp`)
-- Atualiza `capa_livro` na tabela `biblioteca_estudos`
-
-Pode processar em batch (todos os 45 sem capa de uma vez).
-
-#### 3. Fallback no Frontend
-
-Para livros sem capa ainda não processada, usar o proxy wsrv.nl para tentar construir a URL do thumbnail FlipHTML5 diretamente no frontend:
+### Lógica de extração do FILE_ID
 
 ```typescript
-const getCapaUrl = (livro: LivroUnificado) => {
-  if (livro.capa) return cdnImg(livro.capa, 300);
-  if (livro.link?.includes('fliphtml5.com')) {
-    const base = livro.link.replace(/\/$/, '');
-    return `${base}/files/large/1.jpg`;
-  }
-  return '';
-};
+// "https://drive.google.com/file/d/1hko_t1lM4oa5IuvfeaBY2VYTmdKVa5tE/view?usp=drivesdk"
+const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+const fileId = match?.[1]; // "1hko_t1lM4oa5IuvfeaBY2VYTmdKVa5tE"
 ```
 
-### Alterações por Arquivo
+### Fallback
 
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/pages/Biblioteca.tsx` | `renderAreaDetail()` → layout lista vertical com capa, título, sinopse e chevron |
-| `src/components/biblioteca/LivroCard.tsx` | Sem alteração (usado apenas em grid de outras categorias) |
-| `supabase/functions/extrair-capa-fliphtml5/index.ts` | Nova Edge Function para batch-extrair capas e salvar no Storage |
+Se o thumbnail do Drive falhar (403/404), tenta o método FlipHTML5 atual como fallback (`{fliphtml5_url}/files/large/1.jpg`).
 
-### Fluxo
+### Frontend
 
-```text
-Estudos → Direito Penal (lista) → [Livro em lista com capa]
-                                      ↓ click
-                                   LivroDetailSheet (slide)
-```
-
-A Edge Function roda uma vez para preencher as 45 capas faltantes. Depois, todos os livros terão `capa_livro` e o fallback FlipHTML5 serve como segurança.
+Nenhuma alteração necessária — o `capa_livro` já é usado no `renderAreaDetail()`. Após rodar a function, os 45 livros terão capa.
 
