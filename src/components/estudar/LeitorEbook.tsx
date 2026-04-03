@@ -278,20 +278,102 @@ export default function LeitorEbook({ livro, onBack, onUpdateBookmark }: LeitorE
             className="absolute inset-0 overflow-y-auto"
           >
             {currentDisplayPage?.type === 'chapter-cover' ? (
-              <div className="flex flex-col items-center justify-center min-h-full px-8 py-12 text-center">
-                <div className="w-16 h-1 bg-primary rounded-full mb-8" />
-                <h1 className="text-3xl sm:text-4xl font-bold text-foreground leading-tight mb-4 max-w-lg">
-                  {currentDisplayPage.chapterTitle}
-                </h1>
+              <div className="flex flex-col items-center justify-center min-h-full px-8 py-12 text-center relative overflow-hidden">
+                {/* Radial glow background */}
+                <motion.div
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: 'radial-gradient(ellipse at center, hsl(var(--primary) / 0.08) 0%, transparent 70%)',
+                  }}
+                />
+
+                {/* Decorative corner accents */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.15 }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                  className="absolute top-8 left-8 w-16 h-16 border-t-2 border-l-2 border-primary rounded-tl-lg"
+                />
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.15 }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                  className="absolute bottom-8 right-8 w-16 h-16 border-b-2 border-r-2 border-primary rounded-br-lg"
+                />
+
+                {/* Top ornament line */}
+                <motion.div
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ delay: 0.2, duration: 0.5, ease: 'easeOut' }}
+                  className="w-20 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent rounded-full mb-10"
+                />
+
+                {/* Chapter number badge */}
+                {(() => {
+                  const match = currentDisplayPage.chapterTitle?.match(/^(\d+)\.\s*/);
+                  const chapterNum = match ? match[1] : null;
+                  const titleText = match ? currentDisplayPage.chapterTitle!.replace(match[0], '') : currentDisplayPage.chapterTitle;
+                  return (
+                    <>
+                      {chapterNum && (
+                        <motion.div
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ delay: 0.15, duration: 0.4, type: 'spring', stiffness: 200 }}
+                          className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6"
+                        >
+                          <span className="text-xl font-bold text-primary">{chapterNum}</span>
+                        </motion.div>
+                      )}
+                      <motion.h1
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3, duration: 0.5 }}
+                        className="text-3xl sm:text-4xl font-bold text-foreground leading-tight mb-4 max-w-lg"
+                      >
+                        {titleText}
+                      </motion.h1>
+                    </>
+                  );
+                })()}
+
                 {currentDisplayPage.chapterSubtitle && (
-                  <p className="text-lg text-muted-foreground font-medium max-w-md">
+                  <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.45, duration: 0.4 }}
+                    className="text-lg text-muted-foreground font-medium max-w-md"
+                  >
                     {currentDisplayPage.chapterSubtitle}
-                  </p>
+                  </motion.p>
                 )}
-                <div className="w-16 h-1 bg-primary/40 rounded-full mt-8" />
-                <p className="text-xs text-muted-foreground mt-6">
-                  Deslize para continuar →
-                </p>
+
+                {/* Bottom ornament */}
+                <motion.div
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ delay: 0.5, duration: 0.5, ease: 'easeOut' }}
+                  className="w-20 h-0.5 bg-gradient-to-r from-transparent via-primary/40 to-transparent rounded-full mt-10"
+                />
+
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.7, duration: 0.5 }}
+                  className="text-xs text-muted-foreground mt-6 flex items-center gap-1.5"
+                >
+                  Deslize para continuar
+                  <motion.span
+                    animate={{ x: [0, 4, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+                  >
+                    →
+                  </motion.span>
+                </motion.p>
               </div>
             ) : (
               <div className="px-5 py-6 sm:px-8 sm:py-8" style={{ fontSize: `${FONT_SIZES[fontSize]}px`, lineHeight: 1.85 }}>
