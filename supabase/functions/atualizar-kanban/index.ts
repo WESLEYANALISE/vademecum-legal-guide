@@ -7,6 +7,57 @@ const corsHeaders = {
 
 const CAMARA_API = 'https://dadosabertos.camara.leg.br/api/v2';
 
+// Map of keywords in ementas to the law they affect
+const LEI_KEYWORDS: [RegExp, string][] = [
+  [/c[oó]digo\s+penal(?!\s+militar)/i, 'Código Penal'],
+  [/decreto[- ]?lei\s+n?[ºo°]?\s*2\.?848/i, 'Código Penal'],
+  [/c[oó]digo\s+civil/i, 'Código Civil'],
+  [/lei\s+n?[ºo°]?\s*10\.?406/i, 'Código Civil'],
+  [/c[oó]digo\s+de?\s+processo\s+civil/i, 'CPC'],
+  [/lei\s+n?[ºo°]?\s*13\.?105/i, 'CPC'],
+  [/c[oó]digo\s+de?\s+processo\s+penal/i, 'CPP'],
+  [/decreto[- ]?lei\s+n?[ºo°]?\s*3\.?689/i, 'CPP'],
+  [/c[oó]digo\s+penal\s+militar/i, 'Código Penal Militar'],
+  [/consolida[cç][aã]o\s+das?\s+leis\s+d[oe]\s+trabalho|CLT/i, 'CLT'],
+  [/c[oó]digo\s+de?\s+defesa\s+d[oe]\s+consumidor|CDC/i, 'CDC'],
+  [/lei\s+n?[ºo°]?\s*8\.?078/i, 'CDC'],
+  [/c[oó]digo\s+tribut[aá]rio\s+nacional|CTN/i, 'CTN'],
+  [/c[oó]digo\s+de?\s+tr[aâ]nsito/i, 'CTB'],
+  [/lei\s+n?[ºo°]?\s*9\.?503/i, 'CTB'],
+  [/c[oó]digo\s+eleitoral/i, 'Código Eleitoral'],
+  [/c[oó]digo\s+florestal/i, 'Código Florestal'],
+  [/estatuto\s+da?\s+crian[cç]a/i, 'ECA'],
+  [/lei\s+n?[ºo°]?\s*8\.?069/i, 'ECA'],
+  [/estatuto\s+d[oe]\s+idoso/i, 'Estatuto do Idoso'],
+  [/estatuto\s+da?\s+pessoa\s+com\s+defici[eê]ncia/i, 'EPD'],
+  [/estatuto\s+da?\s+OAB/i, 'Estatuto da OAB'],
+  [/lei\s+maria\s+da?\s+penha/i, 'Lei Maria da Penha'],
+  [/lei\s+n?[ºo°]?\s*11\.?340/i, 'Lei Maria da Penha'],
+  [/lei\s+de?\s+drogas/i, 'Lei de Drogas'],
+  [/lei\s+de?\s+execu[cç][aã]o\s+penal|LEP/i, 'LEP'],
+  [/lei\s+n?[ºo°]?\s*7\.?210/i, 'LEP'],
+  [/lei\s+de?\s+licita[cç][oõ]es/i, 'Lei de Licitações'],
+  [/LGPD|prote[cç][aã]o\s+de?\s+dados/i, 'LGPD'],
+  [/lei\s+n?[ºo°]?\s*13\.?709/i, 'LGPD'],
+  [/marco\s+civil\s+da?\s+internet/i, 'Marco Civil da Internet'],
+  [/lei\s+n?[ºo°]?\s*12\.?965/i, 'Marco Civil da Internet'],
+  [/lei\s+de?\s+improbidade/i, 'Improbidade Administrativa'],
+  [/constitui[cç][aã]o\s+federal/i, 'Constituição Federal'],
+  [/lei\s+de?\s+falências/i, 'Lei de Falências'],
+  [/lei\s+d[oe]\s+inquilinato/i, 'Lei do Inquilinato'],
+];
+
+function extractLeiAfetada(ementa: string | null): string | null {
+  if (!ementa) return null;
+  const found: string[] = [];
+  for (const [regex, label] of LEI_KEYWORDS) {
+    if (regex.test(ementa) && !found.includes(label)) {
+      found.push(label);
+    }
+  }
+  return found.length > 0 ? found.join(', ') : null;
+}
+
 interface ProposicaoTramitacao {
   dataHora: string;
   descricaoTramitacao: string;
@@ -28,7 +79,6 @@ function classificarStatus(situacao: string, tramitacoes: ProposicaoTramitacao[]
     return 'votacao';
   }
   
-  // Check latest tramitações
   const latest = tramitacoes.slice(0, 5);
   for (const t of latest) {
     const desc = ((t.descricaoTramitacao || '') + ' ' + (t.despacho || '')).toLowerCase();
@@ -73,8 +123,6 @@ Deno.serve(async (req) => {
       .from('kanban_proposicoes')
       .select('id, id_externo, status_kanban');
 
-    const existingIds = new Set((existing || []).map(e => e.id_externo));
-
     // If kanban is empty, seed from radar_proposicoes (top 100 most recent)
     if (!existing || existing.length === 0) {
       const { data: proposicoes } = await supabase
@@ -91,6 +139,7 @@ Deno.serve(async (req) => {
           ano: p.ano || 2025,
           ementa: p.ementa,
           status_kanban: 'tramitando',
+          lei_afetada: extractLeiAfetada(p.ementa),
           dados_json: p.dados_json,
         }));
 
@@ -98,7 +147,23 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Now fetch all kanban items to update
+    // Step 1: Fill in lei_afetada for items that don't have it yet
+    const { data: missingLei } = await supabase
+      .from('kanban_proposicoes')
+      .select('id, ementa')
+      .is('lei_afetada', null)
+      .not('ementa', 'is', null);
+
+    if (missingLei && missingLei.length > 0) {
+      for (const item of missingLei) {
+        const lei = extractLeiAfetada(item.ementa);
+        if (lei) {
+          await supabase.from('kanban_proposicoes').update({ lei_afetada: lei }).eq('id', item.id);
+        }
+      }
+    }
+
+    // Now fetch all kanban items to update statuses
     const { data: kanbanItems } = await supabase
       .from('kanban_proposicoes')
       .select('*')
@@ -116,14 +181,12 @@ Deno.serve(async (req) => {
 
     for (const item of kanbanItems) {
       try {
-        // Fetch proposição details
         const detRes = await fetchWithRetry(`${CAMARA_API}/proposicoes/${item.id_externo}`);
         if (!detRes.ok) continue;
         const detJson = await detRes.json();
         const dados = detJson.dados;
         if (!dados) continue;
 
-        // Fetch tramitações
         const tramRes = await fetchWithRetry(`${CAMARA_API}/proposicoes/${item.id_externo}/tramitacoes?ordem=DESC&ordenarPor=dataHora&itens=10`);
         const tramJson = tramRes.ok ? await tramRes.json() : { dados: [] };
         const tramitacoes = tramJson.dados || [];
@@ -140,6 +203,12 @@ Deno.serve(async (req) => {
 
         if (dados.statusProposicao?.dataHora) {
           updateData.data_ultima_acao = dados.statusProposicao.dataHora;
+        }
+
+        // Fill lei_afetada if missing
+        if (!item.lei_afetada && item.ementa) {
+          const lei = extractLeiAfetada(item.ementa);
+          if (lei) updateData.lei_afetada = lei;
         }
 
         // Try to get author
@@ -161,7 +230,6 @@ Deno.serve(async (req) => {
 
         updated++;
 
-        // Rate limit: wait 200ms between API calls
         await new Promise(r => setTimeout(r, 200));
       } catch (e: any) {
         errors.push(`${item.id_externo}: ${e.message}`);

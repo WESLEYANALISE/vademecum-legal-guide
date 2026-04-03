@@ -116,9 +116,15 @@ function DraggableCard({ item, onClick }: { item: KanbanItem; onClick: () => voi
 
             <div className="flex items-center gap-2 flex-wrap mt-2">
               {item.lei_afetada && (
-                <Badge variant="outline" className="text-[9px] h-4 px-1">
-                  {item.lei_afetada}
+                <Badge variant="outline" className="text-[9px] h-4 px-1 bg-amber-500/10 text-amber-400 border-amber-500/25">
+                  ⚖️ {item.lei_afetada}
                 </Badge>
+              )}
+              {item.autor && (
+                <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 truncate max-w-[140px]">
+                  <User className="w-2.5 h-2.5 shrink-0" />
+                  {item.autor.split(',')[0]}
+                </span>
               )}
               {item.data_ultima_acao && (
                 <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
@@ -198,6 +204,7 @@ const KanbanLegislativo = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filterTipo, setFilterTipo] = useState<string>('all');
+  const [filterLei, setFilterLei] = useState<string>('all');
   const [selectedItem, setSelectedItem] = useState<KanbanItem | null>(null);
   const [activeItem, setActiveItem] = useState<KanbanItem | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -249,9 +256,11 @@ const KanbanLegislativo = () => {
   };
 
   const filtered = useMemo(() => {
-    if (filterTipo === 'all') return items;
-    return items.filter(i => i.sigla_tipo === filterTipo);
-  }, [items, filterTipo]);
+    let result = items;
+    if (filterTipo !== 'all') result = result.filter(i => i.sigla_tipo === filterTipo);
+    if (filterLei !== 'all') result = result.filter(i => i.lei_afetada?.includes(filterLei));
+    return result;
+  }, [items, filterTipo, filterLei]);
 
   const columnData = useMemo(() => {
     return COLUMNS.map(col => ({
@@ -263,6 +272,16 @@ const KanbanLegislativo = () => {
   const tiposDisponiveis = useMemo(() => {
     const tipos = new Set(items.map(i => i.sigla_tipo));
     return Array.from(tipos).sort();
+  }, [items]);
+
+  const leisDisponiveis = useMemo(() => {
+    const leis = new Set<string>();
+    items.forEach(i => {
+      if (i.lei_afetada) {
+        i.lei_afetada.split(', ').forEach(l => leis.add(l));
+      }
+    });
+    return Array.from(leis).sort();
   }, [items]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
@@ -457,6 +476,20 @@ const KanbanLegislativo = () => {
             ))}
           </SelectContent>
         </Select>
+
+        {leisDisponiveis.length > 0 && (
+          <Select value={filterLei} onValueChange={setFilterLei}>
+            <SelectTrigger className="w-[160px] h-8 text-xs">
+              <SelectValue placeholder="Lei afetada" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as leis</SelectItem>
+              {leisDisponiveis.map(l => (
+                <SelectItem key={l} value={l}>{l}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         <Button
           variant="ghost"
