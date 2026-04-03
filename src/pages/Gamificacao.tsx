@@ -128,9 +128,9 @@ const Gamificacao = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <div className="relative bg-gradient-to-br from-primary via-accent to-primary overflow-hidden px-4 pt-10 pb-4 sm:px-6">
-        <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-primary-foreground/10" />
-        <Gamepad2 className="absolute top-5 right-5 w-10 h-10 text-primary-foreground/25 rotate-12" />
+      <div className="relative bg-gradient-to-br from-signature/90 via-signature to-signature/80 overflow-hidden px-4 pt-10 pb-4 sm:px-6">
+        <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/10" />
+        <Gamepad2 className="absolute top-5 right-5 w-10 h-10 text-white/20 rotate-12" />
 
         <div className="relative max-w-2xl mx-auto z-10">
           <button
