@@ -491,22 +491,20 @@ const GeradorPost = () => {
                 <ChevronLeft className="w-5 h-5" />
               </button>
 
-              <div className="flex-1 overflow-hidden rounded-xl border border-border bg-card">
-                <div className="relative w-full" style={{ paddingBottom: `${(SLIDE_H / SLIDE_W) * 100}%` }}>
-                  <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-                    <div style={{ transform: `scale(${Math.min(1, 350 / SLIDE_W)})`, transformOrigin: 'top center' }}>
-                      {carrossel.slides.map((slide, i) => (
-                        <div
-                          key={i}
-                          className={i === currentSlide ? 'block' : 'hidden'}
-                          style={{ width: SLIDE_W, height: SLIDE_H }}
-                        >
-                          <SlideRenderer slide={slide} index={i} total={carrossel.slides.length} />
-                        </div>
-                      ))}
-                    </div>
+              <div className="flex-1 overflow-hidden rounded-xl border border-border bg-card" style={{ aspectRatio: `${SLIDE_W}/${SLIDE_H}`, position: 'relative' }}>
+                {carrossel.slides.map((slide, i) => (
+                  <div
+                    key={i}
+                    className={i === currentSlide ? 'block' : 'hidden'}
+                    style={{
+                      position: 'absolute', top: 0, left: 0, width: SLIDE_W, height: SLIDE_H,
+                      transform: `scale(${1 / (SLIDE_W / 280)})`,
+                      transformOrigin: 'top left',
+                    }}
+                  >
+                    <SlideRenderer slide={slide} index={i} total={carrossel.slides.length} />
                   </div>
-                </div>
+                ))}
               </div>
 
               <button
