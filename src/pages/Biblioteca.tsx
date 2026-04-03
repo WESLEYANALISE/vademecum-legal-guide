@@ -159,9 +159,12 @@ const Biblioteca = () => {
             <button
               key={cat.id}
               onClick={() => handleSelectCategory(cat.id)}
-              className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden"
+              className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden relative"
             >
-              <img src={cat.img} alt={cat.label} className="w-20 object-cover flex-shrink-0" />
+              <div className="w-20 flex-shrink-0 relative overflow-hidden">
+                <img src={cat.img} alt={cat.label} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+              </div>
               <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{cat.label}</p>
