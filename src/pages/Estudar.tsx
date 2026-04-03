@@ -11,6 +11,7 @@ import BibliotecaView from '@/components/estudar/BibliotecaView';
 import { Input } from '@/components/ui/input';
 import { useStudyStats } from '@/hooks/useStudyStats';
 import { Progress } from '@/components/ui/progress';
+import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
 
 import { LEIS_COMPACTAS as LEIS } from '@/data/leisCatalog';
 
@@ -110,35 +111,41 @@ const Estudar = () => {
 
   const topLaws = lawStats.slice(0, 3);
 
-  return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="relative bg-gradient-to-br from-card to-secondary overflow-hidden px-4 pt-10 pb-8 sm:px-6">
-        <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/5" />
-        <GraduationCap className="absolute top-5 right-5 w-10 h-10 text-white/15 rotate-12" />
-        <div className="max-w-2xl mx-auto relative z-10">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-4">
-            <ArrowLeft className="w-4 h-4" />
-            Voltar
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-black/20 flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="font-display text-2xl text-white font-bold">Estudar</h1>
-              <p className="text-white/70 text-sm">Questões e flashcards por artigo</p>
-            </div>
+  const mobileHeader = (
+    <div className="relative bg-gradient-to-br from-card to-secondary overflow-hidden px-4 pt-10 pb-8 sm:px-6">
+      <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/5" />
+      <GraduationCap className="absolute top-5 right-5 w-10 h-10 text-white/15 rotate-12" />
+      <div className="max-w-2xl mx-auto relative z-10">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-4">
+          <ArrowLeft className="w-4 h-4" />
+          Voltar
+        </button>
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-black/20 flex items-center justify-center">
+            <GraduationCap className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="font-display text-2xl text-white font-bold">Estudar</h1>
+            <p className="text-white/70 text-sm">Questões e flashcards por artigo</p>
           </div>
         </div>
       </div>
+    </div>
+  );
 
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+  return (
+    <DesktopPageLayout
+      activeId="estudar"
+      title="Estudar"
+      subtitle="Questões e flashcards por artigo"
+      mobileHeader={mobileHeader}
+    >
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-5 lg:max-w-none lg:px-0 lg:py-0">
         {/* Menu principal */}
         {view === 'menu' && (
           <>
             {/* Study tools list */}
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2">
               {[
                 { label: 'Questões', desc: '6 tipos de questão por artigo', icon: Target, gradient: 'from-rose-500 to-red-700', onClick: () => handleSelectMode('questoes') },
                 { label: 'Flashcards', desc: 'Cards com animação flip', icon: Layers, gradient: 'from-amber-500 to-orange-600', onClick: () => handleSelectMode('flashcards') },
@@ -170,7 +177,7 @@ const Estudar = () => {
 
         {/* Seletor de Lei */}
         {view === 'select-lei' && (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2">
             <p className="text-sm font-medium text-muted-foreground mb-3">Escolha a lei para {selectedMode === 'questoes' ? 'gerar questões' : 'gerar flashcards'}:</p>
             {LEIS.map((lei, i) => (
               <motion.button
@@ -258,7 +265,7 @@ const Estudar = () => {
           </div>
         )}
       </div>
-    </div>
+    </DesktopPageLayout>
   );
 };
 

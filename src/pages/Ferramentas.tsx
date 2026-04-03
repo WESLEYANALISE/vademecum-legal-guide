@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Timer, BookOpenText, ScanEye, Sparkles, Wrench, ChevronRight, Gamepad2, FileText, ImageIcon } from 'lucide-react';
+import { ArrowLeft, Timer, BookOpenText, ScanEye, Sparkles, Wrench, ChevronRight, Gamepad2, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import StudyTimer from '@/components/vademecum/StudyTimer';
 import AssistenteOverlay from '@/components/vademecum/AssistenteOverlay';
 import DicionarioJuridico from '@/components/ferramentas/DicionarioJuridico';
+import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
 
 const TOOLS = [
   {
@@ -59,91 +60,80 @@ const Ferramentas = () => {
 
   const handleToolClick = (id: string) => {
     switch (id) {
-      case 'pomodoro':
-        setTimerOpen(true);
-        break;
-      case 'dicionario':
-        setDicionarioOpen(true);
-        break;
-      case 'radar360':
-        navigate('/radar-360');
-        break;
-      case 'assistente':
-        setAssistenteOpen(true);
-        break;
-      case 'gamificacao':
-        navigate('/gamificacao');
-        break;
-      case 'resumos':
-        navigate('/resumos');
-        break;
-      case 'gerador-post':
-        navigate('/gerador-post');
-        break;
+      case 'pomodoro': setTimerOpen(true); break;
+      case 'dicionario': setDicionarioOpen(true); break;
+      case 'radar360': navigate('/radar-360'); break;
+      case 'assistente': setAssistenteOpen(true); break;
+      case 'gamificacao': navigate('/gamificacao'); break;
+      case 'resumos': navigate('/resumos'); break;
+      case 'gerador-post': navigate('/gerador-post'); break;
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="relative bg-gradient-to-br from-card to-secondary overflow-hidden px-4 pt-10 pb-8 sm:px-6">
-        {/* Decorative circle */}
-        <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/5" />
-        <Wrench className="absolute top-5 right-5 w-10 h-10 text-white/15 rotate-12" />
-
-        <div className="relative max-w-2xl mx-auto z-10">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-4"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar
-          </button>
-          <h1 className="font-display text-2xl text-white font-bold">
-            Ferramentas
-          </h1>
-          <p className="text-white/70 text-sm mt-1">
-            Recursos para potencializar seus estudos
-          </p>
-        </div>
+  const mobileHeader = (
+    <div className="relative bg-gradient-to-br from-card to-secondary overflow-hidden px-4 pt-10 pb-8 sm:px-6">
+      <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/5" />
+      <Wrench className="absolute top-5 right-5 w-10 h-10 text-white/15 rotate-12" />
+      <div className="relative max-w-2xl mx-auto z-10">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Voltar
+        </button>
+        <h1 className="font-display text-2xl text-white font-bold">Ferramentas</h1>
+        <p className="text-white/70 text-sm mt-1">Recursos para potencializar seus estudos</p>
       </div>
+    </div>
+  );
 
-      {/* Lista de ferramentas */}
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4">
-        <div className="flex flex-col gap-2">
-          {TOOLS.map((tool, i) => {
-            const Icon = tool.icon;
-            return (
-              <motion.button
-                key={tool.id}
-                initial={{ opacity: 0, x: -16 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.06 }}
-                onClick={() => handleToolClick(tool.id)}
-                className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:border-primary/40 transition-all group"
-              >
-                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center shrink-0 shadow-md`}>
-                  <Icon className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="font-display text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                    {tool.label}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">
-                    {tool.desc}
-                  </p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-              </motion.button>
-            );
-          })}
-        </div>
+  const toolsList = (
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+      {TOOLS.map((tool, i) => {
+        const Icon = tool.icon;
+        return (
+          <motion.button
+            key={tool.id}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.06 }}
+            onClick={() => handleToolClick(tool.id)}
+            className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:border-primary/40 transition-all group"
+          >
+            <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center shrink-0 shadow-md`}>
+              <Icon className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="font-display text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                {tool.label}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">
+                {tool.desc}
+              </p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+          </motion.button>
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <DesktopPageLayout
+      activeId="ferramentas"
+      title="Ferramentas"
+      subtitle="Recursos para potencializar seus estudos"
+      mobileHeader={mobileHeader}
+    >
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 lg:max-w-none lg:px-0 lg:py-0">
+        {toolsList}
       </div>
 
       <StudyTimer open={timerOpen} onClose={() => setTimerOpen(false)} />
       <AssistenteOverlay open={assistenteOpen} onClose={() => setAssistenteOpen(false)} />
       <DicionarioJuridico open={dicionarioOpen} onClose={() => setDicionarioOpen(false)} />
-    </div>
+    </DesktopPageLayout>
   );
 };
 
