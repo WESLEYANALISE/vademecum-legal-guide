@@ -58,11 +58,29 @@ function extractLeiAfetada(ementa: string | null): string | null {
   return found.length > 0 ? found.join(', ') : null;
 }
 
-function classificarStatus(situacao: string): string {
+// Status priority: publicada > sancao > votacao > tramitando
+const STATUS_PRIORITY: Record<string, number> = {
+  'publicada': 4,
+  'sancao': 3,
+  'votacao': 2,
+  'tramitando': 1,
+};
+
+function classificarStatus(situacao: string, codSituacao?: number): string {
   const sit = (situacao || '').toLowerCase();
-  if (sit.includes('transformad') || sit.includes('lei') || sit.includes('publicad')) return 'publicada';
-  if (sit.includes('sanção') || sit.includes('sancao') || sit.includes('sancionad') || sit.includes('veto') || sit.includes('presidência da república')) return 'sancao';
-  if (sit.includes('plenário') || sit.includes('plenario') || sit.includes('votação') || sit.includes('votacao') || sit.includes('pauta')) return 'votacao';
+
+  // Check codSituacao first (most reliable)
+  if (codSituacao) {
+    if (codSituacao === 1257 || codSituacao === 1392 || codSituacao === 1178) return 'publicada';
+    if (codSituacao === 918 || codSituacao === 1087) return 'sancao';
+    if (codSituacao === 1140 || codSituacao === 1148 || codSituacao === 1058 || codSituacao === 1065) return 'votacao';
+  }
+
+  // Fallback to text matching
+  if (sit.includes('transformad') || sit.includes('norma jurídica') || sit.includes('publicad')) return 'publicada';
+  if (sit.includes('sanção') || sit.includes('sancao') || sit.includes('sancionad') || sit.includes('veto') || sit.includes('presidência da república') || sit.includes('remetida à sanção')) return 'sancao';
+  if (sit.includes('plenário') || sit.includes('plenario') || sit.includes('votação') || sit.includes('votacao') || sit.includes('pauta') || sit.includes('pronta para pauta') || sit.includes('apreciação')) return 'votacao';
+  if (sit.includes('arquivad')) return 'arquivada';
   return 'tramitando';
 }
 
@@ -84,10 +102,12 @@ async function fetchWithRetry(url: string, retries = 2): Promise<Response> {
   throw new Error('fetch failed');
 }
 
-// Seed: fetch propositions from Câmara API by situacaoId
+// Seed: fetch propositions from Câmara API by codSituacao
 async function seedFromApi(supabase: any) {
   console.log('Seeding kanban from Câmara API...');
 
+  // Process in order of priority: publicada first, then sancao, votacao
+  // Use separate upsert calls to prevent overwriting higher-priority status
   const situacoes = [
     { id: '1257', status: 'publicada', label: 'Transformada em Lei' },
     { id: '918', status: 'sancao', label: 'Aguardando Sanção' },
@@ -96,6 +116,7 @@ async function seedFromApi(supabase: any) {
   ];
 
   const tipos = ['PL', 'PLP', 'PEC', 'MPV'];
+  const insertedIds = new Set<string>();
   let totalInserted = 0;
 
   for (const sit of situacoes) {
@@ -110,7 +131,10 @@ async function seedFromApi(supabase: any) {
 
       if (dados.length === 0) continue;
 
-      const toInsert = dados.map((p: any) => ({
+      // Only insert items not already inserted with a higher-priority status
+      const newItems = dados.filter((p: any) => !insertedIds.has(String(p.id)));
+
+      const toInsert = newItems.map((p: any) => ({
         id_externo: String(p.id),
         sigla_tipo: p.siglaTipo || 'PL',
         numero: p.numero || 0,
@@ -121,24 +145,31 @@ async function seedFromApi(supabase: any) {
         atualizado_em: new Date().toISOString(),
       }));
 
-      const { error } = await supabase.from('kanban_proposicoes').upsert(toInsert, { onConflict: 'id_externo' });
-      if (error) console.log(`Upsert error for ${sit.label}:`, error.message);
-      else totalInserted += toInsert.length;
+      if (toInsert.length > 0) {
+        const { error } = await supabase.from('kanban_proposicoes').upsert(toInsert, { onConflict: 'id_externo' });
+        if (error) console.log(`Upsert error for ${sit.label}:`, error.message);
+        else {
+          totalInserted += toInsert.length;
+          newItems.forEach((p: any) => insertedIds.add(String(p.id)));
+        }
+      }
+      console.log(`Inserted ${toInsert.length} unique for ${sit.label}`);
     } catch (e: any) {
       console.log(`Error seeding ${sit.label}: ${e.message}`);
     }
     await new Promise(r => setTimeout(r, 300));
   }
 
-  // Also seed recent tramitando from radar_proposicoes
+  // Also seed recent tramitando from radar_proposicoes (skip already seeded)
   const { data: radarItems } = await supabase
     .from('radar_proposicoes')
-    .select('id_externo, sigla_tipo, numero, ano, ementa, dados_json')
+    .select('id_externo, sigla_tipo, numero, ano, ementa')
     .order('atualizado_em', { ascending: false })
     .limit(50);
 
   if (radarItems && radarItems.length > 0) {
-    const toInsert = radarItems.map((p: any) => ({
+    const newRadar = radarItems.filter((p: any) => !insertedIds.has(String(p.id_externo)));
+    const toInsert = newRadar.map((p: any) => ({
       id_externo: p.id_externo,
       sigla_tipo: p.sigla_tipo || 'PL',
       numero: p.numero || 0,
@@ -148,8 +179,10 @@ async function seedFromApi(supabase: any) {
       lei_afetada: extractLeiAfetada(p.ementa),
       atualizado_em: new Date().toISOString(),
     }));
-    await supabase.from('kanban_proposicoes').upsert(toInsert, { onConflict: 'id_externo', ignoreDuplicates: true });
-    totalInserted += toInsert.length;
+    if (toInsert.length > 0) {
+      await supabase.from('kanban_proposicoes').upsert(toInsert, { onConflict: 'id_externo', ignoreDuplicates: true });
+      totalInserted += toInsert.length;
+    }
   }
 
   console.log(`Seed complete. Total inserted/updated: ${totalInserted}`);
@@ -190,9 +223,7 @@ Deno.serve(async (req) => {
     if (missingLei && missingLei.length > 0) {
       for (const item of missingLei) {
         const lei = extractLeiAfetada(item.ementa);
-        if (lei) {
-          await supabase.from('kanban_proposicoes').update({ lei_afetada: lei }).eq('id', item.id);
-        }
+        if (lei) await supabase.from('kanban_proposicoes').update({ lei_afetada: lei }).eq('id', item.id);
       }
       console.log(`Filled lei_afetada for ${missingLei.length} items`);
     }
@@ -202,6 +233,7 @@ Deno.serve(async (req) => {
       .from('kanban_proposicoes')
       .select('*')
       .neq('status_kanban', 'publicada')
+      .neq('status_kanban', 'arquivada')
       .order('atualizado_em', { ascending: true, nullsFirst: true })
       .limit(BATCH_SIZE);
 
@@ -220,7 +252,9 @@ Deno.serve(async (req) => {
       try {
         const detRes = await fetchWithRetry(`${CAMARA_API}/proposicoes/${item.id_externo}`);
         if (!detRes.ok) {
-          console.log(`Detail fetch failed for ${item.id_externo}: ${detRes.status}`);
+          console.log(`Detail failed for ${item.id_externo}: ${detRes.status}`);
+          // Still mark as updated to avoid retrying forever
+          await supabase.from('kanban_proposicoes').update({ atualizado_em: new Date().toISOString() }).eq('id', item.id);
           continue;
         }
         const detJson = await detRes.json();
@@ -228,10 +262,16 @@ Deno.serve(async (req) => {
         if (!dados) continue;
 
         const situacao = dados.statusProposicao?.descricaoSituacao || '';
-        const novoStatus = classificarStatus(situacao);
+        const codSituacao = dados.statusProposicao?.codSituacao;
+        const novoStatus = classificarStatus(situacao, codSituacao);
+
+        // Don't downgrade status (e.g., don't move "sancao" back to "tramitando")
+        const currentPriority = STATUS_PRIORITY[item.status_kanban] || 0;
+        const newPriority = STATUS_PRIORITY[novoStatus] || 0;
+        const finalStatus = newPriority >= currentPriority ? novoStatus : item.status_kanban;
 
         const updateData: any = {
-          status_kanban: novoStatus,
+          status_kanban: finalStatus,
           situacao_camara: situacao,
           atualizado_em: new Date().toISOString(),
         };
@@ -250,7 +290,7 @@ Deno.serve(async (req) => {
         }
 
         await supabase.from('kanban_proposicoes').update(updateData).eq('id', item.id);
-        console.log(`Updated ${item.id_externo} → ${novoStatus}`);
+        console.log(`Updated ${item.id_externo} → ${finalStatus} (API: ${situacao})`);
         updated++;
 
         await new Promise(r => setTimeout(r, 200));
