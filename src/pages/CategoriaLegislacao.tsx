@@ -94,6 +94,8 @@ const CategoriaLegislacao = () => {
   const [searchSumulas, setSearchSumulas] = useState('');
   const [openSumula, setOpenSumula] = useState<Sumula | null>(null);
   const [showGrafo, setShowGrafo] = useState(false);
+  const [dbAlteracoes, setDbAlteracoes] = useState<{ artigo_numero: string; tipo_alteracao: string; texto_anterior: string | null; texto_atual: string | null; detectado_em: string }[]>([]);
+  const [loadingDbAlteracoes, setLoadingDbAlteracoes] = useState(false);
 
   // Fetch narrations when playlist tab is active
   useEffect(() => {
