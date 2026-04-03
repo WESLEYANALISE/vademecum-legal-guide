@@ -350,6 +350,76 @@ const AdminMonitor = () => {
           </CardContent>
         </Card>
 
+        {/* Kanban Legislativo */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Kanban className="w-5 h-5 text-primary" />
+                Kanban Legislativo
+                {kanbanItems.length > 0 && (
+                  <Badge variant="secondary" className="text-[10px] ml-1">{kanbanItems.length}</Badge>
+                )}
+              </CardTitle>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => navigate('/kanban-legislativo')}>
+                  <Eye className="w-3.5 h-3.5 mr-1" />
+                  Ver board
+                </Button>
+                <Button variant="outline" size="sm" onClick={refreshKanban} disabled={kanbanRefreshing}>
+                  {kanbanRefreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <RefreshCw className="w-3.5 h-3.5 mr-1" />}
+                  Atualizar
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {kanbanLoading ? (
+              <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+            ) : kanbanItems.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Nenhuma proposição monitorada. Clique em "Atualizar" para popular.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {/* Status summary */}
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { key: 'tramitando', label: 'Tramitando', icon: '📋' },
+                    { key: 'votacao', label: 'Votação', icon: '🗳️' },
+                    { key: 'sancao', label: 'Sanção', icon: '✍️' },
+                    { key: 'publicada', label: 'Publicada', icon: '✅' },
+                  ].map(col => {
+                    const count = kanbanItems.filter(i => i.status_kanban === col.key).length;
+                    return (
+                      <div key={col.key} className="rounded-lg bg-secondary/30 p-2.5 text-center">
+                        <span className="text-lg">{col.icon}</span>
+                        <p className="text-lg font-bold text-foreground mt-1">{count}</p>
+                        <p className="text-[10px] text-muted-foreground">{col.label}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Recent items */}
+                <div className="mt-3 space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Últimas atualizações</p>
+                  {kanbanItems.slice(0, 5).map(item => (
+                    <div key={item.id} className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-secondary/30">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Badge variant="outline" className="text-[10px] shrink-0">{item.sigla_tipo}</Badge>
+                        <span className="text-xs font-medium text-foreground truncate">
+                          {item.sigla_tipo} {item.numero}/{item.ano}
+                        </span>
+                      </div>
+                      <Badge variant="secondary" className="text-[9px] capitalize shrink-0">{item.status_kanban}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* API Keys */}
         <Card>
           <CardHeader className="pb-3">
