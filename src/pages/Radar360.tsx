@@ -138,7 +138,7 @@ const Radar360 = () => {
       items.push({
         id: `r-${item.id}`,
         tipo: item.tipo_ato,
-        titulo: normalizeCase(item.numero_ato),
+        titulo: cleanResenhaTitle(item.numero_ato),
         ementa: normalizeCase(item.ementa),
         data: item.data_publicacao,
         dataDisplay: item.data_publicacao,
@@ -146,8 +146,9 @@ const Radar360 = () => {
       });
     }
 
-    // From leis ordinárias
+    // From leis ordinárias (skip incomplete records)
     for (const lei of leisRecentes) {
+      if (!lei.data_publicacao && !lei.ementa) continue;
       items.push({
         id: `l-${lei.id}`,
         tipo: 'Lei',
@@ -159,8 +160,9 @@ const Radar360 = () => {
       });
     }
 
-    // From decretos
+    // From decretos (skip incomplete records)
     for (const dec of decretosRecentes) {
+      if (!dec.data_publicacao && !dec.ementa) continue;
       items.push({
         id: `d-${dec.id}`,
         tipo: 'Decreto',
@@ -182,10 +184,13 @@ const Radar360 = () => {
       deduped.push(item);
     }
 
+    // Filter out items without a date
+    const filtered = deduped.filter(i => i.dataDisplay && i.dataDisplay !== '');
+
     // Group by date
     const map = new Map<string, UnifiedItem[]>();
-    for (const item of deduped) {
-      const key = item.dataDisplay || 'Sem data';
+    for (const item of filtered) {
+      const key = item.dataDisplay;
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(item);
     }
