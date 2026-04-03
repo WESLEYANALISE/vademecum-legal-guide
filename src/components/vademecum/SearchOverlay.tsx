@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Search, Hash, Tag, Camera } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
+
 import { useFuzzySearch } from '@/hooks/useFuzzySearch';
 import OcrScanner from './OcrScanner';
 
@@ -15,30 +15,17 @@ interface SearchOverlayProps {
   onSelectLei: (lei: { tipo: string; leiId: string; nome: string; descricao: string; tabela_nome: string; artigoNumero?: string }) => void;
 }
 
-type SearchMode = 'lei' | 'artigo';
-
-interface ArtigoResult {
-  numero: string;
-  texto: string;
-  lei_nome: string;
-  lei_sigla: string;
-  tabela_nome: string;
-  tipo: string;
-  leiId: string;
-}
+type SearchMode = 'lei' | 'numero';
 
 const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<SearchMode>('lei');
-  const [artigoResults, setArtigoResults] = useState<ArtigoResult[]>([]);
-  const [searching, setSearching] = useState(false);
   const [ocrOpen, setOcrOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
       setQuery('');
-      setArtigoResults([]);
       setTimeout(() => inputRef.current?.focus(), 300);
     }
   }, [open]);
@@ -50,47 +37,12 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
     limit: 20,
   });
 
-  // Search artigos using FTS RPC
-  useEffect(() => {
-    if (mode !== 'artigo' || query.trim().length < 1) {
-      setArtigoResults([]);
-      return;
-    }
-
-    const timeout = setTimeout(async () => {
-      setSearching(true);
-      try {
-        const { data, error } = await supabase.rpc('buscar_artigos_global', {
-          search_query: query.trim(),
-          max_results: 30,
-        });
-
-        if (!error && data) {
-          const results: ArtigoResult[] = (data as any[]).map((row: any) => {
-            const lei = LEIS_CATALOG.find(l => l.tabela_nome === row.tabela_nome);
-            return {
-              numero: row.numero,
-              texto: row.caput,
-              lei_nome: lei?.nome || row.tabela_nome,
-              lei_sigla: lei?.sigla || '',
-              tabela_nome: row.tabela_nome,
-              tipo: lei?.tipo || 'codigo',
-              leiId: lei?.id || '',
-            };
-          });
-          results.sort((a, b) => a.lei_nome.localeCompare(b.lei_nome));
-          setArtigoResults(results.slice(0, 30));
-        } else {
-          setArtigoResults([]);
-        }
-      } catch {
-        setArtigoResults([]);
-      }
-      setSearching(false);
-    }, 400);
-
-    return () => clearTimeout(timeout);
-  }, [query, mode]);
+  // Fuzzy search for leis by number (descricao contains "Lei nº X.XXX/YYYY")
+  const filteredByNumero = useFuzzySearch(LEIS_CATALOG, mode === 'numero' ? query : '', {
+    keys: ['descricao', 'sigla', 'nome'],
+    threshold: 0.3,
+    limit: 20,
+  });
 
   // Get matching tags for a lei given the current query
   const getMatchingTags = (tags?: string[]) => {
@@ -131,7 +83,7 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={mode === 'artigo' ? 'Digite número ou texto do artigo...' : 'Pesquise por nome, sigla ou tema...'}
+                placeholder={mode === 'numero' ? 'Digite o nº da lei (ex: 8.078, 13.105)...' : 'Pesquise por nome, sigla ou tema...'}
                 className="pl-9 h-10 bg-muted border-none text-sm"
               />
             </div>
@@ -158,9 +110,9 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
               Palavra-chave
             </button>
             <button
-              onClick={() => setMode('artigo')}
+              onClick={() => setMode('numero')}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                mode === 'artigo'
+                mode === 'numero'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-muted-foreground'
               }`}
@@ -216,44 +168,38 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
               </div>
             )}
 
-            {mode === 'artigo' && (
+            {mode === 'numero' && (
               <div className="space-y-2">
                 {query.trim().length < 1 && (
                   <p className="text-center text-muted-foreground text-sm py-8">
-                    Digite o número do artigo ou texto para buscar
+                    Digite o número da lei para buscar (ex: 8.078, 13.105)
                   </p>
                 )}
-                {searching && (
-                  <p className="text-center text-muted-foreground text-sm py-8 animate-pulse">
-                    Buscando artigos...
-                  </p>
+                {query.trim().length >= 1 && filteredByNumero.length === 0 && (
+                  <p className="text-center text-muted-foreground text-sm py-8">Nenhuma lei encontrada</p>
                 )}
-                {!searching && query.trim().length >= 1 && artigoResults.length === 0 && (
-                  <p className="text-center text-muted-foreground text-sm py-8">Nenhum artigo encontrado</p>
-                )}
-                {artigoResults.map((art, i) => (
+                {query.trim().length >= 1 && filteredByNumero.map((lei) => (
                   <button
-                    key={`${art.tabela_nome}-${art.numero}-${i}`}
+                    key={lei.id}
                     onClick={() => {
                       onSelectLei({
-                        tipo: art.tipo,
-                        leiId: art.leiId,
-                        nome: art.lei_nome,
-                        descricao: LEIS_CATALOG.find(l => l.id === art.leiId)?.descricao || '',
-                        tabela_nome: art.tabela_nome,
-                        artigoNumero: art.numero,
+                        tipo: lei.tipo,
+                        leiId: lei.id,
+                        nome: lei.nome,
+                        descricao: lei.descricao,
+                        tabela_nome: lei.tabela_nome,
                       });
                       onClose();
                     }}
-                    className="w-full p-3 rounded-xl bg-card border border-border hover:border-primary/40 transition-all text-left"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/40 transition-all text-left"
                   >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
-                        {art.lei_sigla}
-                      </span>
-                      <span className="text-xs font-semibold text-foreground">Art. {art.numero}</span>
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-primary">{lei.sigla}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{art.texto}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{lei.nome}</p>
+                      <p className="text-xs text-muted-foreground truncate">{lei.descricao}</p>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -266,7 +212,7 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
           onClose={() => setOcrOpen(false)}
           onTextExtracted={(text) => {
             setQuery(text.slice(0, 100));
-            setMode('artigo');
+            setMode('numero');
           }}
         />
         </>
