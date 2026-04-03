@@ -265,7 +265,7 @@ const Estudar = () => {
           </div>
         )}
       </div>
-    </div>
+    </DesktopPageLayout>
   );
 };
 
