@@ -136,6 +136,7 @@ function AnimatedRoutes() {
           <Route path="/ferramentas" element={<ProtectedRoute><PageTransition><Ferramentas /></PageTransition></ProtectedRoute>} />
           <Route path="/radar-360" element={<ProtectedRoute><PageTransition><Radar360 /></PageTransition></ProtectedRoute>} />
           <Route path="/estudar" element={<ProtectedRoute><PageTransition><Estudar /></PageTransition></ProtectedRoute>} />
+          <Route path="/aprender" element={<ProtectedRoute><PageTransition><Aprender /></PageTransition></ProtectedRoute>} />
           <Route path="/aprender/categoria/:categoriaId" element={<ProtectedRoute><PageTransition><CategoriaAprender /></PageTransition></ProtectedRoute>} />
           <Route path="/aprender/:slug" element={<ProtectedRoute><PageTransition><ArtigoEducacional /></PageTransition></ProtectedRoute>} />
           <Route path="/gamificacao" element={<ProtectedRoute><PageTransition><Gamificacao /></PageTransition></ProtectedRoute>} />
