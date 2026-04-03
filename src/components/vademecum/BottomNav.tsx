@@ -10,7 +10,7 @@ interface BottomNavProps {
 }
 
 const NAV_ITEMS = [
-  { id: 'estudar', label: 'Estudar', icon: GraduationCap },
+  { id: 'biblioteca', label: 'Biblioteca', icon: Library },
   { id: 'ferramentas', label: 'Ferramentas', icon: Wrench },
   { id: 'buscar', label: 'Buscar', icon: Search, center: true },
   { id: 'assistente', label: 'Assistente', icon: Sparkles },
