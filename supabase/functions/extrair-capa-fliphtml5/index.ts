@@ -19,11 +19,15 @@ Deno.serve(async (req) => {
   const SB_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(SB_URL, SB_KEY);
 
-  // Fetch all estudos without capa_livro
+  const url = new URL(req.url);
+  const limit = parseInt(url.searchParams.get("limit") || "5");
+
   const { data: livros, error } = await supabase
     .from("biblioteca_estudos")
     .select("id, link, download, capa_livro")
-    .is("capa_livro", null);
+    .is("capa_livro", null)
+    .not("download", "is", null)
+    .limit(limit);
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
