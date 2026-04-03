@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Timer, BookOpenText, ScanEye, Sparkles, Wrench, ChevronRight, Gamepad2, FileText } from 'lucide-react';
+import { ArrowLeft, Timer, BookOpenText, ScanEye, Sparkles, Wrench, ChevronRight, Gamepad2, FileText, ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import StudyTimer from '@/components/vademecum/StudyTimer';
@@ -49,6 +49,13 @@ const TOOLS = [
     icon: FileText,
     gradient: 'from-sky-500 to-indigo-600',
   },
+  {
+    id: 'gerador-post',
+    label: 'Gerador de Post',
+    desc: 'Crie carrosséis Instagram com artigos de lei',
+    icon: ImageIcon,
+    gradient: 'from-pink-500 to-rose-600',
+  },
 ];
 
 const Ferramentas = () => {
@@ -76,6 +83,9 @@ const Ferramentas = () => {
         break;
       case 'resumos':
         navigate('/resumos');
+        break;
+      case 'gerador-post':
+        navigate('/gerador-post');
         break;
     }
   };
