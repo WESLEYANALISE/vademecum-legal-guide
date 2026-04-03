@@ -89,15 +89,96 @@ const Radar360 = () => {
     })();
   }, []);
 
-  const groupedResenha = useMemo(() => {
-    const map = new Map<string, ResenhaItem[]>();
+  // Helper: normalize text to sentence case (no ALL CAPS)
+  const normalizeCase = (text: string) => {
+    if (!text) return text;
+    // If more than 60% uppercase letters, convert to sentence case
+    const letters = text.replace(/[^a-zA-ZÀ-ÿ]/g, '');
+    const upper = letters.replace(/[^A-ZÀ-Ý]/g, '');
+    if (letters.length > 3 && upper.length / letters.length > 0.6) {
+      return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
+        .replace(/\b(lei|decreto|nº|art\.|de|do|da|dos|das|no|na|nos|nas|em|por|para|com|sem|sob|que|e|ou|a|o|ao|à|um|uma)\b/gi, m => m.toLowerCase())
+        .replace(/^./, c => c.toUpperCase());
+    }
+    return text;
+  };
+
+  // Unified item type for the "Recentes" tab
+  type UnifiedItem = {
+    id: string;
+    tipo: string; // 'Lei', 'Decreto', etc.
+    titulo: string;
+    ementa: string;
+    data: string; // sortable date string
+    dataDisplay: string;
+    source: 'resenha' | 'lei' | 'decreto';
+  };
+
+  const allRecentes = useMemo(() => {
+    const items: UnifiedItem[] = [];
+
+    // From resenha (DOU)
     for (const item of resenha) {
-      const key = item.data_publicacao;
+      items.push({
+        id: `r-${item.id}`,
+        tipo: item.tipo_ato,
+        titulo: normalizeCase(item.numero_ato),
+        ementa: normalizeCase(item.ementa),
+        data: item.data_publicacao,
+        dataDisplay: item.data_publicacao,
+        source: 'resenha',
+      });
+    }
+
+    // From leis ordinárias
+    for (const lei of leisRecentes) {
+      items.push({
+        id: `l-${lei.id}`,
+        tipo: 'Lei',
+        titulo: normalizeCase(lei.numero_lei),
+        ementa: normalizeCase(lei.ementa),
+        data: lei.data_publicacao || '',
+        dataDisplay: lei.data_publicacao || '',
+        source: 'lei',
+      });
+    }
+
+    // From decretos
+    for (const dec of decretosRecentes) {
+      items.push({
+        id: `d-${dec.id}`,
+        tipo: 'Decreto',
+        titulo: normalizeCase(dec.numero_lei),
+        ementa: normalizeCase(dec.ementa),
+        data: dec.data_publicacao || '',
+        dataDisplay: dec.data_publicacao || '',
+        source: 'decreto',
+      });
+    }
+
+    // Deduplicate by titulo similarity (resenha may repeat leis/decretos)
+    const seen = new Set<string>();
+    const deduped: UnifiedItem[] = [];
+    for (const item of items) {
+      const key = item.titulo.toLowerCase().replace(/\s+/g, '');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      deduped.push(item);
+    }
+
+    // Group by date
+    const map = new Map<string, UnifiedItem[]>();
+    for (const item of deduped) {
+      const key = item.dataDisplay || 'Sem data';
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(item);
     }
-    return Array.from(map.entries()).slice(0, 10);
-  }, [resenha]);
+
+    // Sort groups by date descending
+    return Array.from(map.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .slice(0, 15);
+  }, [resenha, leisRecentes, decretosRecentes]);
 
   /* ── Novidades (modificações extraídas do texto dos artigos) ── */
   const TIPO_ORDER: Record<string, number> = { constituicao: 0, codigo: 1, estatuto: 2 };
@@ -364,20 +445,20 @@ const Radar360 = () => {
 
           {/* ── Tab: Alterações Recentes ── */}
           <TabsContent value="alteracoes" className="mt-4 space-y-4">
-            {loadingResenha && (
+            {(loadingResenha || loadingLeisDec) && (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
             )}
 
-            {!loadingResenha && groupedResenha.length === 0 && (
+            {!loadingResenha && !loadingLeisDec && allRecentes.length === 0 && (
               <div className="text-center py-12 space-y-2">
                 <FileText className="w-8 h-8 mx-auto text-muted-foreground/40" />
                 <p className="text-muted-foreground text-sm">Nenhuma alteração carregada.</p>
               </div>
             )}
 
-            {!loadingResenha && groupedResenha.map(([dataPub, atos]) => (
+            {!loadingResenha && !loadingLeisDec && allRecentes.map(([dataPub, atos]) => (
               <div key={dataPub} className="space-y-2">
                 <div className="flex items-center gap-2 px-1">
                   <Calendar className="w-3.5 h-3.5 text-primary" />
@@ -387,7 +468,7 @@ const Radar360 = () => {
                   </span>
                 </div>
                 {atos.map((item, i) => {
-                  const color = TIPO_COLORS[item.tipo_ato] || 'bg-muted text-muted-foreground border-border';
+                  const color = TIPO_COLORS[item.tipo] || 'bg-muted text-muted-foreground border-border';
                   return (
                     <motion.div
                       key={item.id}
@@ -400,9 +481,9 @@ const Radar360 = () => {
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge className={`${color} border text-[10px] px-2 py-0.5`}>
-                            {item.tipo_ato}
+                            {item.tipo}
                           </Badge>
-                          <span className="font-display text-sm text-foreground">{item.numero_ato}</span>
+                          <span className="font-display text-sm text-foreground">{item.titulo}</span>
                         </div>
                         <p className="text-muted-foreground text-xs line-clamp-2 leading-relaxed">
                           {item.ementa}
@@ -413,79 +494,6 @@ const Radar360 = () => {
                 })}
               </div>
             ))}
-            {/* ── Leis Ordinárias Recentes ── */}
-            {!loadingLeisDec && leisRecentes.length > 0 && (
-              <div className="space-y-2 mt-2">
-                <div className="flex items-center gap-2 px-1">
-                  <ScrollText className="w-3.5 h-3.5 text-violet-500" />
-                  <span className="text-xs font-display text-violet-500 font-semibold">Leis Ordinárias Recentes</span>
-                </div>
-                {leisRecentes.map((lei, i) => (
-                  <motion.div
-                    key={lei.id}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.02 }}
-                    onClick={() => navigate(`/legislacao/lei-ordinaria?id=${lei.id}`)}
-                    className="border border-border rounded-lg p-3 bg-card hover:border-violet-500/30 transition-colors cursor-pointer flex gap-3 items-start"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <ScrollText className="w-4 h-4 text-violet-500" />
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-display text-sm text-foreground font-semibold">{lei.numero_lei}</span>
-                        {lei.data_publicacao && (
-                          <span className="text-[10px] text-muted-foreground">{lei.data_publicacao}</span>
-                        )}
-                      </div>
-                      <p className="text-muted-foreground text-xs line-clamp-2 leading-relaxed">{lei.ementa}</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
-                  </motion.div>
-                ))}
-              </div>
-            )}
-
-            {/* ── Decretos Recentes ── */}
-            {!loadingLeisDec && decretosRecentes.length > 0 && (
-              <div className="space-y-2 mt-2">
-                <div className="flex items-center gap-2 px-1">
-                  <Gavel className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="text-xs font-display text-emerald-500 font-semibold">Decretos Recentes</span>
-                </div>
-                {decretosRecentes.map((dec, i) => (
-                  <motion.div
-                    key={dec.id}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.02 }}
-                    onClick={() => navigate(`/legislacao/decreto?id=${dec.id}`)}
-                    className="border border-border rounded-lg p-3 bg-card hover:border-emerald-500/30 transition-colors cursor-pointer flex gap-3 items-start"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <Gavel className="w-4 h-4 text-emerald-500" />
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-display text-sm text-foreground font-semibold">{dec.numero_lei}</span>
-                        {dec.data_publicacao && (
-                          <span className="text-[10px] text-muted-foreground">{dec.data_publicacao}</span>
-                        )}
-                      </div>
-                      <p className="text-muted-foreground text-xs line-clamp-2 leading-relaxed">{dec.ementa}</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
-                  </motion.div>
-                ))}
-              </div>
-            )}
-
-            {loadingLeisDec && (
-              <div className="flex items-center justify-center py-6">
-                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-              </div>
-            )}
           </TabsContent>
 
           {/* ── Tab: Novidades ── */}
