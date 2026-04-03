@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Wrench, Sparkles, Search, Menu } from 'lucide-react';
+import { Library, Wrench, Sparkles, Search, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface BottomNavProps {
