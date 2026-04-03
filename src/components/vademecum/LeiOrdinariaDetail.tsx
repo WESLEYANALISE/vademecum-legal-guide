@@ -213,10 +213,10 @@ const LeiOrdinariaDetail = ({ lei, onBack }: LeiOrdinariaDetailProps) => {
         <div className="max-w-5xl mx-auto">
           <button
             onClick={onBack}
-            className="flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm mb-4"
+            className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
-            Voltar às leis
+            Voltar
           </button>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
