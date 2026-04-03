@@ -50,6 +50,13 @@ const TOOLS = [
     icon: FileText,
     gradient: 'from-sky-500 to-indigo-600',
   },
+  {
+    id: 'noticias',
+    label: 'Notícias',
+    desc: 'Notícias jurídicas e atualizações',
+    icon: Newspaper,
+    gradient: 'from-blue-500 to-cyan-600',
+  },
 ];
 
 const Ferramentas = () => {
