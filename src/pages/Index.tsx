@@ -180,7 +180,7 @@ const Index = () => {
                     key={tab.id}
                     onClick={() => {
                       const routes: Record<string, string> = {
-                        noticias: '/aprender',
+                        noticias: '/estudar',
                         estudar: '/estudar',
                         ferramentas: '/ferramentas',
                         radar: '/radar/proposicoes',
