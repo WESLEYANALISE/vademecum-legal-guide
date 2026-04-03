@@ -2926,6 +2926,42 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_subscriptions: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          email: string
+          hora_envio: string
+          id: string
+          preferencias: Json
+          ultimo_envio: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          email: string
+          hora_envio?: string
+          id?: string
+          preferencias?: Json
+          ultimo_envio?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          email?: string
+          hora_envio?: string
+          id?: string
+          preferencias?: Json
+          ultimo_envio?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       NLL_LICITACOES: {
         Row: {
           capitulo: string | null

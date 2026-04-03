@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Timer, BookOpenText, ScanEye, Sparkles, Wrench, ChevronRight, Gamepad2, FileText, Newspaper } from 'lucide-react';
+import { ArrowLeft, Timer, BookOpenText, ScanEye, Sparkles, Wrench, ChevronRight, Gamepad2, FileText, Newspaper, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import StudyTimer from '@/components/vademecum/StudyTimer';
@@ -57,6 +57,13 @@ const TOOLS = [
     icon: Newspaper,
     gradient: 'from-blue-500 to-cyan-600',
   },
+  {
+    id: 'newsletter',
+    label: 'Newsletter',
+    desc: 'Receba um resumo jurídico diário no e-mail',
+    icon: Mail,
+    gradient: 'from-red-500 to-rose-600',
+  },
 ];
 
 const Ferramentas = () => {
@@ -74,6 +81,7 @@ const Ferramentas = () => {
       case 'gamificacao': navigate('/gamificacao'); break;
       case 'resumos': navigate('/resumos'); break;
       case 'noticias': navigate('/noticias'); break;
+      case 'newsletter': navigate('/newsletter'); break;
       case 'gerador-post': navigate('/gerador-post'); break;
     }
   };
