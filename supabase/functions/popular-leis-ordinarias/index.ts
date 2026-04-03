@@ -6,140 +6,90 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&#\d+;/g, (m) => String.fromCharCode(parseInt(m.slice(2, -1))));
-}
-
-function parseLeisOrdinarias(html: string): { numero_lei: string; data_publicacao: string; ementa: string; url: string }[] {
-  const leis: { numero_lei: string; data_publicacao: string; ementa: string; url: string }[] = [];
-
-  const rows = html.split(/<tr[^>]*>/i);
-
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    const cells = row.split(/<td[^>]*>/i);
-    if (cells.length < 3) continue;
-
-    const cell1 = cells[1] || '';
-    const cell2 = cells[2] || '';
-
-    const linkMatch = cell1.match(/<a[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/i);
-    if (!linkMatch) continue;
-
-    const url = linkMatch[1].trim();
-    const linkText = linkMatch[2].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-
-    const leiMatch = linkText.match(/(Lei\s+n[ºo°]\s*[\d.]+),?\s*de\s*([\d.]+\.\d{4})/i);
-    let numero_lei = '';
-    let data_publicacao = '';
-
-    if (leiMatch) {
-      numero_lei = leiMatch[1].trim();
-      data_publicacao = leiMatch[2].trim();
-    } else {
-      numero_lei = linkText;
-    }
-
-    if (numero_lei.toLowerCase().includes('nº da lei') || numero_lei.toLowerCase().includes('ementa')) continue;
-
-    const ementa = decodeHtmlEntities(
-      cell2
-        .replace(/<\/td>.*/is, '')
-        .replace(/<[^>]+>/g, '')
-        .replace(/\s+/g, ' ')
-        .trim()
-    );
-
-    if (!ementa) continue;
-
-    leis.push({ numero_lei, data_publicacao, ementa, url });
-  }
-
-  return leis;
-}
-
 const FETCH_HEADERS = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
   "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
 };
 
-async function fetchTextoCompleto(url: string): Promise<string> {
+function decodeHtml(raw: Uint8Array): string {
   try {
-    let fullUrl = url;
-    if (url.startsWith('/')) {
-      fullUrl = `https://www.planalto.gov.br${url}`;
-    } else if (!url.startsWith('http')) {
-      fullUrl = `https://www.planalto.gov.br/${url}`;
-    }
-
-    console.log(`Buscando texto completo (fetch direto): ${fullUrl}`);
-
-    const response = await fetch(fullUrl, { headers: FETCH_HEADERS });
-
-    if (!response.ok) {
-      console.error(`Erro ao buscar ${fullUrl}: ${response.status}`);
-      return '';
-    }
-
-    const html = await response.text();
-
-    // Extract the main content body - look for the law text
-    // Remove everything before the first Art. or CAPÍTULO or the law title
-    let body = html;
-
-    // Remove script/style tags
-    body = body.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-    body = body.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-
-    // Remove strikethrough content (revoked)
-    body = body.replace(/<(?:strike|s|del)[^>]*>[\s\S]*?<\/(?:strike|s|del)>/gi, '');
-
-    // Try to find the main content area
-    const contentMatch = body.match(/<div[^>]*id="textoLei"[^>]*>([\s\S]*?)<\/div>/i)
-      || body.match(/<div[^>]*class="textoLei"[^>]*>([\s\S]*?)<\/div>/i)
-      || body.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-
-    if (contentMatch) {
-      body = contentMatch[1];
-    }
-
-    // Convert <p>, <br> to newlines
-    body = body.replace(/<\/p>/gi, '\n\n');
-    body = body.replace(/<br\s*\/?>/gi, '\n');
-    body = body.replace(/<\/div>/gi, '\n');
-
-    // Remove all remaining HTML tags
-    body = body.replace(/<[^>]+>/g, '');
-
-    // Decode entities
-    body = decodeHtmlEntities(body);
-
-    // Clean up whitespace
-    body = body
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-      .join('\n\n');
-
-    // Remove navigation/header junk (lines before the actual law content)
-    const lawStart = body.search(/(?:LEI\s+N[ºo°]|Presidência\s+da\s+República|O\s+PRESIDENTE\s+DA\s+REPÚBLICA)/i);
-    if (lawStart > 0 && lawStart < 2000) {
-      body = body.substring(lawStart);
-    }
-
-    return body.trim();
-  } catch (error) {
-    console.error(`Erro ao buscar texto completo de ${url}:`, error);
-    return '';
+    return new TextDecoder("utf-8", { fatal: true }).decode(raw);
+  } catch {
+    return new TextDecoder("iso-8859-1").decode(raw);
   }
+}
+
+function extractLeiData(html: string, num: number): {
+  numero_lei: string;
+  data_publicacao: string;
+  ementa: string;
+  texto_completo: string;
+  url: string;
+} | null {
+  if (html.includes("Ocorreu um erro") || html.length < 500) return null;
+
+  // Clean body for extraction
+  const bodyClean = html
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#\d+;/g, (m) => String.fromCharCode(parseInt(m.slice(2, -1))))
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Extract title + ementa
+  const m = bodyClean.match(
+    /LEI\s+N[ºo°]\s*[\d.]+,?\s*DE\s+(\d{1,2})\s+DE\s+(\w+)\s+DE\s+(\d{4})\s*(.+?)\s*O\s+PRESIDENTE/i
+  );
+
+  let data_publicacao = "";
+  let ementa = "";
+
+  if (m) {
+    const meses: Record<string, string> = {
+      janeiro: "1", fevereiro: "2", "março": "3", marco: "3",
+      abril: "4", maio: "5", junho: "6", julho: "7",
+      agosto: "8", setembro: "9", outubro: "10", novembro: "11", dezembro: "12",
+    };
+    data_publicacao = `${m[1]}.${meses[m[2].toLowerCase()] || "0"}.${m[3]}`;
+    ementa = m[4].replace(/^Mensagem de veto\s*/i, "").trim();
+  }
+
+  // Build numero_lei
+  const nStr = num >= 10000
+    ? `${Math.floor(num / 1000)}.${String(num % 1000).padStart(3, "0")}`
+    : String(num);
+  const numero_lei = `Lei nº ${nStr}`;
+
+  // Full text
+  let body = html;
+  body = body.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "");
+  body = body.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
+  body = body.replace(/<\/p>/gi, "\n\n");
+  body = body.replace(/<br\s*\/?>/gi, "\n");
+  body = body.replace(/<\/div>/gi, "\n");
+  body = body.replace(/<[^>]+>/g, "");
+  body = body.replace(/&nbsp;/g, " ");
+  body = body.replace(/&amp;/g, "&");
+  body = body.replace(/&lt;/g, "<");
+  body = body.replace(/&gt;/g, ">");
+  body = body.replace(/&quot;/g, '"');
+  body = body.replace(/&#39;/g, "'");
+  body = body.replace(/&#\d+;/g, (m) => String.fromCharCode(parseInt(m.slice(2, -1))));
+  body = body.replace(/\n{3,}/g, "\n\n").trim();
+
+  return {
+    numero_lei,
+    data_publicacao,
+    ementa: ementa.substring(0, 500),
+    texto_completo: body.substring(0, 50000),
+    url: `/ccivil_03/_ato2023-2026/2026/lei/L${num}.htm`,
+  };
 }
 
 Deno.serve(async (req) => {
@@ -158,102 +108,88 @@ Deno.serve(async (req) => {
       );
     }
 
-    const browserlessKey = Deno.env.get("BROWSERLESS_API_KEY");
-    if (!browserlessKey) {
-      return new Response(
-        JSON.stringify({ error: "BROWSERLESS_API_KEY não configurada" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const targetUrl = `https://www4.planalto.gov.br/legislacao/portal-legis/legislacao-1/leis-ordinarias/${ano}-leis-ordinarias`;
-    console.log(`Buscando leis ordinárias de ${ano}: ${targetUrl}`);
-
-    // Use Browserless /content endpoint
-    const browserlessUrl = `https://production-sfo.browserless.io/content?token=${browserlessKey}`;
-    const response = await fetch(browserlessUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        url: targetUrl,
-        bestAttempt: true,
-        gotoOptions: {
-          waitUntil: "domcontentloaded",
-          timeout: 15000,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("Browserless error:", errText);
-      return new Response(
-        JSON.stringify({ error: `Browserless error: ${response.status}`, detail: errText.substring(0, 500) }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const html = await response.text();
-    console.log(`HTML recebido: ${html.length} caracteres`);
-
-    const leis = parseLeisOrdinarias(html);
-    console.log(`Leis encontradas: ${leis.length}`);
-
-    if (leis.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "Nenhuma lei encontrada no HTML", htmlPreview: html.substring(0, 3000) }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Reverse to ascending order (page comes descending)
-    leis.reverse();
-
-    // Fetch full text for each law (with delay to avoid rate limiting)
-    console.log(`Buscando texto completo de ${leis.length} leis...`);
-    const textos: string[] = [];
-    for (let i = 0; i < leis.length; i++) {
-      const lei = leis[i];
-      if (lei.url) {
-        const texto = await fetchTextoCompleto(lei.url);
-        textos.push(texto);
-        console.log(`Lei ${i + 1}/${leis.length}: ${lei.numero_lei} - ${texto.length} chars`);
-        // Small delay between requests
-        if (i < leis.length - 1) {
-          await new Promise(r => setTimeout(r, 500));
-        }
-      } else {
-        textos.push('');
-      }
-    }
-
     // Connect to Supabase
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Delete existing records for this year
-    const { error: deleteError } = await supabase
+    // Get existing laws to know what we already have
+    const { data: existing } = await supabase
       .from("leis_ordinarias")
-      .delete()
+      .select("numero_lei")
       .eq("ano", ano);
 
-    if (deleteError) {
-      console.error("Erro ao deletar:", deleteError);
+    const existingSet = new Set((existing || []).map((e: any) => e.numero_lei));
+    const maxExistingOrdem = existing?.length || 0;
+
+    // Scan individual law URLs to find new ones
+    // Start from the last known number and scan forward
+    const lastNum = Math.max(
+      ...Array.from(existingSet).map((n: string) => {
+        const m = n.match(/(\d[\d.]*\d)/);
+        return m ? parseInt(m[1].replace(/\./g, "")) : 0;
+      }),
+      15321 // fallback start for 2026
+    );
+
+    console.log(`Último número conhecido: ${lastNum}, existentes: ${existingSet.size}`);
+
+    const newLeis: any[] = [];
+    let consecutiveMisses = 0;
+
+    for (let num = lastNum + 1; consecutiveMisses < 5; num++) {
+      const url = `https://www.planalto.gov.br/ccivil_03/_ato2023-2026/${ano}/lei/L${num}.htm`;
+
+      try {
+        const resp = await fetch(url, { headers: FETCH_HEADERS });
+
+        if (!resp.ok || resp.status === 404) {
+          consecutiveMisses++;
+          continue;
+        }
+
+        const raw = new Uint8Array(await resp.arrayBuffer());
+        const html = decodeHtml(raw);
+        const lei = extractLeiData(html, num);
+
+        if (!lei) {
+          consecutiveMisses++;
+          continue;
+        }
+
+        consecutiveMisses = 0;
+
+        if (existingSet.has(lei.numero_lei)) {
+          console.log(`Já existe: ${lei.numero_lei}`);
+          continue;
+        }
+
+        newLeis.push(lei);
+        console.log(`Nova: ${lei.numero_lei} | ${lei.data_publicacao}`);
+
+        // Small delay
+        await new Promise((r) => setTimeout(r, 300));
+      } catch (err) {
+        console.error(`Erro ao buscar L${num}:`, err);
+        consecutiveMisses++;
+      }
+    }
+
+    if (newLeis.length === 0) {
+      return new Response(
+        JSON.stringify({ ano, message: "Nenhuma lei nova encontrada", total: existingSet.size }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Insert new records
-    const records = leis.map((lei, index) => ({
-      numero_lei: lei.numero_lei,
-      data_publicacao: lei.data_publicacao,
-      ementa: lei.ementa,
-      url: lei.url,
+    const records = newLeis.map((lei, i) => ({
+      ...lei,
       ano,
-      ordem: index + 1,
-      texto_completo: textos[index] || null,
+      ordem: maxExistingOrdem + i + 1,
     }));
 
-    const batchSize = 100;
+    const batchSize = 50;
     let inserted = 0;
 
     for (let i = 0; i < records.length; i += batchSize) {
@@ -269,15 +205,19 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`✅ ${inserted} leis ordinárias de ${ano} inseridas com texto completo`);
+    console.log(`✅ ${inserted} leis ordinárias novas de ${ano} inseridas`);
 
     return new Response(
       JSON.stringify({
         ano,
-        totalLeis: leis.length,
-        inserted,
-        comTexto: textos.filter(t => t.length > 0).length,
-        sample: leis.slice(0, 3).map((l, i) => ({ ...l, textoPreview: textos[i]?.substring(0, 200) })),
+        novasLeis: inserted,
+        totalAnterior: existingSet.size,
+        totalAtual: existingSet.size + inserted,
+        sample: newLeis.slice(0, 5).map((l) => ({
+          numero_lei: l.numero_lei,
+          data_publicacao: l.data_publicacao,
+          ementa: l.ementa.substring(0, 100),
+        })),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
