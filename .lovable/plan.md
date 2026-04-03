@@ -1,28 +1,41 @@
 
 
-## Plano: Corrigir Exibição de Leis/Decretos na Aba "Recentes" do Radar 360
+## Plano: Abrir Detalhe de Lei/Decreto com Slide da Direita no Radar 360
 
-### Problemas Identificados
+### Problema
 
-1. **"Sem data"**: 9 leis ordinárias no banco possuem `data_publicacao` e `ementa` vazios (ex: Lei nº 15.366, 15.368, 15.370, 15.371). Elas aparecem agrupadas como "Sem data" sem informação útil.
-2. **Título incompleto**: Os cards de leis sem ementa mostram apenas "Lei nº 15.371" sem nenhuma descrição.
-3. **"DEcreto" com maiúsculas erradas**: Os dados da resenha vêm em ALL CAPS ("DECRETO Nº 12.909, DE 27 DE MARÇO DE 2026"). A função `normalizeCase` tem um bug na cadeia de `.replace()` que pode produzir "DEcreto" em vez de "Decreto".
-4. **Título repetitivo nos decretos**: O titulo mostra o nome completo com data (ex: "Decreto nº 12.909, de 27 de março de 2026") e a ementa repete a mesma coisa.
+Os cards de leis ordinárias e decretos na aba "Recentes" não são clicáveis. O usuário quer que ao clicar, abra uma tela de detalhe deslizando da direita para a esquerda.
 
 ### Solução
 
-**1. Filtrar registros sem data/ementa** — No `useMemo` de `allRecentes`, excluir itens que não possuam `data_publicacao` nem `ementa` (registros incompletos não devem aparecer).
+Adicionar estado para armazenar o item selecionado e renderizar o `LeiOrdinariaDetail` com animação de slide-in, igual ao padrão usado em `CategoriaLegislacao.tsx` e `Novidades.tsx`.
 
-**2. Corrigir `normalizeCase`** — Reescrever para usar uma abordagem mais robusta: primeiro converter todo o texto para minúsculas, depois capitalizar a primeira letra e palavras-chave como "Lei", "Decreto", "Medida Provisória", etc.
+### Mudanças em `src/pages/Radar360.tsx`
 
-**3. Limpar título dos atos da resenha** — Extrair apenas o tipo e número (ex: "DECRETO Nº 12.909, DE 27 DE MARÇO DE 2026" → "Decreto nº 12.909") removendo a parte da data que já aparece no agrupamento.
+1. **Importar** `LeiOrdinariaDetail` e `PageTransition`
+2. **Novo estado**: `selectedLei: LeiOrdinaria | null`
+3. **Guardar dados originais**: Manter referência às leis/decretos originais (`leisRecentes` e `decretosRecentes`) para poder buscar o objeto completo ao clicar
+4. **onClick nos cards**: Quando o `source` for `'lei'` ou `'decreto'`, buscar o objeto `LeiOrdinaria` correspondente pelo ID e setar no estado. Cards da `resenha` (que não têm texto completo) não abrem detalhe.
+5. **Renderização condicional**: Se `selectedLei` estiver setado, renderizar `LeiOrdinariaDetail` envolvido em `PageTransition` (slide da direita para esquerda), com `onBack` fechando o detalhe
+6. **Cursor pointer + ChevronRight**: Adicionar indicador visual de que o card é clicável (apenas para leis/decretos)
 
-**4. Re-popular leis incompletas** — Invocar a Edge Function `popular-leis-ordinarias` para buscar ementa e data das 9 leis que estão vazias no banco.
+### Layout
 
-### Arquivos
+```text
+Radar 360 → clica em "Lei nº 15.374"
+  ┌──────────────────────────┐
+  │  ← Voltar                │  ← slide-in da direita
+  │  ⚖️ Lei nº 15.374        │
+  │  Ementa completa...      │
+  │  📋 Artigos (12)         │
+  │  Art. 1º ...             │
+  │  Art. 2º ...             │
+  └──────────────────────────┘
+```
+
+### Arquivo
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/Radar360.tsx` | Corrigir `normalizeCase`, filtrar itens sem data, limpar títulos da resenha |
-| Edge Function (invocar) | Re-rodar `popular-leis-ordinarias` para preencher dados faltantes |
+| `src/pages/Radar360.tsx` | Estado `selectedLei`, onClick nos cards, renderização condicional com `LeiOrdinariaDetail` + `PageTransition` |
 
