@@ -427,8 +427,8 @@ const Biblioteca = () => {
         <LeitorWebView url={readerUrl} titulo={readerTitle} onClose={() => setReaderUrl(null)} />
       )}
 
-      {ebookId && (
-        <LeitorEbook livroId={ebookId} onClose={() => setEbookId(null)} />
+      {ebookData && (
+        <LeitorEbook livro={ebookData} onBack={() => setEbookData(null)} onUpdateBookmark={() => {}} />
       )}
     </>
   );
