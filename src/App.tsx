@@ -48,6 +48,7 @@ const AdminMonitor = lazy(() => import("./pages/AdminMonitor.tsx"));
 const Perfil = lazy(() => import("./pages/Perfil.tsx"));
 const SobreApp = lazy(() => import("./pages/SobreApp.tsx"));
 const GeradorPost = lazy(() => import("./pages/GeradorPost.tsx"));
+const KanbanLegislativo = lazy(() => import("./pages/KanbanLegislativo.tsx"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
