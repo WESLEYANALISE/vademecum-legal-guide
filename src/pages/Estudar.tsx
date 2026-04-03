@@ -15,7 +15,7 @@ import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
 
 import { LEIS_COMPACTAS as LEIS } from '@/data/leisCatalog';
 
-type View = 'menu' | 'select-lei' | 'select-artigo' | 'questoes' | 'flashcards' | 'mapa_mental' | 'desempenho' | 'biblioteca';
+type View = 'menu' | 'select-lei' | 'select-artigo' | 'questoes' | 'flashcards' | 'mapa_mental' | 'desempenho';
 
 const Estudar = () => {
   const navigate = useNavigate();
