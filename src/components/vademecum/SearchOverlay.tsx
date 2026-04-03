@@ -169,44 +169,38 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
               </div>
             )}
 
-            {mode === 'artigo' && (
+            {mode === 'numero' && (
               <div className="space-y-2">
                 {query.trim().length < 1 && (
                   <p className="text-center text-muted-foreground text-sm py-8">
-                    Digite o número do artigo ou texto para buscar
+                    Digite o número da lei para buscar (ex: 8.078, 13.105)
                   </p>
                 )}
-                {searching && (
-                  <p className="text-center text-muted-foreground text-sm py-8 animate-pulse">
-                    Buscando artigos...
-                  </p>
+                {query.trim().length >= 1 && filteredByNumero.length === 0 && (
+                  <p className="text-center text-muted-foreground text-sm py-8">Nenhuma lei encontrada</p>
                 )}
-                {!searching && query.trim().length >= 1 && artigoResults.length === 0 && (
-                  <p className="text-center text-muted-foreground text-sm py-8">Nenhum artigo encontrado</p>
-                )}
-                {artigoResults.map((art, i) => (
+                {query.trim().length >= 1 && filteredByNumero.map((lei) => (
                   <button
-                    key={`${art.tabela_nome}-${art.numero}-${i}`}
+                    key={lei.id}
                     onClick={() => {
                       onSelectLei({
-                        tipo: art.tipo,
-                        leiId: art.leiId,
-                        nome: art.lei_nome,
-                        descricao: LEIS_CATALOG.find(l => l.id === art.leiId)?.descricao || '',
-                        tabela_nome: art.tabela_nome,
-                        artigoNumero: art.numero,
+                        tipo: lei.tipo,
+                        leiId: lei.id,
+                        nome: lei.nome,
+                        descricao: lei.descricao,
+                        tabela_nome: lei.tabela_nome,
                       });
                       onClose();
                     }}
-                    className="w-full p-3 rounded-xl bg-card border border-border hover:border-primary/40 transition-all text-left"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/40 transition-all text-left"
                   >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
-                        {art.lei_sigla}
-                      </span>
-                      <span className="text-xs font-semibold text-foreground">Art. {art.numero}</span>
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-primary">{lei.sigla}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{art.texto}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{lei.nome}</p>
+                      <p className="text-xs text-muted-foreground truncate">{lei.descricao}</p>
+                    </div>
                   </button>
                 ))}
               </div>
