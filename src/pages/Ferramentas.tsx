@@ -73,6 +73,7 @@ const Ferramentas = () => {
       case 'assistente': setAssistenteOpen(true); break;
       case 'gamificacao': navigate('/gamificacao'); break;
       case 'resumos': navigate('/resumos'); break;
+      case 'noticias': navigate('/noticias'); break;
       case 'gerador-post': navigate('/gerador-post'); break;
     }
   };
