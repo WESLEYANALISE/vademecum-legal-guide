@@ -250,8 +250,9 @@ export default function LeitorEbook({ livro, onBack, onUpdateBookmark }: LeitorE
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Header - minimal */}
       <div className="flex items-center px-4 py-4 border-b border-border bg-card/90 backdrop-blur-sm shrink-0">
-        <button onClick={onBack} className="flex items-center justify-center w-10 h-10 rounded-xl bg-foreground/90 hover:bg-foreground text-background transition-colors shrink-0">
-          <ArrowLeft className="w-5 h-5" />
+        <button onClick={onBack} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-foreground/90 hover:bg-foreground text-background transition-colors shrink-0 text-sm font-medium">
+          <ArrowLeft className="w-4 h-4" />
+          Voltar
         </button>
         <div className="flex-1 text-center mx-3 min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">{livro.titulo}</p>
