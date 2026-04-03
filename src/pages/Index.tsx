@@ -179,11 +179,22 @@ const Index = () => {
                   <button
                     key={tab.id}
                     onClick={() => {
-                      setActiveTab(tab.id);
-                      if (tab.id === 'radar') {
-                        localStorage.setItem(RADAR_SEEN_KEY, String(Date.now()));
-                        setRadarBadge(0);
+                      // Navigate to dedicated pages for non-legislacao tabs
+                      const routes: Record<string, string> = {
+                        noticias: '/aprender',
+                        estudar: '/estudar',
+                        ferramentas: '/ferramentas',
+                        radar: '/radar-legislativo',
+                      };
+                      if (routes[tab.id]) {
+                        if (tab.id === 'radar') {
+                          localStorage.setItem(RADAR_SEEN_KEY, String(Date.now()));
+                          setRadarBadge(0);
+                        }
+                        navigate(routes[tab.id]);
+                        return;
                       }
+                      setActiveTab(tab.id);
                     }}
                     className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-body font-medium transition-colors ${
                       isActive
