@@ -98,6 +98,7 @@ const Ferramentas = () => {
       case 'newsletter': navigate('/newsletter'); break;
       case 'gerador-post': navigate('/gerador-post'); break;
       case 'biblioteca': navigate('/biblioteca'); break;
+      case 'aprender': navigate('/aprender'); break;
     }
   };
 

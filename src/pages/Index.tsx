@@ -391,6 +391,10 @@ const Index = () => {
                 <button
                   key={tab.id}
                   onClick={() => {
+                    if (tab.id === 'noticias') {
+                      navigate('/estudar');
+                      return;
+                    }
                     setActiveTab(tab.id);
                     if (tab.id === 'radar') {
                       localStorage.setItem(RADAR_SEEN_KEY, String(Date.now()));
