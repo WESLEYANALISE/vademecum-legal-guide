@@ -492,13 +492,23 @@ const Radar360 = () => {
                 </div>
                 {atos.map((item, i) => {
                   const color = TIPO_COLORS[item.tipo] || 'bg-muted text-muted-foreground border-border';
+                  const isClickable = item.source === 'lei' || item.source === 'decreto';
+                  const handleClick = () => {
+                    if (!isClickable) return;
+                    const rawId = item.id.replace(/^[ld]-/, '');
+                    const found = item.source === 'lei'
+                      ? leisRecentes.find(l => l.id === rawId)
+                      : decretosRecentes.find(d => d.id === rawId);
+                    if (found) setSelectedLei(found);
+                  };
                   return (
                     <motion.div
                       key={item.id}
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.02 }}
-                      className="border border-border rounded-lg p-3 bg-card hover:border-primary/20 transition-colors min-h-[72px] flex gap-3 items-center"
+                      onClick={handleClick}
+                      className={`border border-border rounded-lg p-3 bg-card hover:border-primary/20 transition-colors min-h-[72px] flex gap-3 items-center ${isClickable ? 'cursor-pointer' : ''}`}
                     >
                       <img src={brasaoImg} alt="" className="w-8 h-8 flex-shrink-0" />
                       <div className="flex-1 min-w-0 space-y-1">
@@ -512,6 +522,7 @@ const Radar360 = () => {
                           {item.ementa}
                         </p>
                       </div>
+                      {isClickable && <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
                     </motion.div>
                   );
                 })}
