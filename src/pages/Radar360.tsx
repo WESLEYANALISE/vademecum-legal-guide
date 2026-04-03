@@ -411,9 +411,6 @@ const Radar360 = () => {
                 })}
               </div>
             ))}
-          </TabsContent>
-
-
             {/* ── Leis Ordinárias Recentes ── */}
             {!loadingLeisDec && leisRecentes.length > 0 && (
               <div className="space-y-2 mt-2">
