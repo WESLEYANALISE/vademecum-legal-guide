@@ -67,7 +67,7 @@ const BottomNav = ({ onSearchClick, onAssistenteClick, onMenuClick }: BottomNavP
                 item.id === 'menu' ? onMenuClick :
                 item.id === 'ferramentas' ? () => navigate('/ferramentas') :
                 item.id === 'assistente' ? onAssistenteClick :
-                item.id === 'estudar' ? () => navigate('/estudar') :
+                item.id === 'biblioteca' ? () => navigate('/biblioteca') :
                 undefined
               }
               className="flex flex-col items-center gap-0.5 py-1 px-2 text-foreground hover:text-primary transition-colors relative"

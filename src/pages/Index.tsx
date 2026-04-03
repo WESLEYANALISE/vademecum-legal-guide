@@ -38,7 +38,7 @@ type Tab = 'legislacao' | 'radar' | 'noticias' | 'estudar' | 'ferramentas';
 const TABS: { id: Tab; label: string; icon: typeof Scale; subtitle: string }[] = [
   { id: 'radar', label: 'Radar Legislativo', icon: Radar, subtitle: 'Monitoramento' },
   { id: 'legislacao', label: 'Legislação', icon: Scale, subtitle: 'Leis e Códigos' },
-  { id: 'noticias', label: 'Aprender', icon: Brain, subtitle: 'Estude e aprenda' },
+  { id: 'noticias', label: 'Estudar', icon: GraduationCap, subtitle: 'Questões e flashcards' },
 ];
 
 const DESKTOP_TABS: { id: Tab; label: string; icon: typeof Scale }[] = [
