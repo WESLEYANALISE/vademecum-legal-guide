@@ -44,6 +44,7 @@ const ADMIN_FUNCTIONS = [
   { id: 'camara-deputados', label: 'Câmara dos Deputados', icon: Building2, route: '/radar/deputados' },
   { id: 'boletins', label: 'Boletins', icon: Rss },
   { id: 'paleta-cores', label: 'Paleta de Cores', icon: Palette, route: '/configuracoes' },
+  { id: 'gerador-post', label: 'Gerador de Post', icon: ImageIcon, route: '/gerador-post' },
 ];
 
 const CONFIG_ITEMS = [
