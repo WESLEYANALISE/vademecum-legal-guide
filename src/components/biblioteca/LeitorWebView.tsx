@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 interface LeitorWebViewProps {
   url: string;
@@ -8,15 +8,15 @@ interface LeitorWebViewProps {
 
 const LeitorWebView = ({ url, titulo, onClose }: LeitorWebViewProps) => {
   return (
-    <div className="fixed inset-0 z-[60] bg-black flex flex-col">
-      <div className="flex items-center justify-between px-4 py-2 bg-card border-b border-border">
-        <p className="text-sm font-semibold text-foreground truncate flex-1 mr-3">{titulo}</p>
+    <div className="fixed inset-0 z-[60] bg-background flex flex-col">
+      <div className="flex items-center gap-3 px-4 py-3 bg-card border-b border-border">
         <button
           onClick={onClose}
-          className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-destructive/20 transition-colors"
+          className="flex items-center justify-center w-9 h-9 rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
         >
-          <X className="w-4 h-4" />
+          <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
+        <p className="text-sm font-semibold text-foreground truncate flex-1">{titulo}</p>
       </div>
       <iframe
         src={url}
