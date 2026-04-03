@@ -1167,6 +1167,30 @@ const CategoriaLegislacao = () => {
       }
       items.sort((a, b) => b.ano - a.ano);
 
+      // Merge DB alteracoes (from monitoramento)
+      const parsedKeys = new Set(items.map(i => `${i.artigo.numero}::${i.ano}`));
+      for (const dbItem of dbAlteracoes) {
+        const ano = dbItem.detectado_em ? new Date(dbItem.detectado_em).getFullYear() : 0;
+        const key = `${dbItem.artigo_numero}::${ano}`;
+        if (parsedKeys.has(key)) continue; // skip duplicates
+        const matchingArtigo = artigos.find(a => a.numero === dbItem.artigo_numero);
+        const tipoLabel = dbItem.tipo_alteracao === 'artigo_revogado' ? 'Revogado'
+          : dbItem.tipo_alteracao === 'artigo_novo' ? 'Incluído'
+          : dbItem.tipo_alteracao === 'texto_alterado' ? 'Alterada'
+          : 'Alteração';
+        items.push({
+          artigo: matchingArtigo || { id: dbItem.artigo_numero, numero: dbItem.artigo_numero, caput: dbItem.texto_atual || dbItem.texto_anterior || '' },
+          tipo: tipoLabel,
+          referencia: `Detectado pelo monitoramento em ${new Date(dbItem.detectado_em).toLocaleDateString('pt-BR')}`,
+          ano,
+          parteModificada: 'Artigo inteiro',
+          leiNome: 'Monitoramento automático',
+          linhasModificadas: [],
+          fromMonitor: true,
+        });
+      }
+      items.sort((a, b) => b.ano - a.ano);
+
       const badgeColor = (tipo: string) => {
         const t = tipo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         if (t.startsWith('revogad')) return 'bg-destructive/20 text-destructive';
@@ -1181,7 +1205,12 @@ const CategoriaLegislacao = () => {
       };
 
       if (items.length === 0) {
-        return (
+        return loadingDbAlteracoes ? (
+          <div className="flex flex-col items-center py-12 gap-2">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <p className="text-muted-foreground text-sm">Carregando alterações do monitoramento...</p>
+          </div>
+        ) : (
           <div className="flex flex-col items-center py-12 gap-2">
             <Sparkles className="w-8 h-8 text-muted-foreground/40" />
             <p className="text-muted-foreground text-sm">Nenhuma alteração legislativa encontrada.</p>
