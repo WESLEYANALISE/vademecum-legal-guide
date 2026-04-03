@@ -177,7 +177,7 @@ const Estudar = () => {
 
         {/* Seletor de Lei */}
         {view === 'select-lei' && (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2">
             <p className="text-sm font-medium text-muted-foreground mb-3">Escolha a lei para {selectedMode === 'questoes' ? 'gerar questões' : 'gerar flashcards'}:</p>
             {LEIS.map((lei, i) => (
               <motion.button
