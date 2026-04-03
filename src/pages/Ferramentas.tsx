@@ -84,6 +84,9 @@ const Ferramentas = () => {
       case 'resumos':
         navigate('/resumos');
         break;
+      case 'gerador-post':
+        navigate('/gerador-post');
+        break;
     }
   };
 

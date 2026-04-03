@@ -347,6 +347,34 @@ Deno.serve(async (req) => {
 
       const prompt = `Projeto de Lei: PL ${plNumero || ''}/${plAno || ''}\nAutor: ${autorNome || 'Não informado'}\nEmenta: ${ementa}${pdfContext}`;
       contents = [{ role: 'user', parts: [{ text: prompt }] }];
+    } else if (mode === 'carrossel_post' && artigoTexto && tabelaNome) {
+      // Fetch full article text for richer content
+      const fullText = await fetchFullArticleText(tabelaNome, artigoNumero || artigoTexto);
+      const artText = fullText || artigoTexto;
+
+      systemPrompt = `Você é um designer de conteúdo jurídico viral para Instagram. Crie um carrossel educativo sobre o artigo de lei abaixo.
+
+Regras OBRIGATÓRIAS de formato:
+- Responda SOMENTE com JSON válido, sem markdown, sem texto extra
+- O JSON deve ter: "titulo_viral" (string chamativa de até 60 caracteres) e "slides" (array de 4-6 objetos)
+
+Tipos de slides disponíveis (use pelo menos 3 tipos diferentes):
+1. "capa" — slide de abertura: { "tipo": "capa", "titulo": "Título viral", "subtitulo": "Art. Xº" }
+2. "comparacao" — duas colunas: { "tipo": "comparacao", "titulo_esquerda": "...", "itens_esquerda": ["..."], "titulo_direita": "...", "itens_direita": ["..."] }
+3. "destaque" — card de destaque: { "tipo": "destaque", "titulo": "Nota importante", "texto": "Explicação...", "itens": ["item1", "item2"] }
+4. "conteudo" — bullet points: { "tipo": "conteudo", "titulo": "Título", "itens": ["ponto 1", "ponto 2", "ponto 3"] }
+5. "cta" — slide final: { "tipo": "cta", "texto_engajamento": "Pergunta envolvente?", "texto_salvar": "Salve para revisar!" }
+
+Regras de conteúdo:
+- O primeiro slide DEVE ser tipo "capa"
+- O último slide DEVE ser tipo "cta"
+- Use linguagem acessível, tom de professor descontraído
+- Foque em pontos que são cobrados em provas OAB/concursos
+- Cada item de lista deve ter no máximo 80 caracteres
+- Títulos devem ser curtos e impactantes`;
+
+      const prompt = `Lei: ${leiNome || ''}\nArtigo: ${artigoNumero || ''}\nTexto completo:\n\n${artText}`;
+      contents = [{ role: 'user', parts: [{ text: prompt }] }];
     } else if (mode === 'explicar_alteracao' && artigoTexto) {
       systemPrompt = SYSTEM_PROMPT_ALTERACAO;
       const prompt = `Lei: ${leiNome || 'Não informada'}\nArtigo: ${artigoNumero || 'Não informado'}\nTipo de alteração: ${tipoAlteracao || 'Não informado'}\nParte modificada: ${parteModificada || 'Artigo inteiro'}\nReferência legislativa: ${referencia || 'Não informada'}\n\nTexto completo do artigo:\n\n${artigoTexto}`;
