@@ -20,22 +20,21 @@ Deno.serve(async (req) => {
   const supabase = createClient(SB_URL, SB_KEY);
 
   const url = new URL(req.url);
-  const limit = parseInt(url.searchParams.get("limit") || "10");
-  const mode = url.searchParams.get("mode") || "missing";
+  const limit = parseInt(url.searchParams.get("limit") || "20");
+  const offset = parseInt(url.searchParams.get("offset") || "0");
+  const mode = url.searchParams.get("mode") || "all";
 
+  // mode=all → process ALL books (re-extract everything)
   // mode=missing → only NULL capa_livro
-  // mode=reprocess → re-extract for books with Drive thumbnails (akaeinqkhdwzopfsckgg)
   let query = supabase
     .from("biblioteca_estudos")
     .select("id, link, download, capa_livro");
 
-  if (mode === "reprocess") {
-    query = query.like("capa_livro", "%akaeinqkhdwzopfsckgg%");
-  } else {
+  if (mode === "missing") {
     query = query.is("capa_livro", null);
   }
 
-  query = query.not("download", "is", null).limit(limit);
+  query = query.not("download", "is", null).order("id", { ascending: true }).range(offset, offset + limit - 1);
 
   const { data: livros, error } = await query;
 
@@ -53,13 +52,14 @@ Deno.serve(async (req) => {
       let imgBytes: Uint8Array | null = null;
       let contentType = "image/jpeg";
 
-      // Strategy 1: Google Drive thumbnail at high resolution
+      // Strategy 1: Google Drive thumbnail at maximum resolution (renders full page)
       if (livro.download) {
         const fileId = extractDriveFileId(livro.download);
         if (fileId) {
-          const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200`;
+          // sz=w1600 gives a high-quality render of the first page
+          const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`;
           const res = await fetch(thumbUrl, {
-            headers: { "User-Agent": "Mozilla/5.0" },
+            headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
             redirect: "follow",
           });
           if (res.ok) {
@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
   }
 
   return new Response(
-    JSON.stringify({ total: livros?.length || 0, processed: results }),
+    JSON.stringify({ total: livros?.length || 0, offset, processed: results }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 });
