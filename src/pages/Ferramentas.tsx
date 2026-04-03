@@ -64,6 +64,13 @@ const TOOLS = [
     icon: Mail,
     gradient: 'from-red-500 to-rose-600',
   },
+  {
+    id: 'biblioteca',
+    label: 'Biblioteca',
+    desc: 'Livros e materiais de estudo para leitura',
+    icon: Library,
+    gradient: 'from-teal-500 to-emerald-600',
+  },
 ];
 
 const Ferramentas = () => {
