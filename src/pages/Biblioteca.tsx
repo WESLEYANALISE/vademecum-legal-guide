@@ -423,6 +423,10 @@ const Biblioteca = () => {
       {readerUrl && (
         <LeitorWebView url={readerUrl} titulo={readerTitle} onClose={() => setReaderUrl(null)} />
       )}
+
+      {ebookId && (
+        <LeitorEbook livroId={ebookId} onClose={() => setEbookId(null)} />
+      )}
     </>
   );
 };
