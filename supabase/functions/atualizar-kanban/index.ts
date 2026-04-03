@@ -6,8 +6,8 @@ const corsHeaders = {
 };
 
 const CAMARA_API = 'https://dadosabertos.camara.leg.br/api/v2';
+const BATCH_SIZE = 10;
 
-// Map of keywords in ementas to the law they affect
 const LEI_KEYWORDS: [RegExp, string][] = [
   [/c[oó]digo\s+penal(?!\s+militar)/i, 'Código Penal'],
   [/decreto[- ]?lei\s+n?[ºo°]?\s*2\.?848/i, 'Código Penal'],
@@ -58,35 +58,11 @@ function extractLeiAfetada(ementa: string | null): string | null {
   return found.length > 0 ? found.join(', ') : null;
 }
 
-interface ProposicaoTramitacao {
-  dataHora: string;
-  descricaoTramitacao: string;
-  descricaoSituacao: string;
-  despacho: string;
-  siglaOrgao: string;
-}
-
-function classificarStatus(situacao: string, tramitacoes: ProposicaoTramitacao[]): string {
+function classificarStatus(situacao: string): string {
   const sit = (situacao || '').toLowerCase();
-  
-  if (sit.includes('transformad') || sit.includes('lei') || sit.includes('publicad')) {
-    return 'publicada';
-  }
-  if (sit.includes('sanção') || sit.includes('sancao') || sit.includes('sancionad') || sit.includes('veto') || sit.includes('presidência da república')) {
-    return 'sancao';
-  }
-  if (sit.includes('plenário') || sit.includes('plenario') || sit.includes('votação') || sit.includes('votacao') || sit.includes('pauta')) {
-    return 'votacao';
-  }
-  
-  const latest = tramitacoes.slice(0, 5);
-  for (const t of latest) {
-    const desc = ((t.descricaoTramitacao || '') + ' ' + (t.despacho || '')).toLowerCase();
-    if (desc.includes('transformad') || desc.includes('lei nº') || desc.includes('lei no')) return 'publicada';
-    if (desc.includes('sanção') || desc.includes('sancao') || desc.includes('presidência')) return 'sancao';
-    if (desc.includes('plenário') || desc.includes('votação') || desc.includes('pauta')) return 'votacao';
-  }
-  
+  if (sit.includes('transformad') || sit.includes('lei') || sit.includes('publicad')) return 'publicada';
+  if (sit.includes('sanção') || sit.includes('sancao') || sit.includes('sancionad') || sit.includes('veto') || sit.includes('presidência da república')) return 'sancao';
+  if (sit.includes('plenário') || sit.includes('plenario') || sit.includes('votação') || sit.includes('votacao') || sit.includes('pauta')) return 'votacao';
   return 'tramitando';
 }
 
@@ -108,6 +84,78 @@ async function fetchWithRetry(url: string, retries = 2): Promise<Response> {
   throw new Error('fetch failed');
 }
 
+// Seed: fetch propositions from Câmara API by situacaoId
+async function seedFromApi(supabase: any) {
+  console.log('Seeding kanban from Câmara API...');
+
+  const situacoes = [
+    { id: '1257', status: 'publicada', label: 'Transformada em Lei' },
+    { id: '918', status: 'sancao', label: 'Aguardando Sanção' },
+    { id: '1140', status: 'votacao', label: 'Pronta para Pauta' },
+    { id: '1148', status: 'votacao', label: 'Em apreciação pelo Plenário' },
+  ];
+
+  const tipos = ['PL', 'PLP', 'PEC', 'MPV'];
+  let totalInserted = 0;
+
+  for (const sit of situacoes) {
+    try {
+      const url = `${CAMARA_API}/proposicoes?siglaTipo=${tipos.join(',')}&ano=2025&ano=2026&codSituacao=${sit.id}&itens=30&ordenarPor=ano&ordem=DESC`;
+      console.log(`Fetching ${sit.label}: ${url}`);
+      const res = await fetchWithRetry(url);
+      if (!res.ok) { console.log(`Failed ${sit.label}: ${res.status}`); continue; }
+      const json = await res.json();
+      const dados = json.dados || [];
+      console.log(`Got ${dados.length} for ${sit.label}`);
+
+      if (dados.length === 0) continue;
+
+      const toInsert = dados.map((p: any) => ({
+        id_externo: String(p.id),
+        sigla_tipo: p.siglaTipo || 'PL',
+        numero: p.numero || 0,
+        ano: p.ano || 2026,
+        ementa: p.ementa,
+        status_kanban: sit.status,
+        lei_afetada: extractLeiAfetada(p.ementa),
+        atualizado_em: new Date().toISOString(),
+      }));
+
+      const { error } = await supabase.from('kanban_proposicoes').upsert(toInsert, { onConflict: 'id_externo' });
+      if (error) console.log(`Upsert error for ${sit.label}:`, error.message);
+      else totalInserted += toInsert.length;
+    } catch (e: any) {
+      console.log(`Error seeding ${sit.label}: ${e.message}`);
+    }
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  // Also seed recent tramitando from radar_proposicoes
+  const { data: radarItems } = await supabase
+    .from('radar_proposicoes')
+    .select('id_externo, sigla_tipo, numero, ano, ementa, dados_json')
+    .order('atualizado_em', { ascending: false })
+    .limit(50);
+
+  if (radarItems && radarItems.length > 0) {
+    const toInsert = radarItems.map((p: any) => ({
+      id_externo: p.id_externo,
+      sigla_tipo: p.sigla_tipo || 'PL',
+      numero: p.numero || 0,
+      ano: p.ano || 2026,
+      ementa: p.ementa,
+      status_kanban: 'tramitando',
+      lei_afetada: extractLeiAfetada(p.ementa),
+      atualizado_em: new Date().toISOString(),
+    }));
+    await supabase.from('kanban_proposicoes').upsert(toInsert, { onConflict: 'id_externo', ignoreDuplicates: true });
+    totalInserted += toInsert.length;
+  }
+
+  console.log(`Seed complete. Total inserted/updated: ${totalInserted}`);
+  return totalInserted;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -118,41 +166,26 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Get existing kanban items
-    const { data: existing } = await supabase
+    // Check if kanban is empty → seed
+    const { count } = await supabase
       .from('kanban_proposicoes')
-      .select('id, id_externo, status_kanban');
+      .select('id', { count: 'exact', head: true });
 
-    // If kanban is empty, seed from radar_proposicoes (top 100 most recent)
-    if (!existing || existing.length === 0) {
-      const { data: proposicoes } = await supabase
-        .from('radar_proposicoes')
-        .select('id_externo, sigla_tipo, numero, ano, ementa, dados_json')
-        .order('atualizado_em', { ascending: false })
-        .limit(100);
-
-      if (proposicoes && proposicoes.length > 0) {
-        const toInsert = proposicoes.map((p: any) => ({
-          id_externo: p.id_externo,
-          sigla_tipo: p.sigla_tipo || 'PL',
-          numero: p.numero || 0,
-          ano: p.ano || 2025,
-          ementa: p.ementa,
-          status_kanban: 'tramitando',
-          lei_afetada: extractLeiAfetada(p.ementa),
-          dados_json: p.dados_json,
-        }));
-
-        await supabase.from('kanban_proposicoes').upsert(toInsert, { onConflict: 'id_externo' });
-      }
+    if (!count || count === 0) {
+      const seeded = await seedFromApi(supabase);
+      return new Response(JSON.stringify({
+        message: `Seeded ${seeded} propositions from Câmara API`,
+        seeded: true,
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Step 1: Fill in lei_afetada for items that don't have it yet
+    // Fill lei_afetada for items missing it
     const { data: missingLei } = await supabase
       .from('kanban_proposicoes')
       .select('id, ementa')
       .is('lei_afetada', null)
-      .not('ementa', 'is', null);
+      .not('ementa', 'is', null)
+      .limit(50);
 
     if (missingLei && missingLei.length > 0) {
       for (const item of missingLei) {
@@ -161,73 +194,63 @@ Deno.serve(async (req) => {
           await supabase.from('kanban_proposicoes').update({ lei_afetada: lei }).eq('id', item.id);
         }
       }
+      console.log(`Filled lei_afetada for ${missingLei.length} items`);
     }
 
-    // Now fetch all kanban items to update statuses
+    // Fetch BATCH_SIZE items to update (oldest first, skip publicada)
     const { data: kanbanItems } = await supabase
       .from('kanban_proposicoes')
       .select('*')
       .neq('status_kanban', 'publicada')
-      .limit(50);
+      .order('atualizado_em', { ascending: true, nullsFirst: true })
+      .limit(BATCH_SIZE);
 
     if (!kanbanItems || kanbanItems.length === 0) {
+      console.log('No items to update');
       return new Response(JSON.stringify({ message: 'No items to update' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    console.log(`Updating ${kanbanItems.length} items...`);
     let updated = 0;
     const errors: string[] = [];
 
     for (const item of kanbanItems) {
       try {
         const detRes = await fetchWithRetry(`${CAMARA_API}/proposicoes/${item.id_externo}`);
-        if (!detRes.ok) continue;
+        if (!detRes.ok) {
+          console.log(`Detail fetch failed for ${item.id_externo}: ${detRes.status}`);
+          continue;
+        }
         const detJson = await detRes.json();
         const dados = detJson.dados;
         if (!dados) continue;
 
-        const tramRes = await fetchWithRetry(`${CAMARA_API}/proposicoes/${item.id_externo}/tramitacoes?ordem=DESC&ordenarPor=dataHora&itens=10`);
-        const tramJson = tramRes.ok ? await tramRes.json() : { dados: [] };
-        const tramitacoes = tramJson.dados || [];
-
         const situacao = dados.statusProposicao?.descricaoSituacao || '';
-        const novoStatus = classificarStatus(situacao, tramitacoes);
+        const novoStatus = classificarStatus(situacao);
 
         const updateData: any = {
           status_kanban: novoStatus,
           situacao_camara: situacao,
           atualizado_em: new Date().toISOString(),
-          dados_json: dados,
         };
 
         if (dados.statusProposicao?.dataHora) {
           updateData.data_ultima_acao = dados.statusProposicao.dataHora;
         }
 
-        // Fill lei_afetada if missing
-        if (!item.lei_afetada && item.ementa) {
-          const lei = extractLeiAfetada(item.ementa);
+        if (!item.ementa && dados.ementa) {
+          updateData.ementa = dados.ementa;
+        }
+
+        if (!item.lei_afetada) {
+          const lei = extractLeiAfetada(item.ementa || dados.ementa);
           if (lei) updateData.lei_afetada = lei;
         }
 
-        // Try to get author
-        if (!item.autor) {
-          const autRes = await fetchWithRetry(`${CAMARA_API}/proposicoes/${item.id_externo}/autores`);
-          if (autRes.ok) {
-            const autJson = await autRes.json();
-            const autores = autJson.dados || [];
-            if (autores.length > 0) {
-              updateData.autor = autores.map((a: any) => a.nome).join(', ');
-            }
-          }
-        }
-
-        await supabase
-          .from('kanban_proposicoes')
-          .update(updateData)
-          .eq('id', item.id);
-
+        await supabase.from('kanban_proposicoes').update(updateData).eq('id', item.id);
+        console.log(`Updated ${item.id_externo} → ${novoStatus}`);
         updated++;
 
         await new Promise(r => setTimeout(r, 200));
@@ -236,6 +259,8 @@ Deno.serve(async (req) => {
       }
     }
 
+    console.log(`Done. Updated ${updated}/${kanbanItems.length}`);
+
     return new Response(JSON.stringify({
       message: `Updated ${updated}/${kanbanItems.length} items`,
       errors: errors.length > 0 ? errors : undefined,
@@ -243,6 +268,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e: any) {
+    console.error('Edge function error:', e.message);
     return new Response(JSON.stringify({ error: e.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
