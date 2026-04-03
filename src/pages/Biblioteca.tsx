@@ -291,10 +291,6 @@ const Biblioteca = () => {
 
   const getCapaUrl = (livro: LivroUnificado) => {
     if (livro.capa) return cdnImg(livro.capa, 300);
-    if (livro.link?.includes('fliphtml5.com')) {
-      const base = livro.link.replace(/\/$/, '');
-      return `${base}/files/large/1.jpg`;
-    }
     return '';
   };
 
