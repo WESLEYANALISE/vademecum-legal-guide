@@ -209,8 +209,10 @@ const LeiOrdinariaDetail = ({ lei, onBack }: LeiOrdinariaDetailProps) => {
   return (
     <div className="min-h-screen bg-background pb-20 lg:pb-0">
       {/* Header */}
-      <div className="bg-gradient-to-br from-primary/90 to-copper-dark px-4 pt-10 pb-6 sm:px-6 md:px-8">
-        <div className="max-w-5xl mx-auto">
+      <div className="relative bg-gradient-to-br from-violet-500/90 to-violet-700/80 overflow-hidden px-4 pt-10 pb-6 sm:px-6 md:px-8">
+        <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/5" />
+        <FileText className="absolute top-5 right-5 w-10 h-10 text-white/15 rotate-12" />
+        <div className="max-w-5xl mx-auto relative z-10">
           <button
             onClick={onBack}
             className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-4"
