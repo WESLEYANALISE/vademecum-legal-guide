@@ -1,45 +1,65 @@
 
 
-## Plano: Busca por Palavra-Chave com Tags no Catálogo
+## Plano: Monitoramento Diário de Alterações Legislativas
 
-### Resumo
-Renomear os dois modos de busca para **"Palavra-chave"** (busca por nome/tag da lei) e **"Nº do Artigo"** (busca por número/texto no banco). Adicionar um campo `tags` a cada lei no catálogo com palavras-chave populares que a pessoa usaria para encontrar aquela lei.
+### Como funciona
 
-### Mudanças
+Uma Edge Function nova (`monitorar-legislacao`) vai, para cada lei do catálogo:
 
-**1. `src/data/leisCatalog.ts`** — Adicionar campo `tags: string[]` à interface e a cada entrada
+1. Buscar o HTML atual do Planalto (`url_planalto`)
+2. Parsear os artigos (reutilizando a lógica do `scrape-legislacao`)
+3. Comparar com o que já está no banco (quantidade de artigos, textos dos artigos)
+4. Registrar diferenças encontradas numa tabela `legislacao_alteracoes`
 
-Exemplos de tags:
-- CF/88: `['constituição', 'carta magna', 'direitos fundamentais', 'CRFB']`
-- CP: `['código penal', 'crime', 'pena', 'homicídio', 'furto', 'roubo']`
-- CC: `['código civil', 'contrato', 'família', 'herança', 'propriedade', 'obrigações']`
-- CLT: `['trabalhista', 'trabalho', 'emprego', 'férias', 'FGTS', 'demissão']`
-- CDC: `['consumidor', 'defeito', 'propaganda enganosa', 'recall']`
-- LD: `['drogas', 'tráfico', 'entorpecentes', 'lei antidrogas']`
-- LMP: `['maria da penha', 'violência doméstica', 'mulher']`
-- LGPD: `['dados pessoais', 'privacidade', 'proteção de dados']`
-- ECA: `['criança', 'adolescente', 'menor', 'infância']`
-- E assim por diante para todas as ~55 leis
+### Tabela nova: `legislacao_alteracoes`
 
-**2. `src/components/vademecum/SearchOverlay.tsx`** — Ajustar modos e busca
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | uuid PK | |
+| tabela_nome | text | Ex: CP_CODIGO_PENAL |
+| tipo_alteracao | text | `artigo_novo`, `artigo_revogado`, `texto_alterado`, `contagem_diferente` |
+| artigo_numero | text | Ex: "Art. 121" |
+| texto_anterior | text | Trecho antigo (ou null se novo) |
+| texto_atual | text | Trecho novo (ou null se revogado) |
+| detectado_em | timestamptz | Quando foi detectado |
+| revisado | boolean | Se o admin já viu |
 
-- Renomear botões: "Buscar por Artigo" → **"Nº do Artigo"** | "Buscar por Lei" → **"Palavra-chave"**
-- Modo padrão: `'lei'` (palavra-chave) em vez de `'artigo'`
-- Incluir `tags` no fuzzy search: `keys: ['nome', 'sigla', 'descricao', 'tags']`
-- Exibir as tags relevantes como badges abaixo do nome da lei nos resultados
+### Edge Function: `monitorar-legislacao`
 
-**3. `src/hooks/useFuzzySearch.ts`** — Sem mudança necessária (Fuse.js já suporta arrays como keys)
+- Recebe `{ tabela_nome, url_planalto }` opcionalmente (para rodar uma lei específica) ou roda todas
+- Busca HTML do Planalto → parseia artigos
+- Busca artigos atuais do banco (`SELECT numero, texto FROM tabela`)
+- Compara:
+  - Artigos no Planalto que não existem no banco → `artigo_novo`
+  - Artigos no banco que não existem no Planalto → `artigo_revogado`
+  - Artigos com texto diferente → `texto_alterado`
+- Insere diferenças na tabela `legislacao_alteracoes`
+- Retorna resumo: `{ total_leis_verificadas, alteracoes_encontradas, detalhes[] }`
 
-### Detalhes Técnicos
+### Cron Job
 
-O Fuse.js nativamente indexa arrays de strings — basta adicionar `'tags'` ao array de keys e ele fará match em qualquer elemento do array. Exemplo: pesquisar "tráfico" vai encontrar a Lei de Drogas porque `tags` contém `'tráfico'`.
+Rodar diariamente às 04:00 (horário de baixo tráfego). Processa ~5 leis por execução para não estourar timeout, com auto-enfileiramento para as demais.
 
-O campo `tags` é adicionado à interface `LeiCatalogItem` como `tags?: string[]` para manter compatibilidade.
+### Painel no Admin
 
-### Arquivos Editados
+Nova seção no `AdminMonitor.tsx` ou página dedicada `/admin-monitor-leis` com:
+
+- Lista de alterações detectadas com filtro por lei e tipo
+- Badge mostrando quantidade de alterações não revisadas
+- Botão "Verificar agora" para rodar manualmente uma lei específica
+- Botão "Aplicar" que chama `scrape-legislacao` para atualizar o banco com a versão nova
+- Botão "Ignorar" para marcar como revisado sem alterar
+
+### Arquivos
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/data/leisCatalog.ts` | Adicionar `tags?: string[]` à interface + tags em todas as leis |
-| `src/components/vademecum/SearchOverlay.tsx` | Renomear modos, incluir `tags` no fuzzy search, mostrar tags nos resultados |
+| Migração SQL | Criar tabela `legislacao_alteracoes` com RLS |
+| `supabase/functions/monitorar-legislacao/index.ts` | Nova Edge Function com lógica de comparação |
+| `src/pages/AdminMonitor.tsx` | Adicionar seção de alterações legislativas |
+| Cron job SQL | Agendar execução diária |
+
+### Detalhes Técnicos
+
+A lógica de parsing será extraída do `scrape-legislacao` e copiada para a nova função (Edge Functions não compartilham módulos facilmente). A comparação usa normalização de whitespace antes de diff para evitar falsos positivos. Para leis grandes (CF/88, CC), o texto é comparado artigo a artigo via hash MD5 para performance.
 
