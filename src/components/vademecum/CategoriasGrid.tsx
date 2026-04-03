@@ -88,62 +88,6 @@ const CategoriasGrid = ({ onSelect }: CategoriasGridProps) => {
         </div>
       </div>
 
-
-      {/* Notícias */}
-      {noticias.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2">
-              <Newspaper className="w-4 h-4 text-primary" />
-              <h2 className="font-display text-base text-foreground font-bold">Notícias</h2>
-            </div>
-            <button
-              onClick={() => navigate('/noticias')}
-              className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/15"
-            >
-              Ver mais →
-            </button>
-          </div>
-
-          <div
-            className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pr-0 -mr-4"
-            style={{ scrollbarWidth: 'none' }}
-          >
-            {noticias.filter(n => n.imagem_url?.trim()).map((noticia) => (
-              <motion.div
-                key={noticia.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-                onClick={() => navigate('/noticias', { state: { noticiaId: noticia.id } })}
-                className="shrink-0 w-[180px] snap-start rounded-xl overflow-hidden bg-card border border-border hover:border-primary/30 transition-all cursor-pointer group"
-              >
-                <div className="relative h-[100px] overflow-hidden bg-muted">
-                  <img
-                    src={cdnImg(noticia.imagem_url!, 360)}
-                    alt={noticia.titulo}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                    decoding="async"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  {noticia.categoria && (
-                    <span className="absolute top-1.5 left-1.5 text-[8px] font-bold uppercase tracking-wider text-white bg-primary/80 backdrop-blur-sm px-1.5 py-0.5 rounded-full">
-                      {noticia.categoria}
-                    </span>
-                  )}
-                </div>
-                <div className="p-2">
-                  <h4 className="font-display text-[11px] font-semibold text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-                    {noticia.titulo}
-                  </h4>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
