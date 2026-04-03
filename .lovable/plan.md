@@ -1,41 +1,133 @@
 
 
-## Plano: Abrir Detalhe de Lei/Decreto com Slide da Direita no Radar 360
+## Plano: Kanban Legislativo com Rastreamento em Tempo Real
 
-### Problema
+### Visão Geral
 
-Os cards de leis ordinárias e decretos na aba "Recentes" não são clicáveis. O usuário quer que ao clicar, abra uma tela de detalhe deslizando da direita para a esquerda.
-
-### Solução
-
-Adicionar estado para armazenar o item selecionado e renderizar o `LeiOrdinariaDetail` com animação de slide-in, igual ao padrão usado em `CategoriaLegislacao.tsx` e `Novidades.tsx`.
-
-### Mudanças em `src/pages/Radar360.tsx`
-
-1. **Importar** `LeiOrdinariaDetail` e `PageTransition`
-2. **Novo estado**: `selectedLei: LeiOrdinaria | null`
-3. **Guardar dados originais**: Manter referência às leis/decretos originais (`leisRecentes` e `decretosRecentes`) para poder buscar o objeto completo ao clicar
-4. **onClick nos cards**: Quando o `source` for `'lei'` ou `'decreto'`, buscar o objeto `LeiOrdinaria` correspondente pelo ID e setar no estado. Cards da `resenha` (que não têm texto completo) não abrem detalhe.
-5. **Renderização condicional**: Se `selectedLei` estiver setado, renderizar `LeiOrdinariaDetail` envolvido em `PageTransition` (slide da direita para esquerda), com `onBack` fechando o detalhe
-6. **Cursor pointer + ChevronRight**: Adicionar indicador visual de que o card é clicável (apenas para leis/decretos)
-
-### Layout
+Um painel Kanban que mostra o ciclo de vida de proposições legislativas em colunas visuais:
 
 ```text
-Radar 360 → clica em "Lei nº 15.374"
-  ┌──────────────────────────┐
-  │  ← Voltar                │  ← slide-in da direita
-  │  ⚖️ Lei nº 15.374        │
-  │  Ementa completa...      │
-  │  📋 Artigos (12)         │
-  │  Art. 1º ...             │
-  │  Art. 2º ...             │
-  └──────────────────────────┘
+┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+│ 📋 Tramitando│  │ 🗳️ Em Votação│  │ ✍️ Sanção    │  │ ✅ Publicada  │
+│             │  │             │  │             │  │             │
+│ ┌─────────┐ │  │ ┌─────────┐ │  │             │  │ ┌─────────┐ │
+│ │PL 1234  │ │  │ │PLP 56   │ │  │             │  │ │Lei 15374│ │
+│ │Altera CP│ │  │ │Altera..│ │  │             │  │ │Cria...  │ │
+│ │⚖️ C.Penal│ │  │ │Aprovado│ │  │             │  │ │02/04/26 │ │
+│ └─────────┘ │  │ └─────────┘ │  │             │  │ └─────────┘ │
+└─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘
 ```
 
-### Arquivo
+### Problema Atual dos Dados
+
+A tabela `radar_proposicoes` tem 8.334 registros, mas `situacao` e `ultima_tramitacao` estão todos `NULL`. Precisamos enriquecer esses dados pela API da Câmara para classificar em colunas.
+
+### Solução Técnica
+
+#### 1. Nova tabela `kanban_proposicoes` (migration)
+
+Tabela dedicada para rastrear o status kanban de proposições monitoradas:
+
+```sql
+CREATE TABLE kanban_proposicoes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id_externo TEXT NOT NULL,
+  sigla_tipo TEXT NOT NULL,         -- PL, PLP, PEC, MPV
+  numero INTEGER NOT NULL,
+  ano INTEGER NOT NULL,
+  ementa TEXT,
+  autor TEXT,
+  lei_afetada TEXT,                 -- ex: 'CP_CODIGO_PENAL'
+  status_kanban TEXT NOT NULL DEFAULT 'tramitando',  -- tramitando, votacao, sancao, publicada
+  situacao_camara TEXT,             -- descrição da situação na API
+  data_ultima_acao TIMESTAMPTZ,
+  data_votacao TIMESTAMPTZ,
+  resultado_votacao TEXT,           -- Aprovado, Rejeitado
+  data_publicacao TIMESTAMPTZ,
+  numero_lei_publicada TEXT,        -- ex: 'Lei nº 15.374'
+  dados_json JSONB,
+  atualizado_em TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(id_externo)
+);
+
+ALTER TABLE kanban_proposicoes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "kanban_read" ON kanban_proposicoes FOR SELECT USING (true);
+```
+
+#### 2. Edge Function `atualizar-kanban` (nova)
+
+- Busca tramitação detalhada na API da Câmara para cada proposição monitorada
+- Classifica automaticamente em colunas com base no `despacho` e `situação`:
+  - **Tramitando**: em análise nas comissões
+  - **Em Votação**: pauta do plenário, votação agendada
+  - **Sanção/Veto**: aprovada na Câmara, aguardando presidente
+  - **Publicada**: sancionada e publicada no DOU
+- Quando detecta status "Publicada", dispara atualização na tabela da lei afetada (ex: `CP_CODIGO_PENAL`) via `monitorar-legislacao`
+- Cron job a cada 6 horas
+
+#### 3. Nova página `KanbanLegislativo.tsx`
+
+- **4 colunas** com scroll horizontal (swipe no mobile)
+- Cards coloridos por tipo (PL=violet, PEC=sky, MPV=rose, PLP=amber) — mesmas cores já definidas no Radar
+- Cada card mostra: tipo+número, ementa resumida, lei afetada (badge), data da última ação
+- Filtro por lei afetada (ex: "Código Penal", "CLT")
+- Ao clicar em um card → abre detalhe com timeline da tramitação
+- **Realtime**: subscription no Supabase para `kanban_proposicoes` com `on('UPDATE')` para atualizar cards ao vivo
+- Sem drag-and-drop (as colunas são determinadas automaticamente pelo status real)
+
+#### 4. Integração com Radar 360
+
+- Nova aba "Kanban" no Radar 360, ou link na página de Ferramentas
+- Quando uma proposição muda para "Publicada", a Edge Function:
+  1. Insere registro em `legislacao_alteracoes` (alimenta aba "Novidades")
+  2. Invoca `monitorar-legislacao` para atualizar os artigos da lei afetada
+
+### Layout Mobile
+
+```text
+┌──────────────────────────────┐
+│  ← Voltar                    │
+│  📊 Kanban Legislativo       │
+├──────────────────────────────┤
+│  [Filtrar por lei ▾]         │
+│                              │
+│  ← swipe horizontal →       │
+│ ┌──────────┐┌──────────┐    │
+│ │Tramitando ││Em Votação│    │
+│ │    12     ││    3     │    │
+│ │┌────────┐ ││┌────────┐│    │
+│ ││PL 1234 │ │││PEC 45  ││    │
+│ ││Altera  │ │││Reforma ││    │
+│ ││C.Penal │ │││Tribut. ││    │
+│ │└────────┘ ││└────────┘│    │
+│ │┌────────┐ ││          │    │
+│ ││PL 5678 │ ││          │    │
+│ │└────────┘ ││          │    │
+│ └──────────┘└──────────┘    │
+└──────────────────────────────┘
+```
+
+### Arquivos
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/Radar360.tsx` | Estado `selectedLei`, onClick nos cards, renderização condicional com `LeiOrdinariaDetail` + `PageTransition` |
+| `supabase/migrations/...` | Criar tabela `kanban_proposicoes` |
+| `supabase/functions/atualizar-kanban/index.ts` | Edge Function para buscar tramitação e classificar status |
+| `src/pages/KanbanLegislativo.tsx` | Nova página com o board Kanban |
+| `src/services/radarService.ts` | Funções para fetch de dados kanban |
+| `src/App.tsx` | Rota `/kanban-legislativo` |
+| `src/pages/Radar360.tsx` ou `Ferramentas.tsx` | Link de acesso ao Kanban |
+
+### Fluxo de Atualização Automática
+
+```text
+Cron (6h) → atualizar-kanban
+  ├─ API Câmara: busca tramitação de cada PL monitorado
+  ├─ Classifica status_kanban
+  ├─ UPDATE kanban_proposicoes
+  │   └─ Realtime → UI atualiza ao vivo
+  └─ Se status = "publicada":
+      ├─ INSERT legislacao_alteracoes (Novidades)
+      └─ INVOKE monitorar-legislacao (atualiza artigos)
+```
 
