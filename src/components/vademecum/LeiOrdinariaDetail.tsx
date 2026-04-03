@@ -260,7 +260,7 @@ const LeiOrdinariaDetail = ({ lei, onBack }: LeiOrdinariaDetailProps) => {
                 {/* Ementa */}
                 {parsed.ementa && (
                   <div className="bg-card rounded-2xl p-4">
-                    <p className="text-foreground/80 font-body italic text-sm leading-relaxed">
+                    <p className="text-foreground/80 font-body italic text-base leading-relaxed">
                       {parsed.ementa}
                     </p>
                   </div>
