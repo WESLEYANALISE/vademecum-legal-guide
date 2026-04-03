@@ -94,6 +94,23 @@ const CategoriaLegislacao = () => {
   const [searchSumulas, setSearchSumulas] = useState('');
   const [openSumula, setOpenSumula] = useState<Sumula | null>(null);
   const [showGrafo, setShowGrafo] = useState(false);
+  const [dbAlteracoes, setDbAlteracoes] = useState<{ artigo_numero: string; tipo_alteracao: string; texto_anterior: string | null; texto_atual: string | null; detectado_em: string }[]>([]);
+  const [loadingDbAlteracoes, setLoadingDbAlteracoes] = useState(false);
+
+  // Fetch DB alteracoes when novidades panel opens
+  useEffect(() => {
+    if (overlayPanel !== 'novidades' || !selectedTabelaNome) return;
+    setLoadingDbAlteracoes(true);
+    supabase
+      .from('legislacao_alteracoes')
+      .select('artigo_numero,tipo_alteracao,texto_anterior,texto_atual,detectado_em')
+      .eq('tabela_nome', selectedTabelaNome)
+      .order('detectado_em', { ascending: false })
+      .then(({ data }) => {
+        setDbAlteracoes(data || []);
+        setLoadingDbAlteracoes(false);
+      });
+  }, [overlayPanel, selectedTabelaNome]);
 
   // Fetch narrations when playlist tab is active
   useEffect(() => {
@@ -1099,7 +1116,7 @@ const CategoriaLegislacao = () => {
       const yearRegex = /\b(1\d{3}|20\d{2})\b/;
       const typeRegex = /^\((Redação\s+dada|Incluíd[oa]|Acrescid[oa]|Revogad[oa]|Alterad[oa]|Vetad[oa]|Vigência|Regulamento|Vide|Promulgação|Renumerado|Transformado|Suprimido|Restabelecido|Ressalvado|Produção de efeito)/i;
 
-      type ModItem = { artigo: ArtigoLei; tipo: string; referencia: string; ano: number; parteModificada: string; leiNome: string; linhasModificadas: number[] };
+      type ModItem = { artigo: ArtigoLei; tipo: string; referencia: string; ano: number; parteModificada: string; leiNome: string; linhasModificadas: number[]; fromMonitor?: boolean };
       const items: ModItem[] = [];
 
       for (const artigo of artigos) {
@@ -1150,6 +1167,30 @@ const CategoriaLegislacao = () => {
       }
       items.sort((a, b) => b.ano - a.ano);
 
+      // Merge DB alteracoes (from monitoramento)
+      const parsedKeys = new Set(items.map(i => `${i.artigo.numero}::${i.ano}`));
+      for (const dbItem of dbAlteracoes) {
+        const ano = dbItem.detectado_em ? new Date(dbItem.detectado_em).getFullYear() : 0;
+        const key = `${dbItem.artigo_numero}::${ano}`;
+        if (parsedKeys.has(key)) continue; // skip duplicates
+        const matchingArtigo = artigos.find(a => a.numero === dbItem.artigo_numero);
+        const tipoLabel = dbItem.tipo_alteracao === 'artigo_revogado' ? 'Revogado'
+          : dbItem.tipo_alteracao === 'artigo_novo' ? 'Incluído'
+          : dbItem.tipo_alteracao === 'texto_alterado' ? 'Alterada'
+          : 'Alteração';
+        items.push({
+          artigo: matchingArtigo || { id: dbItem.artigo_numero, numero: dbItem.artigo_numero, caput: dbItem.texto_atual || dbItem.texto_anterior || '' },
+          tipo: tipoLabel,
+          referencia: `Detectado pelo monitoramento em ${new Date(dbItem.detectado_em).toLocaleDateString('pt-BR')}`,
+          ano,
+          parteModificada: 'Artigo inteiro',
+          leiNome: 'Monitoramento automático',
+          linhasModificadas: [],
+          fromMonitor: true,
+        });
+      }
+      items.sort((a, b) => b.ano - a.ano);
+
       const badgeColor = (tipo: string) => {
         const t = tipo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         if (t.startsWith('revogad')) return 'bg-destructive/20 text-destructive';
@@ -1164,7 +1205,12 @@ const CategoriaLegislacao = () => {
       };
 
       if (items.length === 0) {
-        return (
+        return loadingDbAlteracoes ? (
+          <div className="flex flex-col items-center py-12 gap-2">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <p className="text-muted-foreground text-sm">Carregando alterações do monitoramento...</p>
+          </div>
+        ) : (
           <div className="flex flex-col items-center py-12 gap-2">
             <Sparkles className="w-8 h-8 text-muted-foreground/40" />
             <p className="text-muted-foreground text-sm">Nenhuma alteração legislativa encontrada.</p>
@@ -1224,6 +1270,12 @@ const CategoriaLegislacao = () => {
                           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400">
                             {item.parteModificada}
                           </span>
+                          {item.fromMonitor && (
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center gap-1">
+                              <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" /><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" /></span>
+                              Monitoramento
+                            </span>
+                          )}
                         </div>
                         <p className="text-[11px] text-muted-foreground mb-1 italic">{item.referencia}</p>
                         {previewText && (
