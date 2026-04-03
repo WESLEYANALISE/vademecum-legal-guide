@@ -84,7 +84,7 @@ const CATEGORIES = [
 
 const Biblioteca = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [classicos, setClassicos] = useState<LivroUnificado[]>([]);
   const [lideranca, setLideranca] = useState<LivroUnificado[]>([]);
   const [estudos, setEstudos] = useState<LivroUnificado[]>([]);
