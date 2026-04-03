@@ -1,37 +1,50 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Gamepad2, Skull, Grid3X3, Hash, ChevronRight, Search, Loader2, ArrowLeftCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowLeft, Gamepad2, Skull, Grid3X3, Hash, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import HangmanGame from '@/components/gamificacao/HangmanGame';
 import WordSearchGame from '@/components/gamificacao/WordSearchGame';
 import CrosswordGame from '@/components/gamificacao/CrosswordGame';
 import ArtigoTrail from '@/components/gamificacao/ArtigoTrail';
-
-import { LEIS_COMPACTAS as LEIS } from '@/data/leisCatalog';
+import LeiTrail from '@/components/gamificacao/LeiTrail';
+import { LEIS_CATALOG, type LeiCatalogItem } from '@/data/leisCatalog';
 
 type TipoJogo = 'forca' | 'caca-palavras' | 'cruzadas';
-type View = 'menu' | 'select-lei' | 'select-artigo' | 'playing';
+type View = 'select-lei' | 'select-artigo' | 'playing';
 
 const JOGOS = [
-  { id: 'forca' as TipoJogo, label: 'Jogo da Forca', desc: 'Adivinhe o termo jurídico', icon: Skull },
-  { id: 'caca-palavras' as TipoJogo, label: 'Caça-Palavras', desc: 'Encontre termos escondidos na grade', icon: Grid3X3 },
-  { id: 'cruzadas' as TipoJogo, label: 'Palavras Cruzadas', desc: 'Complete a cruzada jurídica', icon: Hash },
+  { id: 'forca' as TipoJogo, label: 'Forca', icon: Skull },
+  { id: 'caca-palavras' as TipoJogo, label: 'Caça-Palavras', icon: Grid3X3 },
+  { id: 'cruzadas' as TipoJogo, label: 'Cruzadas', icon: Hash },
+];
+
+const CATEGORIAS = [
+  { id: 'constituicao', label: 'Constituição' },
+  { id: 'codigo', label: 'Códigos' },
+  { id: 'estatuto', label: 'Estatutos' },
+  { id: 'lei-especial', label: 'Leis Especiais' },
+  { id: 'previdenciario', label: 'Previdenciário' },
 ];
 
 const Gamificacao = () => {
   const navigate = useNavigate();
-  const [view, setView] = useState<View>('menu');
+  const [view, setView] = useState<View>('select-lei');
   const [selectedJogo, setSelectedJogo] = useState<TipoJogo>('forca');
-  const [selectedLei, setSelectedLei] = useState<typeof LEIS[0] | null>(null);
+  const [selectedCategoria, setSelectedCategoria] = useState('codigo');
+  const [selectedLei, setSelectedLei] = useState<LeiCatalogItem | null>(null);
   const [artigos, setArtigos] = useState<{ numero: string; rotulo?: string; caput?: string }[]>([]);
   const [selectedArtigo, setSelectedArtigo] = useState('');
   const [loadingArtigos, setLoadingArtigos] = useState(false);
   const [loadingGame, setLoadingGame] = useState(false);
-  const [searchArtigo, setSearchArtigo] = useState('');
   const [gameData, setGameData] = useState<any>(null);
   const [error, setError] = useState('');
+
+  const leisFiltradas = useMemo(
+    () => LEIS_CATALOG.filter(l => l.tipo === selectedCategoria),
+    [selectedCategoria]
+  );
 
   const loadArtigos = async (tabela: string) => {
     setLoadingArtigos(true);
@@ -43,14 +56,9 @@ const Gamificacao = () => {
     setLoadingArtigos(false);
   };
 
-  const handleSelectJogo = (tipo: TipoJogo) => {
-    setSelectedJogo(tipo);
-    setView('select-lei');
-  };
-
-  const handleSelectLei = (lei: typeof LEIS[0]) => {
+  const handleSelectLei = (lei: LeiCatalogItem) => {
     setSelectedLei(lei);
-    loadArtigos(lei.tabela);
+    loadArtigos(lei.tabela_nome);
     setView('select-artigo');
   };
 
@@ -87,121 +95,116 @@ const Gamificacao = () => {
   const handleSelectArtigo = (numero: string) => {
     setSelectedArtigo(numero);
     if (selectedLei) {
-      generateGame(selectedLei.tabela, numero, selectedJogo);
+      generateGame(selectedLei.tabela_nome, numero, selectedJogo);
     }
   };
 
   const handleNewGame = () => {
     if (selectedLei) {
-      generateGame(selectedLei.tabela, selectedArtigo, selectedJogo);
+      generateGame(selectedLei.tabela_nome, selectedArtigo, selectedJogo);
     }
   };
 
   const handleBack = () => {
     if (view === 'playing') setView('select-artigo');
     else if (view === 'select-artigo') setView('select-lei');
-    else if (view === 'select-lei') setView('menu');
     else navigate(-1);
   };
 
-  const filteredArtigos = useMemo(() => {
-    if (!searchArtigo.trim()) return artigos;
-    const q = searchArtigo.toLowerCase();
-    return artigos.filter(
-      a =>
-        a.numero.toLowerCase().includes(q) ||
-        (a.rotulo && a.rotulo.toLowerCase().includes(q)) ||
-        (a.caput && a.caput.toLowerCase().includes(q))
-    );
-  }, [artigos, searchArtigo]);
-
   const jogoInfo = JOGOS.find(j => j.id === selectedJogo);
+
+  const headerTitle = () => {
+    if (view === 'playing') return `${jogoInfo?.label} — Art. ${selectedArtigo}`;
+    if (view === 'select-artigo') return selectedLei?.nome || '';
+    return 'Gamificação';
+  };
+
+  const headerSubtitle = () => {
+    if (view === 'playing') return selectedLei?.sigla || '';
+    if (view === 'select-artigo') return 'Escolha o artigo para jogar';
+    return 'Aprenda Direito jogando';
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <div className="relative bg-gradient-to-br from-primary via-accent to-primary overflow-hidden px-4 pt-10 pb-8 sm:px-6">
+      <div className="relative bg-gradient-to-br from-primary via-accent to-primary overflow-hidden px-4 pt-10 pb-4 sm:px-6">
         <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-primary-foreground/10" />
         <Gamepad2 className="absolute top-5 right-5 w-10 h-10 text-primary-foreground/25 rotate-12" />
 
         <div className="relative max-w-2xl mx-auto z-10">
           <button
             onClick={handleBack}
-            className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-4"
+            className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-3"
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar
           </button>
           <h1 className="font-display text-2xl text-primary-foreground font-bold">
-            {view === 'menu' && 'Gamificação'}
-            {view === 'select-lei' && jogoInfo?.label}
-            {view === 'select-artigo' && selectedLei?.nome}
-            {view === 'playing' && `${jogoInfo?.label} — Art. ${selectedArtigo}`}
+            {headerTitle()}
           </h1>
           <p className="text-primary-foreground/70 text-sm mt-1">
-            {view === 'menu' && 'Aprenda Direito jogando'}
-            {view === 'select-lei' && 'Escolha a legislação'}
-            {view === 'select-artigo' && 'Escolha o artigo para jogar'}
-            {view === 'playing' && selectedLei?.sigla}
+            {headerSubtitle()}
           </p>
         </div>
+
+        {/* Game type tabs - always visible */}
+        {view === 'select-lei' && (
+          <div className="relative max-w-2xl mx-auto z-10 mt-4">
+            <div className="flex gap-1.5 bg-white/10 backdrop-blur-sm rounded-xl p-1">
+              {JOGOS.map(jogo => {
+                const Icon = jogo.icon;
+                const active = selectedJogo === jogo.id;
+                return (
+                  <button
+                    key={jogo.id}
+                    onClick={() => setSelectedJogo(jogo.id)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-display font-bold transition-all ${
+                      active
+                        ? 'bg-white/25 text-primary-foreground shadow-sm'
+                        : 'text-primary-foreground/60 hover:text-primary-foreground/80'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {jogo.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4">
-        {/* Menu - Game selection */}
-        {view === 'menu' && (
-          <div className="flex flex-col gap-2">
-            {JOGOS.map((jogo, i) => {
-              const Icon = jogo.icon;
-              return (
-                <motion.button
-                  key={jogo.id}
-                  initial={{ opacity: 0, x: -16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.06 }}
-                  onClick={() => handleSelectJogo(jogo.id)}
-                  className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:border-primary/40 transition-all group"
-                >
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0 shadow-md">
-                    <Icon className="w-5 h-5 text-primary-foreground" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="font-display text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                      {jogo.label}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">
-                      {jogo.desc}
-                    </p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                </motion.button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Law selection */}
+        {/* Category tabs + Lei trail */}
         {view === 'select-lei' && (
-          <div className="flex flex-col gap-2">
-            {LEIS.map((lei, i) => (
-              <motion.button
-                key={lei.id}
-                initial={{ opacity: 0, x: -16 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.04 }}
-                onClick={() => handleSelectLei(lei)}
-                className="flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border hover:border-primary/40 transition-all group"
+          <>
+            <Tabs value={selectedCategoria} onValueChange={setSelectedCategoria} className="mb-4">
+              <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1">
+                {CATEGORIAS.map(cat => (
+                  <TabsTrigger
+                    key={cat.id}
+                    value={cat.id}
+                    className="text-[11px] px-2.5 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  >
+                    {cat.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={selectedCategoria}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.2 }}
               >
-                <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
-                  <span className="text-[10px] font-display font-bold text-primary">{lei.sigla}</span>
-                </div>
-                <p className="flex-1 text-left text-sm font-body text-foreground group-hover:text-primary transition-colors">
-                  {lei.nome}
-                </p>
-                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-              </motion.button>
-            ))}
-          </div>
+                <LeiTrail leis={leisFiltradas} onSelect={handleSelectLei} />
+              </motion.div>
+            </AnimatePresence>
+          </>
         )}
 
         {/* Article selection */}
