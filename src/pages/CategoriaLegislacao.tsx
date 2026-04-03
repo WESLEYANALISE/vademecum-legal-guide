@@ -1270,6 +1270,12 @@ const CategoriaLegislacao = () => {
                           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400">
                             {item.parteModificada}
                           </span>
+                          {item.fromMonitor && (
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center gap-1">
+                              <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" /><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" /></span>
+                              Monitoramento
+                            </span>
+                          )}
                         </div>
                         <p className="text-[11px] text-muted-foreground mb-1 italic">{item.referencia}</p>
                         {previewText && (
