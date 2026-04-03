@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Search, Scale, FileText, Camera } from 'lucide-react';
+import { ArrowLeft, Search, Hash, Tag, Camera } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useFuzzySearch } from '@/hooks/useFuzzySearch';
 import OcrScanner from './OcrScanner';
@@ -28,7 +29,7 @@ interface ArtigoResult {
 
 const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
   const [query, setQuery] = useState('');
-  const [mode, setMode] = useState<SearchMode>('artigo');
+  const [mode, setMode] = useState<SearchMode>('lei');
   const [artigoResults, setArtigoResults] = useState<ArtigoResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [ocrOpen, setOcrOpen] = useState(false);
@@ -42,9 +43,9 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
     }
   }, [open]);
 
-  // Fuzzy search for leis
+  // Fuzzy search for leis (includes tags)
   const filteredLeis = useFuzzySearch(LEIS_CATALOG, query, {
-    keys: ['nome', 'sigla', 'descricao'],
+    keys: ['nome', 'sigla', 'descricao', 'tags'],
     threshold: 0.35,
     limit: 20,
   });
@@ -77,7 +78,6 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
               leiId: lei?.id || '',
             };
           });
-          // Sort by rank desc then lei name
           results.sort((a, b) => a.lei_nome.localeCompare(b.lei_nome));
           setArtigoResults(results.slice(0, 30));
         } else {
@@ -92,13 +92,17 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
     return () => clearTimeout(timeout);
   }, [query, mode]);
 
-  
+  // Get matching tags for a lei given the current query
+  const getMatchingTags = (tags?: string[]) => {
+    if (!tags || !query || query.length < 2) return [];
+    const q = query.toLowerCase();
+    return tags.filter(t => t.toLowerCase().includes(q)).slice(0, 3);
+  };
 
   return (
     <AnimatePresence>
       {open && (
         <>
-        {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -127,7 +131,7 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={mode === 'artigo' ? 'Digite número, sigla ou texto...' : 'Pesquise leis e códigos...'}
+                placeholder={mode === 'artigo' ? 'Digite número ou texto do artigo...' : 'Pesquise por nome, sigla ou tema...'}
                 className="pl-9 h-10 bg-muted border-none text-sm"
               />
             </div>
@@ -143,17 +147,6 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
           {/* Mode toggle */}
           <div className="flex gap-2 px-4 py-3">
             <button
-              onClick={() => setMode('artigo')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                mode === 'artigo'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground'
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              Buscar por Artigo
-            </button>
-            <button
               onClick={() => setMode('lei')}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                 mode === 'lei'
@@ -161,8 +154,19 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
                   : 'bg-muted text-muted-foreground'
               }`}
             >
-              <Scale className="w-4 h-4" />
-              Buscar por Lei
+              <Tag className="w-4 h-4" />
+              Palavra-chave
+            </button>
+            <button
+              onClick={() => setMode('artigo')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                mode === 'artigo'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              <Hash className="w-4 h-4" />
+              Nº do Artigo
             </button>
           </div>
 
@@ -170,30 +174,42 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
           <div className="flex-1 overflow-y-auto px-4 pb-6">
             {mode === 'lei' && (
               <div className="space-y-2">
-                {filteredLeis.map((lei) => (
-                  <button
-                    key={lei.id}
-                    onClick={() => {
-                      onSelectLei({
-                        tipo: lei.tipo,
-                        leiId: lei.id,
-                        nome: lei.nome,
-                        descricao: lei.descricao,
-                        tabela_nome: lei.tabela_nome,
-                      });
-                      onClose();
-                    }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/40 transition-all text-left"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-primary">{lei.sigla}</span>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{lei.nome}</p>
-                      <p className="text-xs text-muted-foreground truncate">{lei.descricao}</p>
-                    </div>
-                  </button>
-                ))}
+                {filteredLeis.map((lei) => {
+                  const matchedTags = getMatchingTags(lei.tags);
+                  return (
+                    <button
+                      key={lei.id}
+                      onClick={() => {
+                        onSelectLei({
+                          tipo: lei.tipo,
+                          leiId: lei.id,
+                          nome: lei.nome,
+                          descricao: lei.descricao,
+                          tabela_nome: lei.tabela_nome,
+                        });
+                        onClose();
+                      }}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/40 transition-all text-left"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-bold text-primary">{lei.sigla}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-foreground truncate">{lei.nome}</p>
+                        <p className="text-xs text-muted-foreground truncate">{lei.descricao}</p>
+                        {matchedTags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {matchedTags.map(tag => (
+                              <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
                 {query.length >= 2 && filteredLeis.length === 0 && (
                   <p className="text-center text-muted-foreground text-sm py-8">Nenhuma lei encontrada</p>
                 )}
