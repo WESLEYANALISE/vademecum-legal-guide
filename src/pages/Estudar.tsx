@@ -147,7 +147,7 @@ const Estudar = () => {
                 { label: 'Flashcards', desc: 'Cards com animação flip', icon: Layers, gradient: 'from-amber-500 to-orange-600', onClick: () => handleSelectMode('flashcards') },
                 { label: 'Mapa Mental', desc: 'Visualização hierárquica', icon: Network, gradient: 'from-purple-600 to-purple-900', onClick: () => handleSelectMode('mapa_mental') },
                 { label: 'Simulados', desc: 'Provas completas extraídas por IA', icon: ClipboardList, gradient: 'from-emerald-600 to-emerald-900', onClick: () => navigate('/simulado') },
-                { label: 'Biblioteca', desc: 'PDFs convertidos em e-book', icon: BookOpen, gradient: 'from-amber-600 to-amber-900', onClick: () => setView('biblioteca') },
+                
               ].map((item, i) => (
                 <motion.button
                   key={item.label}
