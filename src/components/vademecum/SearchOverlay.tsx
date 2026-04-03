@@ -21,7 +21,6 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<SearchMode>('lei');
   const [ocrOpen, setOcrOpen] = useState(false);
-  const [ocrOpen, setOcrOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
