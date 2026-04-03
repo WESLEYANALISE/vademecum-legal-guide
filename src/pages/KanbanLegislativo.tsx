@@ -1,15 +1,30 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Kanban, Filter, RefreshCw, Loader2, ChevronRight, Calendar, User, Clock } from 'lucide-react';
+import { ArrowLeft, Kanban, Filter, RefreshCw, Loader2, ChevronRight, Calendar, User, Clock, GripVertical } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { toast } from 'sonner';
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragStartEvent,
+  type DragEndEvent,
+  type DragOverEvent,
+} from '@dnd-kit/core';
+import { useDroppable } from '@dnd-kit/core';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 
 interface KanbanItem {
   id: string;
@@ -53,6 +68,130 @@ function formatDate(d: string | null) {
   } catch { return null; }
 }
 
+/* ── Draggable Card ── */
+function DraggableCard({ item, onClick }: { item: KanbanItem; onClick: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: item.id,
+    data: { item },
+  });
+
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="touch-manipulation">
+      <Card className="hover:border-primary/40 transition-all group">
+        <CardContent className="p-3 space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              {/* Drag handle */}
+              <button
+                {...listeners}
+                {...attributes}
+                className="cursor-grab active:cursor-grabbing touch-manipulation p-0.5 -ml-1 text-muted-foreground hover:text-foreground transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <GripVertical className="w-3.5 h-3.5" />
+              </button>
+              <Badge className={`text-[10px] px-1.5 py-0 ${TIPO_COLORS[item.sigla_tipo] || 'bg-muted'}`}>
+                {item.sigla_tipo}
+              </Badge>
+              <span className="text-xs font-bold text-foreground">
+                {item.numero}/{item.ano}
+              </span>
+            </div>
+            <button onClick={onClick} className="shrink-0 mt-0.5">
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary" />
+            </button>
+          </div>
+
+          <div onClick={onClick} className="cursor-pointer">
+            {item.ementa && (
+              <p className="text-[11px] text-muted-foreground line-clamp-3 leading-tight">
+                {item.ementa}
+              </p>
+            )}
+
+            <div className="flex items-center gap-2 flex-wrap mt-2">
+              {item.lei_afetada && (
+                <Badge variant="outline" className="text-[9px] h-4 px-1">
+                  {item.lei_afetada}
+                </Badge>
+              )}
+              {item.data_ultima_acao && (
+                <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                  <Clock className="w-2.5 h-2.5" />
+                  {formatDate(item.data_ultima_acao)}
+                </span>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/* ── Overlay Card (shown while dragging) ── */
+function OverlayCard({ item }: { item: KanbanItem }) {
+  return (
+    <div className="w-[230px] rotate-2 shadow-2xl">
+      <Card className="border-primary/50 bg-card">
+        <CardContent className="p-3 space-y-2">
+          <div className="flex items-center gap-1.5">
+            <GripVertical className="w-3.5 h-3.5 text-primary" />
+            <Badge className={`text-[10px] px-1.5 py-0 ${TIPO_COLORS[item.sigla_tipo] || 'bg-muted'}`}>
+              {item.sigla_tipo}
+            </Badge>
+            <span className="text-xs font-bold text-foreground">
+              {item.numero}/{item.ano}
+            </span>
+          </div>
+          {item.ementa && (
+            <p className="text-[11px] text-muted-foreground line-clamp-2 leading-tight">
+              {item.ementa}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/* ── Droppable Column ── */
+function DroppableColumn({ columnKey, children, color, label, icon, count }: {
+  columnKey: string;
+  children: React.ReactNode;
+  color: string;
+  label: string;
+  icon: string;
+  count: number;
+}) {
+  const { isOver, setNodeRef } = useDroppable({ id: columnKey });
+
+  return (
+    <div ref={setNodeRef} className="flex flex-col">
+      <div className={`rounded-xl border bg-gradient-to-b ${color} p-3 mb-3 transition-all ${isOver ? 'ring-2 ring-primary scale-[1.02]' : ''}`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{icon}</span>
+            <span className="text-sm font-semibold text-foreground">{label}</span>
+          </div>
+          <Badge variant="secondary" className="text-[10px] h-5 min-w-[20px] justify-center">
+            {count}
+          </Badge>
+        </div>
+      </div>
+      <div className={`space-y-2 flex-1 min-h-[100px] rounded-xl transition-colors ${isOver ? 'bg-primary/5' : ''}`}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 const KanbanLegislativo = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -61,7 +200,12 @@ const KanbanLegislativo = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [filterTipo, setFilterTipo] = useState<string>('all');
   const [selectedItem, setSelectedItem] = useState<KanbanItem | null>(null);
+  const [activeItem, setActiveItem] = useState<KanbanItem | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const pointerSensor = useSensor(PointerSensor, { activationConstraint: { distance: 8 } });
+  const touchSensor = useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } });
+  const sensors = useSensors(pointerSensor, touchSensor);
 
   const fetchItems = async () => {
     const { data, error } = await supabase
@@ -78,12 +222,11 @@ const KanbanLegislativo = () => {
   useEffect(() => {
     fetchItems();
 
-    // Realtime subscription
     const channel = supabase
       .channel('kanban-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'kanban_proposicoes' }, (payload) => {
         if (payload.eventType === 'UPDATE') {
-          setItems(prev => prev.map(item => 
+          setItems(prev => prev.map(item =>
             item.id === (payload.new as KanbanItem).id ? payload.new as KanbanItem : item
           ));
         } else if (payload.eventType === 'INSERT') {
@@ -122,6 +265,45 @@ const KanbanLegislativo = () => {
     const tipos = new Set(items.map(i => i.sigla_tipo));
     return Array.from(tipos).sort();
   }, [items]);
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const item = event.active.data.current?.item as KanbanItem;
+    if (item) setActiveItem(item);
+  }, []);
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    setActiveItem(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const draggedItem = active.data.current?.item as KanbanItem;
+    if (!draggedItem) return;
+
+    const newStatus = over.id as string;
+    if (!COLUMNS.some(c => c.key === newStatus)) return;
+    if (draggedItem.status_kanban === newStatus) return;
+
+    // Optimistic update
+    setItems(prev => prev.map(item =>
+      item.id === draggedItem.id ? { ...item, status_kanban: newStatus } : item
+    ));
+
+    // Persist to DB
+    const { error } = await supabase
+      .from('kanban_proposicoes')
+      .update({ status_kanban: newStatus, atualizado_em: new Date().toISOString() } as any)
+      .eq('id', draggedItem.id);
+
+    if (error) {
+      toast.error('Erro ao mover proposição');
+      setItems(prev => prev.map(item =>
+        item.id === draggedItem.id ? { ...item, status_kanban: draggedItem.status_kanban } : item
+      ));
+    } else {
+      const colLabel = COLUMNS.find(c => c.key === newStatus)?.label || newStatus;
+      toast.success(`Movido para "${colLabel}"`);
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -170,7 +352,6 @@ const KanbanLegislativo = () => {
               </Badge>
             </div>
             <div className="p-4 space-y-4 max-w-2xl mx-auto">
-              {/* Status */}
               <Card>
                 <CardContent className="p-4 space-y-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase">Status</p>
@@ -184,7 +365,6 @@ const KanbanLegislativo = () => {
                 </CardContent>
               </Card>
 
-              {/* Ementa */}
               {selectedItem.ementa && (
                 <Card>
                   <CardContent className="p-4 space-y-2">
@@ -194,7 +374,6 @@ const KanbanLegislativo = () => {
                 </Card>
               )}
 
-              {/* Author */}
               {selectedItem.autor && (
                 <Card>
                   <CardContent className="p-4 space-y-2">
@@ -206,7 +385,6 @@ const KanbanLegislativo = () => {
                 </Card>
               )}
 
-              {/* Dates */}
               <Card>
                 <CardContent className="p-4 space-y-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase flex items-center gap-1">
@@ -231,7 +409,6 @@ const KanbanLegislativo = () => {
                 </CardContent>
               </Card>
 
-              {/* Link to Câmara */}
               <Button
                 variant="outline"
                 className="w-full"
@@ -294,85 +471,49 @@ const KanbanLegislativo = () => {
         </Button>
       </div>
 
-      {/* Kanban board */}
-      <div
-        ref={scrollRef}
-        className="max-w-4xl mx-auto px-4 sm:px-6 py-4 overflow-x-auto scrollbar-hide"
+      {/* Kanban board with DnD */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4" style={{ minWidth: isMobile ? `${COLUMNS.length * 260}px` : undefined }}>
-          {columnData.map(col => (
-            <div key={col.key} className={`${isMobile ? 'min-w-[240px] w-[240px]' : 'flex-1 min-w-[200px]'}`}>
-              {/* Column header */}
-              <div className={`rounded-xl border bg-gradient-to-b ${col.color} p-3 mb-3`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{col.icon}</span>
-                    <span className="text-sm font-semibold text-foreground">{col.label}</span>
-                  </div>
-                  <Badge variant="secondary" className="text-[10px] h-5 min-w-[20px] justify-center">
-                    {col.items.length}
-                  </Badge>
-                </div>
+        <div
+          ref={scrollRef}
+          className="max-w-4xl mx-auto px-4 sm:px-6 py-4 overflow-x-auto scrollbar-hide"
+        >
+          <div className="flex gap-4" style={{ minWidth: isMobile ? `${COLUMNS.length * 260}px` : undefined }}>
+            {columnData.map(col => (
+              <div key={col.key} className={`${isMobile ? 'min-w-[240px] w-[240px]' : 'flex-1 min-w-[200px]'}`}>
+                <DroppableColumn
+                  columnKey={col.key}
+                  color={col.color}
+                  label={col.label}
+                  icon={col.icon}
+                  count={col.items.length}
+                >
+                  {col.items.length === 0 && (
+                    <div className="text-center py-8 text-xs text-muted-foreground">
+                      Nenhuma proposição
+                    </div>
+                  )}
+                  {col.items.map(item => (
+                    <DraggableCard
+                      key={item.id}
+                      item={item}
+                      onClick={() => setSelectedItem(item)}
+                    />
+                  ))}
+                </DroppableColumn>
               </div>
-
-              {/* Column items */}
-              <div className="space-y-2">
-                {col.items.length === 0 && (
-                  <div className="text-center py-8 text-xs text-muted-foreground">
-                    Nenhuma proposição
-                  </div>
-                )}
-                {col.items.map(item => (
-                  <motion.div
-                    key={item.id}
-                    layout
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    onClick={() => setSelectedItem(item)}
-                    className="cursor-pointer"
-                  >
-                    <Card className="hover:border-primary/40 transition-all group">
-                      <CardContent className="p-3 space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-1.5">
-                            <Badge className={`text-[10px] px-1.5 py-0 ${TIPO_COLORS[item.sigla_tipo] || 'bg-muted'}`}>
-                              {item.sigla_tipo}
-                            </Badge>
-                            <span className="text-xs font-bold text-foreground">
-                              {item.numero}/{item.ano}
-                            </span>
-                          </div>
-                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary shrink-0 mt-0.5" />
-                        </div>
-
-                        {item.ementa && (
-                          <p className="text-[11px] text-muted-foreground line-clamp-3 leading-tight">
-                            {item.ementa}
-                          </p>
-                        )}
-
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {item.lei_afetada && (
-                            <Badge variant="outline" className="text-[9px] h-4 px-1">
-                              {item.lei_afetada}
-                            </Badge>
-                          )}
-                          {item.data_ultima_acao && (
-                            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                              <Clock className="w-2.5 h-2.5" />
-                              {formatDate(item.data_ultima_acao)}
-                            </span>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+
+        <DragOverlay dropAnimation={{ duration: 200, easing: 'ease' }}>
+          {activeItem ? <OverlayCard item={activeItem} /> : null}
+        </DragOverlay>
+      </DndContext>
 
       {/* Empty state */}
       {items.length === 0 && !loading && (
