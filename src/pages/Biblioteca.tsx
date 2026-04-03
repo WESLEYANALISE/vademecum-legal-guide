@@ -6,9 +6,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
 import LivroCard, { type LivroUnificado } from '@/components/biblioteca/LivroCard';
-import LivroDetailSheet from '@/components/biblioteca/LivroDetailSheet';
+import LivroDetailSheet, { type ReadMode } from '@/components/biblioteca/LivroDetailSheet';
 import LeitorWebView from '@/components/biblioteca/LeitorWebView';
+import LeitorEbook from '@/components/estudar/LeitorEbook';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 
 import capaEstudos from '@/assets/biblioteca/capa-estudos.jpg';
 import capaClassicos from '@/assets/biblioteca/capa-classicos.jpg';
@@ -98,6 +100,7 @@ const Biblioteca = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [readerUrl, setReaderUrl] = useState<string | null>(null);
   const [readerTitle, setReaderTitle] = useState('');
+  const [ebookData, setEbookData] = useState<any>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -171,11 +174,56 @@ const Biblioteca = () => {
     setDetailOpen(true);
   };
 
-  const handleRead = (livro: LivroUnificado) => {
-    if (!livro.link) return;
+  const handleRead = async (livro: LivroUnificado, mode: ReadMode) => {
     setDetailOpen(false);
-    setReaderTitle(livro.titulo);
-    setReaderUrl(livro.link);
+
+    if (mode === 'fliphtml5') {
+      if (!livro.link) return;
+      setReaderTitle(livro.titulo);
+      setReaderUrl(livro.link);
+    } else if (mode === 'vertical') {
+      if (!livro.download) return;
+      const match = livro.download.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (!match) { toast.error('Link do Drive inválido'); return; }
+      const previewUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
+      setReaderTitle(livro.titulo);
+      setReaderUrl(previewUrl);
+    } else if (mode === 'dinamico') {
+      // Check if ebook exists in biblioteca_livros
+      const { data } = await supabase
+        .from('biblioteca_livros')
+        .select('id,status')
+        .ilike('titulo', livro.titulo.trim())
+        .limit(1)
+        .maybeSingle();
+
+      if (data && data.status === 'ready') {
+        const { data: full } = await supabase
+          .from('biblioteca_livros')
+          .select('id,titulo,total_paginas,ultima_pagina,conteudo,estrutura_leitura')
+          .eq('id', data.id)
+          .single();
+        if (full) setEbookData(full);
+      } else if (data && data.status === 'processing') {
+        toast.info('Este livro ainda está sendo formatado...');
+      } else {
+        // Start formatting
+        toast.info('Iniciando formatação do e-book...');
+        try {
+          await supabase.functions.invoke('processar-pdf', {
+            body: {
+              url: livro.download,
+              titulo: livro.titulo,
+              autor: livro.autor || undefined,
+              capa_url: livro.capa || undefined,
+            },
+          });
+          toast.success('Formatação iniciada! Volte em alguns minutos.');
+        } catch {
+          toast.error('Erro ao iniciar formatação');
+        }
+      }
+    }
   };
 
   const catMeta = CATEGORIES.find(c => c.id === activeCategory);
@@ -377,6 +425,10 @@ const Biblioteca = () => {
 
       {readerUrl && (
         <LeitorWebView url={readerUrl} titulo={readerTitle} onClose={() => setReaderUrl(null)} />
+      )}
+
+      {ebookData && (
+        <LeitorEbook livro={ebookData} onBack={() => setEbookData(null)} onUpdateBookmark={() => {}} />
       )}
     </>
   );
