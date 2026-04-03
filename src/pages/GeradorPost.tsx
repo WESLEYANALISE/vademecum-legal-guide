@@ -12,18 +12,6 @@ import { Label } from '@/components/ui/label';
 import html2canvas from 'html2canvas';
 import logoImg from '@/assets/logo-vacatio.jpeg';
 
-// ─── Background Images ───
-import bgHero from '@/assets/carousel-bg/bg-hero.jpg';
-import bgDark from '@/assets/carousel-bg/bg-dark.jpg';
-import bgComparison from '@/assets/carousel-bg/bg-comparison.jpg';
-import bgFeatures from '@/assets/carousel-bg/bg-features.jpg';
-import bgDestaque from '@/assets/carousel-bg/bg-destaque.jpg';
-import bgPassos from '@/assets/carousel-bg/bg-passos.jpg';
-import bgCta from '@/assets/carousel-bg/bg-cta.jpg';
-import bgContentA from '@/assets/carousel-bg/bg-content-a.jpg';
-import bgDarkB from '@/assets/carousel-bg/bg-dark-b.jpg';
-import bgContentB from '@/assets/carousel-bg/bg-content-b.jpg';
-
 // ─── Types ───
 
 interface SlideFeature { icone: string; label: string; desc: string; }
@@ -49,21 +37,13 @@ interface CarrosselData {
   slides: SlideData[];
 }
 
-// ─── Background Mapping ───
-
-const BG_MAP: Record<string, string> = {
-  hero: bgHero,
-  problema: bgDark,
-  solucao: bgDarkB,
-  features: bgFeatures,
-  detalhes: bgPassos,
-  passos: bgContentA,
-  cta: bgCta,
-  // Alternates
-  'features-alt': bgContentB,
-  'detalhes-alt': bgDestaque,
-  'problema-alt': bgComparison,
-};
+// ─── Design tokens ───
+const WINE = 'hsl(340, 55%, 12%)';
+const WINE_DARK = 'hsl(340, 30%, 8%)';
+const WINE_MED = 'hsl(340, 40%, 15%)';
+const IVORY = 'hsl(40, 15%, 95%)';
+const IVORY_WARM = 'hsl(40, 20%, 93%)';
+const GOLD = '#B8860B';
 
 const SLIDE_W = 420;
 const SLIDE_H = 525;
@@ -76,42 +56,46 @@ const TIPOS_CONTEUDO = [
   { value: 'comparacao', label: 'Comparação', desc: 'Antes vs Depois / Artigo X vs Artigo Y' },
 ];
 
-// ─── Design tokens ───
-const WINE = 'hsl(340, 55%, 12%)';
-const GOLD = '#B8860B';
+// ─── Background & color helpers ───
 
-// ─── Get background image for slide type ───
-function getBgImage(tipo: string, index: number): string {
-  // Use alternates for variety on repeated types
-  if (index % 2 === 1 && BG_MAP[`${tipo}-alt`]) return BG_MAP[`${tipo}-alt`];
-  return BG_MAP[tipo] || bgHero;
+function getSlideBackground(tipo: string): string {
+  switch (tipo) {
+    case 'hero': return `linear-gradient(165deg, ${WINE}, hsl(340, 45%, 18%))`;
+    case 'problema': return WINE_DARK;
+    case 'solucao': return `linear-gradient(165deg, ${WINE_DARK}, hsl(340, 35%, 14%))`;
+    case 'features': return IVORY;
+    case 'detalhes': return WINE_MED;
+    case 'passos': return IVORY_WARM;
+    case 'cta': return `linear-gradient(165deg, ${WINE}, hsl(30, 50%, 20%))`;
+    default: return IVORY;
+  }
 }
 
-function isDarkBg(tipo: string): boolean {
-  return ['problema', 'solucao', 'detalhes', 'cta'].includes(tipo);
+function isDark(tipo: string): boolean {
+  return ['hero', 'problema', 'solucao', 'detalhes', 'cta'].includes(tipo);
 }
 
 // ─── Slide Renderer ───
 
-function SlideRenderer({ slide, index, total }: { slide: SlideData; index: number; total: number }) {
-  const dark = isDarkBg(slide.tipo);
+function SlideRenderer({ slide, index }: { slide: SlideData; index: number }) {
+  const dark = isDark(slide.tipo);
   const textColor = dark ? '#fff' : WINE;
-  const subColor = dark ? 'rgba(255,255,255,0.75)' : '#5a3040';
-  const bgImage = getBgImage(slide.tipo, index);
+  const subColor = dark ? 'rgba(255,255,255,0.7)' : '#5a3040';
 
   const baseStyle: React.CSSProperties = {
     width: SLIDE_W, height: SLIDE_H,
-    backgroundImage: `url(${bgImage})`,
-    backgroundSize: 'cover', backgroundPosition: 'center',
+    background: getSlideBackground(slide.tipo),
     display: 'flex', flexDirection: 'column',
     position: 'relative', overflow: 'hidden', boxSizing: 'border-box',
     fontFamily: "'DM Sans', Arial, sans-serif",
+    boxShadow: 'inset 0 0 0 1px rgba(184,134,11,0.12)',
   };
 
   const headingFont: React.CSSProperties = {
     fontFamily: "'Playfair Display', Georgia, serif",
-    fontWeight: 700, lineHeight: 1.15, letterSpacing: -0.3,
+    fontWeight: 700, lineHeight: 1.18, letterSpacing: -0.3,
     color: textColor, margin: 0,
+    textShadow: dark ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
   };
 
   const bodyFont: React.CSSProperties = {
@@ -119,27 +103,29 @@ function SlideRenderer({ slide, index, total }: { slide: SlideData; index: numbe
     fontWeight: 400, lineHeight: 1.5, color: subColor, margin: 0,
   };
 
-  // Logo in top-left corner
+  // Gold accent line at top
+  const TopAccent = () => (
+    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `rgba(184,134,11,0.35)` }} />
+  );
+
   const Logo = () => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
       <img src={logoImg} alt="" style={{ width: 28, height: 28, borderRadius: '50%' }} crossOrigin="anonymous" />
       <div>
         <div style={{ fontSize: 11, fontWeight: 700, color: textColor }}>Vacatio</div>
-        <div style={{ fontSize: 8, color: dark ? 'rgba(255,255,255,0.5)' : GOLD }}>Vade Mecum 2026</div>
+        <div style={{ fontSize: 8, color: dark ? 'rgba(255,255,255,0.45)' : GOLD }}>Vade Mecum 2026</div>
       </div>
     </div>
   );
 
-  // Tag label
   const Tag = () => (
-    <span style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: dark ? GOLD : WINE, textTransform: 'uppercase', marginBottom: 8 }}>
+    <span style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: dark ? GOLD : WINE, textTransform: 'uppercase', marginBottom: 10 }}>
       {slide.tag}
     </span>
   );
 
-  // Bottom bar
   const BottomBar = () => (
-    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 32, background: WINE, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 30, background: WINE, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <span style={{ color: '#d4c9a8', fontSize: 10, letterSpacing: 1.5 }}>@vacatio.app</span>
     </div>
   );
@@ -148,11 +134,12 @@ function SlideRenderer({ slide, index, total }: { slide: SlideData; index: numbe
   if (slide.tipo === 'hero') {
     return (
       <div style={baseStyle}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px 40px 50px' }}>
+        <TopAccent />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px 36px 48px' }}>
           <Logo />
           <Tag />
-          <h1 style={{ ...headingFont, fontSize: 26 }}>{slide.titulo}</h1>
-          {slide.subtitulo && <p style={{ ...bodyFont, fontSize: 13, marginTop: 8 }}>{slide.subtitulo}</p>}
+          <h1 style={{ ...headingFont, fontSize: 24 }}>{slide.titulo}</h1>
+          {slide.subtitulo && <p style={{ ...bodyFont, fontSize: 13, marginTop: 10 }}>{slide.subtitulo}</p>}
         </div>
         <BottomBar />
       </div>
@@ -163,13 +150,14 @@ function SlideRenderer({ slide, index, total }: { slide: SlideData; index: numbe
   if (slide.tipo === 'problema') {
     return (
       <div style={baseStyle}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '36px 44px 50px' }}>
+        <TopAccent />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '36px 36px 48px' }}>
           <Tag />
-          <h2 style={{ ...headingFont, fontSize: 20, marginBottom: 16 }}>{slide.titulo}</h2>
+          <h2 style={{ ...headingFont, fontSize: 19, marginBottom: 16 }}>{slide.titulo}</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {slide.itens?.map((item, i) => (
               <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                <span style={{ color: GOLD, fontSize: 14, marginTop: 1, flexShrink: 0 }}>⚠</span>
+                <span style={{ color: GOLD, fontSize: 13, marginTop: 1, flexShrink: 0 }}>⚠</span>
                 <p style={{ ...bodyFont, fontSize: 12 }}>{item}</p>
               </div>
             ))}
@@ -184,12 +172,13 @@ function SlideRenderer({ slide, index, total }: { slide: SlideData; index: numbe
   if (slide.tipo === 'solucao') {
     return (
       <div style={baseStyle}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '36px 44px 50px' }}>
+        <TopAccent />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '36px 36px 48px' }}>
           <Tag />
-          <h2 style={{ ...headingFont, fontSize: 20, marginBottom: 12 }}>{slide.titulo}</h2>
+          <h2 style={{ ...headingFont, fontSize: 19, marginBottom: 12 }}>{slide.titulo}</h2>
           {slide.texto && <p style={{ ...bodyFont, fontSize: 12, marginBottom: 14 }}>{slide.texto}</p>}
           {slide.citacao && (
-            <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: 10, padding: 14, borderLeft: `3px solid ${GOLD}` }}>
+            <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: 14, borderLeft: `3px solid ${GOLD}` }}>
               <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontStyle: 'italic', lineHeight: 1.5, fontFamily: "'Playfair Display', serif", margin: 0 }}>
                 "{slide.citacao}"
               </p>
@@ -205,12 +194,13 @@ function SlideRenderer({ slide, index, total }: { slide: SlideData; index: numbe
   if (slide.tipo === 'features') {
     return (
       <div style={baseStyle}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '36px 36px 50px' }}>
+        <TopAccent />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '36px 32px 48px' }}>
           <Tag />
           <h2 style={{ ...headingFont, fontSize: 18, marginBottom: 14 }}>{slide.titulo}</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {slide.features?.map((f, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'rgba(184,134,11,0.08)', borderRadius: 8, padding: '8px 10px' }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'rgba(184,134,11,0.06)', borderRadius: 8, padding: '8px 10px' }}>
                 <span style={{ fontSize: 16, flexShrink: 0 }}>{f.icone}</span>
                 <div>
                   <span style={{ fontSize: 12, fontWeight: 700, color: WINE, display: 'block' }}>{f.label}</span>
@@ -229,9 +219,10 @@ function SlideRenderer({ slide, index, total }: { slide: SlideData; index: numbe
   if (slide.tipo === 'detalhes') {
     return (
       <div style={baseStyle}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '36px 44px 50px' }}>
+        <TopAccent />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '36px 36px 48px' }}>
           <Tag />
-          <h2 style={{ ...headingFont, fontSize: 20, marginBottom: 12 }}>{slide.titulo}</h2>
+          <h2 style={{ ...headingFont, fontSize: 19, marginBottom: 12 }}>{slide.titulo}</h2>
           {slide.texto && <p style={{ ...bodyFont, fontSize: 12, marginBottom: 12 }}>{slide.texto}</p>}
           {slide.itens?.map((item, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 6 }}>
@@ -249,13 +240,14 @@ function SlideRenderer({ slide, index, total }: { slide: SlideData; index: numbe
   if (slide.tipo === 'passos') {
     return (
       <div style={baseStyle}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '36px 36px 50px' }}>
+        <TopAccent />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '36px 32px 48px' }}>
           <Tag />
           <h2 style={{ ...headingFont, fontSize: 18, marginBottom: 14 }}>{slide.titulo}</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {slide.passos?.map((p, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                <span style={{ ...headingFont, fontSize: 22, fontWeight: 300, color: GOLD, minWidth: 28 }}>
+                <span style={{ ...headingFont, fontSize: 22, fontWeight: 300, color: GOLD, minWidth: 28, textShadow: 'none' }}>
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <div>
@@ -275,10 +267,11 @@ function SlideRenderer({ slide, index, total }: { slide: SlideData; index: numbe
   if (slide.tipo === 'cta') {
     return (
       <div style={baseStyle}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '40px 40px 50px' }}>
+        <TopAccent />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '40px 36px 48px' }}>
           <Logo />
           <Tag />
-          <h2 style={{ ...headingFont, fontSize: 20, color: '#fff', marginBottom: 16 }}>{slide.texto_engajamento}</h2>
+          <h2 style={{ ...headingFont, fontSize: 19, color: '#fff', marginBottom: 18 }}>{slide.texto_engajamento}</h2>
           <div style={{ display: 'inline-flex', padding: '10px 24px', background: GOLD, color: '#fff', fontWeight: 700, fontSize: 12, borderRadius: 20 }}>
             {slide.cta_texto || 'Salve para revisar!'}
           </div>
@@ -291,9 +284,10 @@ function SlideRenderer({ slide, index, total }: { slide: SlideData; index: numbe
   // Fallback
   return (
     <div style={baseStyle}>
-      <div style={{ flex: 1, padding: '36px 36px 50px' }}>
+      <TopAccent />
+      <div style={{ flex: 1, padding: '36px 36px 48px' }}>
         <Tag />
-        {slide.titulo && <h2 style={{ ...headingFont, fontSize: 20 }}>{slide.titulo}</h2>}
+        {slide.titulo && <h2 style={{ ...headingFont, fontSize: 19 }}>{slide.titulo}</h2>}
         {slide.texto && <p style={{ ...bodyFont, fontSize: 12, marginTop: 8 }}>{slide.texto}</p>}
       </div>
       <BottomBar />
@@ -495,7 +489,7 @@ const GeradorPost = () => {
                       transform: `scale(${previewScale})`, transformOrigin: 'top left',
                     }}
                   >
-                    <SlideRenderer slide={slide} index={i} total={carrossel.slides.length} />
+                    <SlideRenderer slide={slide} index={i} />
                   </div>
                 ))}
               </div>
@@ -536,7 +530,7 @@ const GeradorPost = () => {
               ref={(el) => { slidesRef.current[i] = el; }}
               style={{ width: SLIDE_W, height: SLIDE_H }}
             >
-              <SlideRenderer slide={slide} index={i} total={carrossel.slides.length} />
+              <SlideRenderer slide={slide} index={i} />
             </div>
           ))}
         </div>
