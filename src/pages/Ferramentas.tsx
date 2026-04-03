@@ -49,6 +49,13 @@ const TOOLS = [
     icon: FileText,
     gradient: 'from-sky-500 to-indigo-600',
   },
+  {
+    id: 'kanban',
+    label: 'Kanban Legislativo',
+    desc: 'Acompanhe o ciclo de vida das proposições',
+    icon: Kanban,
+    gradient: 'from-indigo-500 to-violet-600',
+  },
 ];
 
 const Ferramentas = () => {
