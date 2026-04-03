@@ -97,6 +97,21 @@ const CategoriaLegislacao = () => {
   const [dbAlteracoes, setDbAlteracoes] = useState<{ artigo_numero: string; tipo_alteracao: string; texto_anterior: string | null; texto_atual: string | null; detectado_em: string }[]>([]);
   const [loadingDbAlteracoes, setLoadingDbAlteracoes] = useState(false);
 
+  // Fetch DB alteracoes when novidades panel opens
+  useEffect(() => {
+    if (overlayPanel !== 'novidades' || !selectedTabelaNome) return;
+    setLoadingDbAlteracoes(true);
+    supabase
+      .from('legislacao_alteracoes')
+      .select('artigo_numero,tipo_alteracao,texto_anterior,texto_atual,detectado_em')
+      .eq('tabela_nome', selectedTabelaNome)
+      .order('detectado_em', { ascending: false })
+      .then(({ data }) => {
+        setDbAlteracoes(data || []);
+        setLoadingDbAlteracoes(false);
+      });
+  }, [overlayPanel, selectedTabelaNome]);
+
   // Fetch narrations when playlist tab is active
   useEffect(() => {
     if (overlayPanel !== 'playlist' || !selectedTabelaNome) return;
