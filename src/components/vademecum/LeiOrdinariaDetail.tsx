@@ -15,14 +15,22 @@ interface ParsedLei {
   assinatura: string;
 }
 
-function normalizeLegislativeText(text: string): string {
+function normalizeOrdinals(text: string): string {
   return text
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/\u00A0/g, ' ')
-    .replace(/\r/g, '')
-    .trim();
+    .replace(/(\d+)o\b/g, '$1º')
+    .replace(/(\d+)a\b(?=\s+da\b)/g, '$1ª');
+}
+
+function normalizeLegislativeText(text: string): string {
+  return normalizeOrdinals(
+    text
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/\u00A0/g, ' ')
+      .replace(/\r/g, '')
+      .trim()
+  );
 }
 
 /**
@@ -152,14 +160,23 @@ function parseTextoCompleto(texto: string): ParsedLei {
   
   assinatura = assinatura.replace(/Este texto n(?:ã|a)o substitui[\s\S]*/i, '').replace(/\*+\s*$/, '').trim();
 
-  // Normalize signature: join broken lines that aren't standalone names
+  // Normalize signature: join broken name lines (e.g. "LUIZ" + "INÁCIO LULA DA SILVA" → single line)
   const sigLines = assinatura.split('\n').filter(l => l.trim());
   const mergedSigLines: string[] = [];
-  for (const line of sigLines) {
-    const trimmed = line.trim();
+  for (let i = 0; i < sigLines.length; i++) {
+    const trimmed = sigLines[i].trim();
     const isName = /^[A-ZÁÀÂÃÉÈÊÍÏÓÔÕÚÜÇ\s]+$/.test(trimmed) && trimmed.length > 3;
     const startsWithBrasilia = /^Bras[ií]lia/i.test(trimmed);
-    if (isName || startsWithBrasilia) {
+    
+    // Check if next line is also an ALL-CAPS name — merge them
+    const nextTrimmed = i + 1 < sigLines.length ? sigLines[i + 1].trim() : '';
+    const nextIsName = /^[A-ZÁÀÂÃÉÈÊÍÏÓÔÕÚÜÇ\s]+$/.test(nextTrimmed) && nextTrimmed.length > 3;
+    
+    if (isName && nextIsName && !startsWithBrasilia) {
+      // Merge current + next as one name line
+      mergedSigLines.push(trimmed + ' ' + nextTrimmed);
+      i++; // skip next
+    } else if (isName || startsWithBrasilia) {
       mergedSigLines.push(trimmed);
     } else if (mergedSigLines.length > 0) {
       mergedSigLines[mergedSigLines.length - 1] += ' ' + trimmed;
@@ -196,10 +213,10 @@ const LeiOrdinariaDetail = ({ lei, onBack }: LeiOrdinariaDetailProps) => {
         <div className="max-w-5xl mx-auto">
           <button
             onClick={onBack}
-            className="flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm mb-4"
+            className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
-            Voltar às leis
+            Voltar
           </button>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
@@ -243,7 +260,7 @@ const LeiOrdinariaDetail = ({ lei, onBack }: LeiOrdinariaDetailProps) => {
                 {/* Ementa */}
                 {parsed.ementa && (
                   <div className="bg-card rounded-2xl p-4">
-                    <p className="text-foreground/80 font-body italic text-sm leading-relaxed">
+                    <p className="text-foreground/80 font-body italic text-base leading-relaxed">
                       {parsed.ementa}
                     </p>
                   </div>
@@ -251,7 +268,7 @@ const LeiOrdinariaDetail = ({ lei, onBack }: LeiOrdinariaDetailProps) => {
 
                 {/* Preâmbulo */}
                 {parsed.preambulo && (
-                  <p className="text-foreground/70 font-body text-sm leading-relaxed">
+                  <p className="text-foreground/70 font-body text-base leading-relaxed">
                     {parsed.preambulo}
                   </p>
                 )}
