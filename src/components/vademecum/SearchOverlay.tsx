@@ -20,8 +20,7 @@ type SearchMode = 'lei' | 'numero';
 const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<SearchMode>('lei');
-  const [artigoResults, setArtigoResults] = useState<ArtigoResult[]>([]);
-  const [searching, setSearching] = useState(false);
+  const [ocrOpen, setOcrOpen] = useState(false);
   const [ocrOpen, setOcrOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
