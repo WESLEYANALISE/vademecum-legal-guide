@@ -14,6 +14,64 @@ import capaClassicos from '@/assets/biblioteca/capa-classicos.jpg';
 import capaLideranca from '@/assets/biblioteca/capa-lideranca.jpg';
 import capaForaDaToga from '@/assets/biblioteca/capa-fora-da-toga.jpg';
 
+import areaAdministrativo from '@/assets/biblioteca/areas/direito-administrativo.jpg';
+import areaAmbiental from '@/assets/biblioteca/areas/direito-ambiental.jpg';
+import areaCivil from '@/assets/biblioteca/areas/direito-civil.jpg';
+import areaConcorrencial from '@/assets/biblioteca/areas/direito-concorrencial.jpg';
+import areaConstitucional from '@/assets/biblioteca/areas/direito-constitucional.jpg';
+import areaDesportivo from '@/assets/biblioteca/areas/direito-desportivo.jpg';
+import areaTrabalho from '@/assets/biblioteca/areas/direito-do-trabalho.jpg';
+import areaEmpresarial from '@/assets/biblioteca/areas/direito-empresarial.jpg';
+import areaFinanceiro from '@/assets/biblioteca/areas/direito-financeiro.jpg';
+import areaIntPrivado from '@/assets/biblioteca/areas/direito-internacional-privado.jpg';
+import areaIntPublico from '@/assets/biblioteca/areas/direito-internacional-publico.jpg';
+import areaPenal from '@/assets/biblioteca/areas/direito-penal.jpg';
+import areaPrevidenciario from '@/assets/biblioteca/areas/direito-previdenciario.jpg';
+import areaProcCivil from '@/assets/biblioteca/areas/direito-processual-civil.jpg';
+import areaProcTrabalho from '@/assets/biblioteca/areas/direito-processual-do-trabalho.jpg';
+import areaProcPenal from '@/assets/biblioteca/areas/direito-processual-penal.jpg';
+import areaTributario from '@/assets/biblioteca/areas/direito-tributario.jpg';
+import areaUrbanistico from '@/assets/biblioteca/areas/direito-urbanistico.jpg';
+import areaDireitosHumanos from '@/assets/biblioteca/areas/direitos-humanos.jpg';
+import areaFormacao from '@/assets/biblioteca/areas/formacao-complementar.jpg';
+import areaLeiPenal from '@/assets/biblioteca/areas/lei-penal-especial.jpg';
+import areaPesquisa from '@/assets/biblioteca/areas/pesquisa-cientifica.jpg';
+import areaPoliticas from '@/assets/biblioteca/areas/politicas-publicas.jpg';
+import areaPortugues from '@/assets/biblioteca/areas/portugues.jpg';
+import areaPratica from '@/assets/biblioteca/areas/pratica-profissional.jpg';
+import areaOab from '@/assets/biblioteca/areas/revisao-oab.jpg';
+import areaTeoria from '@/assets/biblioteca/areas/teoria-filosofia-direito.jpg';
+
+const AREA_IMAGES: Record<string, string> = {
+  'Direito Administrativo': areaAdministrativo,
+  'Direito Ambiental': areaAmbiental,
+  'Direito Civil': areaCivil,
+  'Direito Concorrencial': areaConcorrencial,
+  'Direito Constitucional': areaConstitucional,
+  'Direito Desportivo': areaDesportivo,
+  'Direito Do Trabalho': areaTrabalho,
+  'Direito Empresarial': areaEmpresarial,
+  'Direito Financeiro': areaFinanceiro,
+  'Direito Internacional Privado': areaIntPrivado,
+  'Direito Internacional Público': areaIntPublico,
+  'Direito Penal': areaPenal,
+  'Direito Previndenciario': areaPrevidenciario,
+  'Direito Processual Civil': areaProcCivil,
+  'Direito Processual Do Trabalho': areaProcTrabalho,
+  'Direito Processual Penal': areaProcPenal,
+  'Direito Tributario': areaTributario,
+  'Direito Urbanistico': areaUrbanistico,
+  'Direitos Humanos': areaDireitosHumanos,
+  'Formação Complementar': areaFormacao,
+  'Lei Penal Especial': areaLeiPenal,
+  'Pesquisa Científica': areaPesquisa,
+  'Politicas Publicas': areaPoliticas,
+  'Portugues': areaPortugues,
+  'Pratica Profissional': areaPratica,
+  'Revisão Oab': areaOab,
+  'Teoria E Filosofia Do Direito': areaTeoria,
+};
+
 type View = 'menu' | 'category' | 'area-detail';
 
 const CATEGORIES = [
@@ -192,33 +250,40 @@ const Biblioteca = () => {
       className="space-y-6"
     >
       {areasByCategory.length <= 1 ? (
-        // No sub-areas — show as grid
         <div className="grid grid-cols-3 gap-3">
           {areasByCategory[0]?.items.map((livro) => (
             <LivroCard key={`${livro.categoria}-${livro.id}`} livro={livro} onClick={() => handleSelect(livro)} />
           ))}
         </div>
       ) : (
-        // Has sub-areas — show carousels
-        areasByCategory.map((section) => (
-          <div key={section.label}>
-            <button
-              onClick={() => handleSelectArea(section.label)}
-              className="flex items-center gap-1 mb-2 group"
-            >
-              <h2 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                {section.label}
-              </h2>
-              <span className="text-[10px] text-muted-foreground ml-1">({section.items.length})</span>
-              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </button>
-            <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
-              {section.items.map((livro) => (
-                <LivroCard key={`${livro.categoria}-${livro.id}`} livro={livro} onClick={() => handleSelect(livro)} />
-              ))}
-            </div>
-          </div>
-        ))
+        <div className="space-y-3">
+          {areasByCategory.map((section) => {
+            const areaImg = AREA_IMAGES[section.label];
+            return (
+              <button
+                key={section.label}
+                onClick={() => handleSelectArea(section.label)}
+                className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden relative"
+              >
+                <div className="w-20 flex-shrink-0 relative overflow-hidden">
+                  {areaImg ? (
+                    <img src={areaImg} alt={section.label} className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/10" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+                </div>
+                <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{section.label}</p>
+                    <p className="text-xs text-muted-foreground">{section.items.length} materiais</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                </div>
+              </button>
+            );
+          })}
+        </div>
       )}
     </motion.div>
   );
