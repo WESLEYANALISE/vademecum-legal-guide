@@ -38,7 +38,7 @@ type Tab = 'legislacao' | 'radar' | 'noticias' | 'estudar' | 'ferramentas';
 const TABS: { id: Tab; label: string; icon: typeof Scale; subtitle: string }[] = [
   { id: 'radar', label: 'Radar Legislativo', icon: Radar, subtitle: 'Monitoramento' },
   { id: 'legislacao', label: 'Legislação', icon: Scale, subtitle: 'Leis e Códigos' },
-  { id: 'noticias', label: 'Aprender', icon: Brain, subtitle: 'Estude e aprenda' },
+  { id: 'noticias', label: 'Estudar', icon: GraduationCap, subtitle: 'Questões e flashcards' },
 ];
 
 const DESKTOP_TABS: { id: Tab; label: string; icon: typeof Scale }[] = [
@@ -180,7 +180,7 @@ const Index = () => {
                     key={tab.id}
                     onClick={() => {
                       const routes: Record<string, string> = {
-                        noticias: '/aprender',
+                        noticias: '/estudar',
                         estudar: '/estudar',
                         ferramentas: '/ferramentas',
                         radar: '/radar/proposicoes',
@@ -391,6 +391,10 @@ const Index = () => {
                 <button
                   key={tab.id}
                   onClick={() => {
+                    if (tab.id === 'noticias') {
+                      navigate('/estudar');
+                      return;
+                    }
                     setActiveTab(tab.id);
                     if (tab.id === 'radar') {
                       localStorage.setItem(RADAR_SEEN_KEY, String(Date.now()));

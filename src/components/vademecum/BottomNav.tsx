@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Wrench, Sparkles, Search, Menu } from 'lucide-react';
+import { Library, Wrench, Sparkles, Search, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface BottomNavProps {
@@ -10,7 +10,7 @@ interface BottomNavProps {
 }
 
 const NAV_ITEMS = [
-  { id: 'estudar', label: 'Estudar', icon: GraduationCap },
+  { id: 'biblioteca', label: 'Biblioteca', icon: Library },
   { id: 'ferramentas', label: 'Ferramentas', icon: Wrench },
   { id: 'buscar', label: 'Buscar', icon: Search, center: true },
   { id: 'assistente', label: 'Assistente', icon: Sparkles },
@@ -67,7 +67,7 @@ const BottomNav = ({ onSearchClick, onAssistenteClick, onMenuClick }: BottomNavP
                 item.id === 'menu' ? onMenuClick :
                 item.id === 'ferramentas' ? () => navigate('/ferramentas') :
                 item.id === 'assistente' ? onAssistenteClick :
-                item.id === 'estudar' ? () => navigate('/estudar') :
+                item.id === 'biblioteca' ? () => navigate('/biblioteca') :
                 undefined
               }
               className="flex flex-col items-center gap-0.5 py-1 px-2 text-foreground hover:text-primary transition-colors relative"
