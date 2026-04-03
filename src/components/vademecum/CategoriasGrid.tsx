@@ -29,24 +29,6 @@ interface CategoriasGridProps {
 
 const CategoriasGrid = ({ onSelect }: CategoriasGridProps) => {
   const navigate = useNavigate();
-  const [noticias, setNoticias] = useState<Noticia[]>(() => {
-    const cached = getNoticiasCache();
-    return cached ? cached.slice(0, 8) : [];
-  });
-
-  useEffect(() => {
-    if (noticias.length > 0) return;
-    prefetchNoticias();
-    const interval = setInterval(() => {
-      const cached = getNoticiasCache();
-      if (cached && cached.length > 0) {
-        setNoticias(cached.slice(0, 8));
-        clearInterval(interval);
-      }
-    }, 300);
-    const timeout = setTimeout(() => clearInterval(interval), 8000);
-    return () => { clearInterval(interval); clearTimeout(timeout); };
-  }, []);
 
   return (
     <div className="space-y-4">
