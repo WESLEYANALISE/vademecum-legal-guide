@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Scale, BookOpen, FileText, Newspaper, Landmark, Shield, ScrollText, Gavel, Settings, PanelLeftClose, Radar, RefreshCw, Rss, Bell, Building2, Lightbulb, Mic, BookA, BellRing, MessageCircle, Palette, Info, LogOut, Gamepad2, ClipboardList, ShieldCheck, Brain, Activity, BookMarked, HeartPulse, ChevronDown, Lock } from 'lucide-react';
+import { Scale, BookOpen, FileText, Newspaper, Landmark, Shield, ScrollText, Gavel, Settings, PanelLeftClose, Radar, RefreshCw, Rss, Bell, Building2, Lightbulb, Mic, BookA, BellRing, MessageCircle, Palette, Info, LogOut, Gamepad2, ClipboardList, ShieldCheck, Brain, Activity, BookMarked, HeartPulse, ChevronDown, Lock, ImageIcon } from 'lucide-react';
 import SuporteSheet from './SuporteSheet';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import { useNavigate } from 'react-router-dom';
@@ -44,6 +44,7 @@ const ADMIN_FUNCTIONS = [
   { id: 'camara-deputados', label: 'Câmara dos Deputados', icon: Building2, route: '/radar/deputados' },
   { id: 'boletins', label: 'Boletins', icon: Rss },
   { id: 'paleta-cores', label: 'Paleta de Cores', icon: Palette, route: '/configuracoes' },
+  { id: 'gerador-post', label: 'Gerador de Post', icon: ImageIcon, route: '/gerador-post' },
 ];
 
 const CONFIG_ITEMS = [
