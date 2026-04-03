@@ -77,9 +77,9 @@ const ArtigoTrail = ({ artigos, loading, loadingGame, onSelect }: ArtigoTrailPro
           transition={{ repeat: Infinity, duration: 10, ease: 'linear' }}
           style={{
             backgroundImage:
-              'radial-gradient(circle at 20% 20%, hsl(var(--primary) / 0.08) 0, transparent 30%), ' +
-              'radial-gradient(circle at 80% 60%, hsl(var(--primary) / 0.06) 0, transparent 30%)',
-            backgroundSize: '150% 150%',
+              'radial-gradient(circle at 20% 20%, hsl(var(--signature) / 0.05) 0, transparent 35%), ' +
+              'radial-gradient(circle at 80% 60%, hsl(var(--signature) / 0.04) 0, transparent 35%)',
+            backgroundSize: '200% 200%',
           }}
         />
 
