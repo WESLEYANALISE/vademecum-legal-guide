@@ -11,6 +11,7 @@ import BibliotecaView from '@/components/estudar/BibliotecaView';
 import { Input } from '@/components/ui/input';
 import { useStudyStats } from '@/hooks/useStudyStats';
 import { Progress } from '@/components/ui/progress';
+import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
 
 import { LEIS_COMPACTAS as LEIS } from '@/data/leisCatalog';
 
