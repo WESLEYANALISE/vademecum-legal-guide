@@ -212,7 +212,7 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
           onClose={() => setOcrOpen(false)}
           onTextExtracted={(text) => {
             setQuery(text.slice(0, 100));
-            setMode('artigo');
+            setMode('numero');
           }}
         />
         </>
