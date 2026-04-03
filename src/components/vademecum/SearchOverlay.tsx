@@ -166,7 +166,7 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
               }`}
             >
               <Hash className="w-4 h-4" />
-              Nº do Artigo
+              Nº da Lei
             </button>
           </div>
 
