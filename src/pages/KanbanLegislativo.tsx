@@ -256,9 +256,11 @@ const KanbanLegislativo = () => {
   };
 
   const filtered = useMemo(() => {
-    if (filterTipo === 'all') return items;
-    return items.filter(i => i.sigla_tipo === filterTipo);
-  }, [items, filterTipo]);
+    let result = items;
+    if (filterTipo !== 'all') result = result.filter(i => i.sigla_tipo === filterTipo);
+    if (filterLei !== 'all') result = result.filter(i => i.lei_afetada?.includes(filterLei));
+    return result;
+  }, [items, filterTipo, filterLei]);
 
   const columnData = useMemo(() => {
     return COLUMNS.map(col => ({
