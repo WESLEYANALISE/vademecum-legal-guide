@@ -36,6 +36,7 @@ const GrafoArtigos = lazy(() => import("./pages/GrafoArtigos.tsx"));
 const Ferramentas = lazy(() => import("./pages/Ferramentas.tsx"));
 const Radar360 = lazy(() => import("./pages/Radar360.tsx"));
 const Estudar = lazy(() => import("./pages/Estudar.tsx"));
+const Aprender = lazy(() => import("./pages/Aprender.tsx"));
 const ArtigoEducacional = lazy(() => import("./pages/ArtigoEducacional.tsx"));
 const CategoriaAprender = lazy(() => import("./pages/CategoriaAprender.tsx"));
 const Gamificacao = lazy(() => import("./pages/Gamificacao.tsx"));
