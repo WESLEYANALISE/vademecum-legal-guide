@@ -40,7 +40,7 @@ const DesktopPageLayout = ({ children, activeId, title, subtitle, mobileHeader }
 
       {/* Tab bar */}
       <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border">
-        <div className="flex items-center gap-1 px-8 h-12">
+        <div className="flex items-center justify-center gap-1 h-12">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = tab.id === activeId;
@@ -48,14 +48,14 @@ const DesktopPageLayout = ({ children, activeId, title, subtitle, mobileHeader }
               <button
                 key={tab.id}
                 onClick={() => navigate(tab.path)}
-                className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-body font-medium transition-colors ${
+                className={`relative flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-body font-medium transition-colors min-w-[130px] ${
                   isActive
                     ? 'text-primary bg-primary/10'
                     : 'text-foreground/60 hover:text-foreground hover:bg-secondary/60'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="whitespace-nowrap">{tab.label}</span>
                 {isActive && (
                   <motion.div
                     layoutId="desktop-page-tab-indicator"
