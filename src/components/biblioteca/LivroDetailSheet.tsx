@@ -1,6 +1,6 @@
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { ArrowLeft, BookOpen, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Download, ExternalLink } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { LivroUnificado } from './LivroCard';
 import { cdnImg } from '@/lib/cdnImg';
 
@@ -12,72 +12,101 @@ interface LivroDetailSheetProps {
 }
 
 const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProps) => {
-  if (!livro) return null;
+  if (!livro && !open) return null;
 
-  const capaUrl = livro.capa ? cdnImg(livro.capa, 400) : '';
+  const capaUrl = livro?.capa ? cdnImg(livro.capa, 400) : '';
 
   return (
-    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent side="bottom" className="rounded-t-2xl max-h-[85vh] overflow-y-auto p-0">
-        <div className="p-5 space-y-4">
-          <SheetHeader className="text-left">
-            <SheetTitle className="text-lg">{livro.titulo}</SheetTitle>
-            {livro.autor && (
-              <SheetDescription>{livro.autor}</SheetDescription>
-            )}
-          </SheetHeader>
+    <AnimatePresence>
+      {open && livro && (
+        <motion.div
+          initial={{ x: '100%' }}
+          animate={{ x: 0 }}
+          exit={{ x: '100%' }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          className="fixed inset-0 z-50 bg-background flex flex-col"
+        >
+          {/* Header */}
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card">
+            <button
+              onClick={onClose}
+              className="flex items-center justify-center w-9 h-9 rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-foreground" />
+            </button>
+            <h1 className="text-sm font-semibold text-foreground truncate flex-1">{livro.titulo}</h1>
+          </div>
 
-          <div className="flex gap-4">
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Cover hero */}
             {capaUrl && (
-              <img
-                src={capaUrl}
-                alt={livro.titulo}
-                className="w-24 h-36 rounded-lg object-cover shadow-md flex-shrink-0"
-              />
+              <div className="flex justify-center py-8 bg-gradient-to-b from-secondary/40 to-transparent">
+                <img
+                  src={capaUrl}
+                  alt={livro.titulo}
+                  className="w-40 h-56 rounded-xl object-cover shadow-2xl"
+                />
+              </div>
             )}
-            <div className="flex-1 min-w-0">
-              {livro.sinopse && (
-                <p className="text-xs text-muted-foreground leading-relaxed line-clamp-6">
-                  {livro.sinopse}
-                </p>
-              )}
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                  {livro.categoria}
-                </span>
-                {livro.area && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground font-medium">
-                    {livro.area}
+
+            <div className="px-5 pb-8 space-y-5">
+              {/* Title & Author */}
+              <div className="text-center space-y-1">
+                <h2 className="text-xl font-bold text-foreground">{livro.titulo}</h2>
+                {livro.autor && (
+                  <p className="text-sm text-muted-foreground">{livro.autor}</p>
+                )}
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                    {livro.categoria}
                   </span>
+                  {livro.area && (
+                    <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-secondary text-secondary-foreground font-medium">
+                      {livro.area}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Synopsis */}
+              {livro.sinopse && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-foreground">Sobre o livro</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {livro.sinopse}
+                  </p>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex gap-3 pt-2">
+                {livro.link && (
+                  <Button className="flex-1 gap-2 h-12 text-base" onClick={() => onRead(livro)}>
+                    <BookOpen className="w-5 h-5" />
+                    Ler agora
+                  </Button>
+                )}
+                {livro.download && (
+                  <Button
+                    variant="outline"
+                    className="flex-1 gap-2 h-12 text-base"
+                    onClick={() => window.open(livro.download!, '_blank')}
+                  >
+                    <Download className="w-5 h-5" />
+                    Download
+                  </Button>
                 )}
               </div>
+
+              {!livro.link && !livro.download && (
+                <p className="text-sm text-muted-foreground text-center">Nenhum link disponível</p>
+              )}
             </div>
           </div>
-
-          <div className="flex gap-3 pt-2">
-            {livro.link && (
-              <Button className="flex-1 gap-2" onClick={() => onRead(livro)}>
-                <BookOpen className="w-4 h-4" />
-                Ler agora
-              </Button>
-            )}
-            {livro.download && (
-              <Button
-                variant="outline"
-                className="flex-1 gap-2"
-                onClick={() => window.open(livro.download!, '_blank')}
-              >
-                <Download className="w-4 h-4" />
-                Download
-              </Button>
-            )}
-            {!livro.link && !livro.download && (
-              <p className="text-xs text-muted-foreground">Nenhum link disponível</p>
-            )}
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
