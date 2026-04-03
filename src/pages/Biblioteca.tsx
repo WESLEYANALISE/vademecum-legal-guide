@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Library, ChevronRight, BookOpen, GraduationCap, Award, Coffee } from 'lucide-react';
+import { ArrowLeft, Library, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
@@ -8,7 +8,11 @@ import LivroCard, { type LivroUnificado } from '@/components/biblioteca/LivroCar
 import LivroDetailSheet from '@/components/biblioteca/LivroDetailSheet';
 import LeitorWebView from '@/components/biblioteca/LeitorWebView';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cdnImg } from '@/lib/cdnImg';
+
+import capaEstudos from '@/assets/biblioteca/capa-estudos.jpg';
+import capaClassicos from '@/assets/biblioteca/capa-classicos.jpg';
+import capaLideranca from '@/assets/biblioteca/capa-lideranca.jpg';
+import capaForaDaToga from '@/assets/biblioteca/capa-fora-da-toga.jpg';
 
 type View = 'menu' | 'category' | 'area-detail';
 
