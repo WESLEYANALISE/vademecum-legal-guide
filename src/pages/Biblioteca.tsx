@@ -250,33 +250,40 @@ const Biblioteca = () => {
       className="space-y-6"
     >
       {areasByCategory.length <= 1 ? (
-        // No sub-areas — show as grid
         <div className="grid grid-cols-3 gap-3">
           {areasByCategory[0]?.items.map((livro) => (
             <LivroCard key={`${livro.categoria}-${livro.id}`} livro={livro} onClick={() => handleSelect(livro)} />
           ))}
         </div>
       ) : (
-        // Has sub-areas — show carousels
-        areasByCategory.map((section) => (
-          <div key={section.label}>
-            <button
-              onClick={() => handleSelectArea(section.label)}
-              className="flex items-center gap-1 mb-2 group"
-            >
-              <h2 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                {section.label}
-              </h2>
-              <span className="text-[10px] text-muted-foreground ml-1">({section.items.length})</span>
-              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </button>
-            <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
-              {section.items.map((livro) => (
-                <LivroCard key={`${livro.categoria}-${livro.id}`} livro={livro} onClick={() => handleSelect(livro)} />
-              ))}
-            </div>
-          </div>
-        ))
+        <div className="space-y-3">
+          {areasByCategory.map((section) => {
+            const areaImg = AREA_IMAGES[section.label];
+            return (
+              <button
+                key={section.label}
+                onClick={() => handleSelectArea(section.label)}
+                className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden relative"
+              >
+                <div className="w-20 flex-shrink-0 relative overflow-hidden">
+                  {areaImg ? (
+                    <img src={areaImg} alt={section.label} className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/10" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+                </div>
+                <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{section.label}</p>
+                    <p className="text-xs text-muted-foreground">{section.items.length} materiais</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                </div>
+              </button>
+            );
+          })}
+        </div>
       )}
     </motion.div>
   );
