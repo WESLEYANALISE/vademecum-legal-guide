@@ -206,9 +206,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // --- Import PDFs from storage ---
-    if (action === 'pdfs' || action === 'all') {
-      const buckets = ['pdfs', 'pdfs-educacionais', 'simulados-pdfs'];
+    // --- Import PDFs from storage (one bucket at a time via body.bucket) ---
+    if (action === 'pdfs') {
+      const singleBucket = body.bucket;
+      const buckets = singleBucket ? [singleBucket] : ['pdfs', 'pdfs-educacionais', 'simulados-pdfs'];
       for (const bucket of buckets) {
         try {
           const { data: files, error } = await extSupa.storage.from(bucket).list('', { limit: 500 });
