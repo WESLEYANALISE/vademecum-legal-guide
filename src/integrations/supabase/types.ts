@@ -2116,6 +2116,39 @@ export type Database = {
         }
         Relationships: []
       }
+      legislacao_alteracoes: {
+        Row: {
+          artigo_numero: string | null
+          detectado_em: string
+          id: string
+          revisado: boolean
+          tabela_nome: string
+          texto_anterior: string | null
+          texto_atual: string | null
+          tipo_alteracao: string
+        }
+        Insert: {
+          artigo_numero?: string | null
+          detectado_em?: string
+          id?: string
+          revisado?: boolean
+          tabela_nome: string
+          texto_anterior?: string | null
+          texto_atual?: string | null
+          tipo_alteracao: string
+        }
+        Update: {
+          artigo_numero?: string | null
+          detectado_em?: string
+          id?: string
+          revisado?: boolean
+          tabela_nome?: string
+          texto_anterior?: string | null
+          texto_atual?: string | null
+          tipo_alteracao?: string
+        }
+        Relationships: []
+      }
       leis_ordinarias: {
         Row: {
           ano: number
