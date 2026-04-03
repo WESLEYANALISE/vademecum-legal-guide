@@ -15,17 +15,7 @@ interface SearchOverlayProps {
   onSelectLei: (lei: { tipo: string; leiId: string; nome: string; descricao: string; tabela_nome: string; artigoNumero?: string }) => void;
 }
 
-type SearchMode = 'lei' | 'artigo';
-
-interface ArtigoResult {
-  numero: string;
-  texto: string;
-  lei_nome: string;
-  lei_sigla: string;
-  tabela_nome: string;
-  tipo: string;
-  leiId: string;
-}
+type SearchMode = 'lei' | 'numero';
 
 const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
   const [query, setQuery] = useState('');
