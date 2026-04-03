@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Loader2, ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Download, Loader2, ImageIcon, ChevronLeft, ChevronRight, Image, Type } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { LEIS_CATALOG } from '@/data/leisCatalog';
 import { fetchArtigosLei } from '@/services/legislacaoService';
@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import html2canvas from 'html2canvas';
 import logoImg from '@/assets/logo-vacatio.jpeg';
 
-// ─── Background Images ───
+// ─── Background Images (for text-only mode) ───
 import bgDarkPillars from '@/assets/carousel-bg/bg-dark-pillars.jpg';
 import bgDarkJustice from '@/assets/carousel-bg/bg-dark-justice.jpg';
 import bgDarkGavel from '@/assets/carousel-bg/bg-dark-gavel.jpg';
@@ -42,6 +42,8 @@ interface SlideData {
   passos?: SlidePasso[];
   texto_engajamento?: string;
   cta_texto?: string;
+  imagem_prompt?: string;
+  imagem_url?: string; // filled after image generation
 }
 
 interface CarrosselData {
@@ -49,29 +51,15 @@ interface CarrosselData {
   slides: SlideData[];
 }
 
-// ─── Background Mapping ───
-
-const DARK_BGS = [bgDarkPillars, bgDarkJustice, bgDarkGavel, bgDarkColumns, bgDarkBook, bgDarkLaurel, bgDarkScroll];
-const LIGHT_BGS = [bgLightPillars, bgLightJustice, bgLightCourthouse];
+// ─── Background Mapping (text-only mode) ───
 
 const BG_MAP: Record<string, string> = {
-  hero: bgDarkPillars,
-  problema: bgDarkColumns,
-  solucao: bgDarkScroll,
-  features: bgLightPillars,
-  detalhes: bgDarkLaurel,
-  passos: bgLightJustice,
-  cta: bgDarkJustice,
+  hero: bgDarkPillars, problema: bgDarkColumns, solucao: bgDarkScroll,
+  features: bgLightPillars, detalhes: bgDarkLaurel, passos: bgLightJustice, cta: bgDarkJustice,
 };
-
 const BG_ALT: Record<string, string> = {
-  hero: bgDarkGavel,
-  problema: bgDarkBook,
-  solucao: bgDarkLaurel,
-  features: bgLightCourthouse,
-  detalhes: bgDarkScroll,
-  passos: bgLightPillars,
-  cta: bgDarkColumns,
+  hero: bgDarkGavel, problema: bgDarkBook, solucao: bgDarkLaurel,
+  features: bgLightCourthouse, detalhes: bgDarkScroll, passos: bgLightPillars, cta: bgDarkColumns,
 };
 
 const SLIDE_W = 420;
@@ -100,20 +88,23 @@ function isDark(tipo: string): boolean {
 
 // ─── Slide Renderer ───
 
-function SlideRenderer({ slide, index }: { slide: SlideData; index: number }) {
+function SlideRenderer({ slide, index, useImages }: { slide: SlideData; index: number; useImages: boolean }) {
   const dark = isDark(slide.tipo);
-  const textColor = dark ? '#fff' : '#2d0a12';
-  const subColor = dark ? 'rgba(255,255,255,0.75)' : '#5a3040';
-  const bgImage = getBgImage(slide.tipo, index);
+  // If slide has a generated image, always treat as dark (image has overlay)
+  const effectiveDark = (useImages && slide.imagem_url) ? true : dark;
+  const textColor = effectiveDark ? '#fff' : '#2d0a12';
+  const subColor = effectiveDark ? 'rgba(255,255,255,0.75)' : '#5a3040';
+  
+  const hasBgImage = useImages && slide.imagem_url;
+  const staticBg = getBgImage(slide.tipo, index);
 
-  // Dark overlay to ensure text readability over background images
-  const overlayColor = dark
-    ? 'rgba(20, 5, 10, 0.55)'
+  const overlayColor = effectiveDark
+    ? 'rgba(20, 5, 10, 0.6)'
     : 'rgba(255, 252, 245, 0.65)';
 
   const baseStyle: React.CSSProperties = {
     width: SLIDE_W, height: SLIDE_H,
-    backgroundImage: `url(${bgImage})`,
+    backgroundImage: hasBgImage ? `url(${slide.imagem_url})` : `url(${staticBg})`,
     backgroundSize: 'cover', backgroundPosition: 'center',
     display: 'flex', flexDirection: 'column',
     position: 'relative', overflow: 'hidden', boxSizing: 'border-box',
@@ -121,8 +112,7 @@ function SlideRenderer({ slide, index }: { slide: SlideData; index: number }) {
   };
 
   const overlayStyle: React.CSSProperties = {
-    position: 'absolute', inset: 0,
-    background: overlayColor,
+    position: 'absolute', inset: 0, background: overlayColor,
   };
 
   const contentStyle: React.CSSProperties = {
@@ -133,27 +123,27 @@ function SlideRenderer({ slide, index }: { slide: SlideData; index: number }) {
     fontFamily: "'Merriweather', 'Georgia', serif",
     fontWeight: 700, lineHeight: 1.25, letterSpacing: -0.2,
     color: textColor, margin: 0,
-    textShadow: dark ? '0 1px 6px rgba(0,0,0,0.4)' : 'none',
+    textShadow: effectiveDark ? '0 1px 6px rgba(0,0,0,0.5)' : 'none',
   };
 
   const bodyFont: React.CSSProperties = {
     fontFamily: "'Inter', 'Segoe UI', Arial, sans-serif",
     fontWeight: 400, lineHeight: 1.6, color: subColor, margin: 0,
-    textShadow: dark ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
+    textShadow: effectiveDark ? '0 1px 3px rgba(0,0,0,0.4)' : 'none',
   };
 
   const Logo = () => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
       <img src={logoImg} alt="" style={{ width: 28, height: 28, borderRadius: '50%', border: '1.5px solid rgba(184,134,11,0.4)' }} crossOrigin="anonymous" />
       <div>
-        <div style={{ fontSize: 11, fontWeight: 700, color: textColor, textShadow: dark ? '0 1px 3px rgba(0,0,0,0.3)' : 'none' }}>Vacatio</div>
-        <div style={{ fontSize: 8, color: dark ? 'rgba(255,255,255,0.5)' : GOLD }}>Vade Mecum 2026</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: textColor, textShadow: effectiveDark ? '0 1px 3px rgba(0,0,0,0.3)' : 'none' }}>Vacatio</div>
+        <div style={{ fontSize: 8, color: effectiveDark ? 'rgba(255,255,255,0.5)' : GOLD }}>Vade Mecum 2026</div>
       </div>
     </div>
   );
 
   const Tag = () => (
-    <span style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, letterSpacing: 2.5, color: GOLD, textTransform: 'uppercase', marginBottom: 10 }}>
+    <span style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, letterSpacing: 2.5, color: GOLD, textTransform: 'uppercase', marginBottom: 10, textShadow: effectiveDark ? '0 1px 3px rgba(0,0,0,0.3)' : 'none' }}>
       {slide.tag}
     </span>
   );
@@ -164,7 +154,6 @@ function SlideRenderer({ slide, index }: { slide: SlideData; index: number }) {
     </div>
   );
 
-  // ── HERO
   if (slide.tipo === 'hero') {
     return (
       <div style={baseStyle}>
@@ -180,7 +169,6 @@ function SlideRenderer({ slide, index }: { slide: SlideData; index: number }) {
     );
   }
 
-  // ── PROBLEMA
   if (slide.tipo === 'problema') {
     return (
       <div style={baseStyle}>
@@ -202,7 +190,6 @@ function SlideRenderer({ slide, index }: { slide: SlideData; index: number }) {
     );
   }
 
-  // ── SOLUÇÃO
   if (slide.tipo === 'solucao') {
     return (
       <div style={baseStyle}>
@@ -212,7 +199,7 @@ function SlideRenderer({ slide, index }: { slide: SlideData; index: number }) {
           <h2 style={{ ...headingFont, fontSize: 18, marginBottom: 12 }}>{slide.titulo}</h2>
           {slide.texto && <p style={{ ...bodyFont, fontSize: 12, marginBottom: 14 }}>{slide.texto}</p>}
           {slide.citacao && (
-            <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: 8, padding: 14, borderLeft: `3px solid ${GOLD}` }}>
+            <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 8, padding: 14, borderLeft: `3px solid ${GOLD}` }}>
               <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.9)', fontStyle: 'italic', lineHeight: 1.6, fontFamily: "'Merriweather', serif", margin: 0 }}>
                 "{slide.citacao}"
               </p>
@@ -224,8 +211,10 @@ function SlideRenderer({ slide, index }: { slide: SlideData; index: number }) {
     );
   }
 
-  // ── FEATURES
   if (slide.tipo === 'features') {
+    const cardBg = effectiveDark ? 'rgba(0,0,0,0.25)' : 'rgba(45,10,18,0.06)';
+    const labelColor = effectiveDark ? '#fff' : '#2d0a12';
+    const descColor = effectiveDark ? 'rgba(255,255,255,0.7)' : '#6a5060';
     return (
       <div style={baseStyle}>
         <div style={overlayStyle} />
@@ -234,11 +223,11 @@ function SlideRenderer({ slide, index }: { slide: SlideData; index: number }) {
           <h2 style={{ ...headingFont, fontSize: 17, marginBottom: 14 }}>{slide.titulo}</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {slide.features?.map((f, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'rgba(45,10,18,0.06)', borderRadius: 8, padding: '8px 10px' }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: cardBg, borderRadius: 8, padding: '8px 10px' }}>
                 <span style={{ fontSize: 16, flexShrink: 0 }}>{f.icone}</span>
                 <div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#2d0a12', display: 'block' }}>{f.label}</span>
-                  <span style={{ fontSize: 10, color: '#6a5060' }}>{f.desc}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: labelColor, display: 'block' }}>{f.label}</span>
+                  <span style={{ fontSize: 10, color: descColor }}>{f.desc}</span>
                 </div>
               </div>
             ))}
@@ -249,7 +238,6 @@ function SlideRenderer({ slide, index }: { slide: SlideData; index: number }) {
     );
   }
 
-  // ── DETALHES
   if (slide.tipo === 'detalhes') {
     return (
       <div style={baseStyle}>
@@ -270,8 +258,9 @@ function SlideRenderer({ slide, index }: { slide: SlideData; index: number }) {
     );
   }
 
-  // ── PASSOS
   if (slide.tipo === 'passos') {
+    const labelColor = effectiveDark ? '#fff' : '#2d0a12';
+    const descColor = effectiveDark ? 'rgba(255,255,255,0.7)' : '#6a5060';
     return (
       <div style={baseStyle}>
         <div style={overlayStyle} />
@@ -281,12 +270,12 @@ function SlideRenderer({ slide, index }: { slide: SlideData; index: number }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {slide.passos?.map((p, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                <span style={{ fontFamily: "'Merriweather', serif", fontSize: 20, fontWeight: 300, color: GOLD, minWidth: 28 }}>
+                <span style={{ fontFamily: "'Merriweather', serif", fontSize: 20, fontWeight: 300, color: GOLD, minWidth: 28, textShadow: effectiveDark ? '0 1px 3px rgba(0,0,0,0.3)' : 'none' }}>
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#2d0a12', display: 'block' }}>{p.titulo}</span>
-                  <span style={{ fontSize: 10, color: '#6a5060' }}>{p.desc}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: labelColor, display: 'block' }}>{p.titulo}</span>
+                  <span style={{ fontSize: 10, color: descColor }}>{p.desc}</span>
                 </div>
               </div>
             ))}
@@ -297,7 +286,6 @@ function SlideRenderer({ slide, index }: { slide: SlideData; index: number }) {
     );
   }
 
-  // ── CTA
   if (slide.tipo === 'cta') {
     return (
       <div style={baseStyle}>
@@ -337,8 +325,11 @@ const GeradorPost = () => {
   const [artigos, setArtigos] = useState<{ numero: string; caput: string }[]>([]);
   const [selectedArtigo, setSelectedArtigo] = useState('');
   const [tipoConteudo, setTipoConteudo] = useState('curiosidade');
+  const [formato, setFormato] = useState<'texto' | 'imagens'>('texto');
   const [loading, setLoading] = useState(false);
   const [loadingArtigos, setLoadingArtigos] = useState(false);
+  const [loadingImagens, setLoadingImagens] = useState(false);
+  const [imagensProgresso, setImagensProgresso] = useState('');
   const [carrossel, setCarrossel] = useState<CarrosselData | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const slidesRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -357,12 +348,34 @@ const GeradorPost = () => {
     setLoadingArtigos(false);
   }, []);
 
+  const generateSlideImages = async (slides: SlideData[]): Promise<SlideData[]> => {
+    const updated = [...slides];
+    for (let i = 0; i < updated.length; i++) {
+      const slide = updated[i];
+      if (!slide.imagem_prompt) continue;
+      setImagensProgresso(`Gerando imagem ${i + 1} de ${updated.length}...`);
+      try {
+        const { data, error } = await supabase.functions.invoke('gerar-imagem-slide', {
+          body: { prompt: slide.imagem_prompt },
+        });
+        if (!error && data?.imageUrl) {
+          updated[i] = { ...slide, imagem_url: data.imageUrl };
+        }
+      } catch (e) {
+        console.error(`Erro ao gerar imagem slide ${i + 1}:`, e);
+      }
+    }
+    setImagensProgresso('');
+    return updated;
+  };
+
   const handleGerar = async () => {
     if (!selectedLei || !selectedArtigo) return;
     setLoading(true);
     setCarrossel(null);
     try {
       const artigo = artigos.find(a => a.numero === selectedArtigo);
+      const comImagens = formato === 'imagens';
       const { data, error } = await supabase.functions.invoke('assistente-juridica', {
         body: {
           mode: 'carrossel_post',
@@ -371,18 +384,28 @@ const GeradorPost = () => {
           artigoTexto: artigo?.caput || selectedArtigo,
           leiNome: lei?.nome || '',
           tipoConteudo,
+          comImagens,
         },
       });
       if (error) throw error;
       const reply = data?.reply;
       if (!reply) throw new Error('Sem resposta');
-      const parsed: CarrosselData = typeof reply === 'string' ? JSON.parse(reply.replace(/^```json\s*/i, '').replace(/\s*```$/i, '')) : reply;
+      let parsed: CarrosselData = typeof reply === 'string' ? JSON.parse(reply.replace(/^```json\s*/i, '').replace(/\s*```$/i, '')) : reply;
+      
+      if (comImagens) {
+        setLoading(false);
+        setLoadingImagens(true);
+        parsed = { ...parsed, slides: await generateSlideImages(parsed.slides) };
+        setLoadingImagens(false);
+      }
+      
       setCarrossel(parsed);
       setCurrentSlide(0);
     } catch (e) {
       console.error('Erro ao gerar carrossel:', e);
     }
     setLoading(false);
+    setLoadingImagens(false);
   };
 
   const downloadSlide = async (index: number) => {
@@ -409,6 +432,7 @@ const GeradorPost = () => {
   };
 
   const previewScale = 280 / SLIDE_W;
+  const isGenerating = loading || loadingImagens;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -427,6 +451,44 @@ const GeradorPost = () => {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 space-y-5">
+        {/* Formato do carrossel */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground">Formato</label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setFormato('texto')}
+              className={`flex items-center gap-2 p-3 rounded-lg border transition-colors ${
+                formato === 'texto'
+                  ? 'border-primary bg-primary/10 text-foreground'
+                  : 'border-border text-muted-foreground hover:bg-accent/50'
+              }`}
+              style={formato === 'texto' ? { borderColor: WINE } : {}}
+            >
+              <Type className="w-4 h-4" />
+              <div className="text-left">
+                <span className="text-sm font-medium block">Só Texto</span>
+                <span className="text-xs opacity-70">Fundos estáticos</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setFormato('imagens')}
+              className={`flex items-center gap-2 p-3 rounded-lg border transition-colors ${
+                formato === 'imagens'
+                  ? 'border-primary bg-primary/10 text-foreground'
+                  : 'border-border text-muted-foreground hover:bg-accent/50'
+              }`}
+              style={formato === 'imagens' ? { borderColor: WINE } : {}}
+            >
+              <Image className="w-4 h-4" />
+              <div className="text-left">
+                <span className="text-sm font-medium block">Com Imagens</span>
+                <span className="text-xs opacity-70">IA gera fundos</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Seletor de lei */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">Selecione a lei</label>
           <Select value={selectedLei} onValueChange={handleLeiChange}>
@@ -439,6 +501,7 @@ const GeradorPost = () => {
           </Select>
         </div>
 
+        {/* Seletor de artigo */}
         {selectedLei && (
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Selecione o artigo</label>
@@ -461,6 +524,7 @@ const GeradorPost = () => {
           </div>
         )}
 
+        {/* Tipo de conteúdo */}
         <div className="space-y-3">
           <label className="text-sm font-medium text-foreground">Tipo de conteúdo</label>
           <RadioGroup value={tipoConteudo} onValueChange={setTipoConteudo} className="grid grid-cols-1 gap-2">
@@ -476,15 +540,29 @@ const GeradorPost = () => {
           </RadioGroup>
         </div>
 
+        {/* Botão gerar */}
         <Button
           onClick={handleGerar}
-          disabled={!selectedLei || !selectedArtigo || loading}
+          disabled={!selectedLei || !selectedArtigo || isGenerating}
           className="w-full text-white"
           style={{ background: WINE }}
         >
-          {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Gerando...</> : 'Gerar Carrossel'}
+          {loading ? (
+            <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Gerando conteúdo...</>
+          ) : loadingImagens ? (
+            <><Loader2 className="w-4 h-4 animate-spin mr-2" /> {imagensProgresso || 'Gerando imagens...'}</>
+          ) : (
+            formato === 'imagens' ? 'Gerar Carrossel com Imagens' : 'Gerar Carrossel'
+          )}
         </Button>
 
+        {formato === 'imagens' && !isGenerating && !carrossel && (
+          <p className="text-xs text-muted-foreground text-center">
+            ⚡ Com imagens demora mais (~30s por slide). Cada slide terá um fundo único gerado por IA.
+          </p>
+        )}
+
+        {/* Preview dos slides */}
         {carrossel && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
             <div className="flex items-center justify-between">
@@ -518,7 +596,7 @@ const GeradorPost = () => {
                       transform: `scale(${previewScale})`, transformOrigin: 'top left',
                     }}
                   >
-                    <SlideRenderer slide={slide} index={i} />
+                    <SlideRenderer slide={slide} index={i} useImages={formato === 'imagens'} />
                   </div>
                 ))}
               </div>
@@ -559,7 +637,7 @@ const GeradorPost = () => {
               ref={(el) => { slidesRef.current[i] = el; }}
               style={{ width: SLIDE_W, height: SLIDE_H }}
             >
-              <SlideRenderer slide={slide} index={i} />
+              <SlideRenderer slide={slide} index={i} useImages={formato === 'imagens'} />
             </div>
           ))}
         </div>
