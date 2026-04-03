@@ -348,32 +348,49 @@ Deno.serve(async (req) => {
       const prompt = `Projeto de Lei: PL ${plNumero || ''}/${plAno || ''}\nAutor: ${autorNome || 'Não informado'}\nEmenta: ${ementa}${pdfContext}`;
       contents = [{ role: 'user', parts: [{ text: prompt }] }];
     } else if (mode === 'carrossel_post' && artigoTexto && tabelaNome) {
-      // Fetch full article text for richer content
       const fullText = await fetchFullArticleText(tabelaNome, artigoNumero || artigoTexto);
       const artText = fullText || artigoTexto;
+      const tipoConteudo = body.tipoConteudo || 'curiosidade';
 
-      systemPrompt = `Você é um designer de conteúdo jurídico viral para Instagram. Crie um carrossel educativo sobre o artigo de lei abaixo.
+      const tipoDescricoes: Record<string, string> = {
+        curiosidade: 'Foque em fatos surpreendentes e curiosidades pouco conhecidas sobre este artigo. Use "Você sabia que..." como gancho. Traga dados, história ou contexto inesperado.',
+        explicacao: 'Explique o artigo de forma didática e acessível, como um professor descontraído. Use exemplos práticos do cotidiano.',
+        resumo_prova: 'Foque nos pontos mais cobrados em provas OAB e concursos. Destaque pegadinhas, exceções e palavras-chave que os examinadores adoram.',
+        dica_pratica: 'Mostre como aplicar este artigo na prática profissional. Dê dicas de como usar no dia-a-dia do advogado, petições, audiências.',
+        comparacao: 'Compare este artigo com outros artigos relacionados, mostrando diferenças e semelhanças. Use formato "Antes vs Depois" ou "Artigo X vs Artigo Y".',
+      };
+
+      systemPrompt = `Você é um designer de conteúdo jurídico viral para Instagram com expertise em design editorial premium. Crie um carrossel educativo sobre o artigo de lei abaixo.
+
+TIPO DE CONTEÚDO: ${tipoConteudo}
+${tipoDescricoes[tipoConteudo] || tipoDescricoes.curiosidade}
 
 Regras OBRIGATÓRIAS de formato:
 - Responda SOMENTE com JSON válido, sem markdown, sem texto extra
-- O JSON deve ter: "titulo_viral" (string chamativa de até 60 caracteres) e "slides" (array de 4-6 objetos)
+- O JSON deve ter: "titulo_viral" (string chamativa de até 60 caracteres) e "slides" (array de 5-7 objetos)
 
-Tipos de slides disponíveis (use pelo menos 3 tipos diferentes):
-1. "capa" — slide de abertura: { "tipo": "capa", "titulo": "Título viral", "subtitulo": "Art. Xº" }
-2. "comparacao" — duas colunas: { "tipo": "comparacao", "titulo_esquerda": "...", "itens_esquerda": ["..."], "titulo_direita": "...", "itens_direita": ["..."] }
-3. "destaque" — card de destaque: { "tipo": "destaque", "titulo": "Nota importante", "texto": "Explicação...", "itens": ["item1", "item2"] }
-4. "conteudo" — bullet points: { "tipo": "conteudo", "titulo": "Título", "itens": ["ponto 1", "ponto 2", "ponto 3"] }
-5. "cta" — slide final: { "tipo": "cta", "texto_engajamento": "Pergunta envolvente?", "texto_salvar": "Salve para revisar!" }
+Tipos de slides disponíveis:
+1. "hero" — slide de abertura (OBRIGATÓRIO como primeiro): { "tipo": "hero", "bg": "light", "tag": "LABEL UPPERCASE", "titulo": "Título viral impactante", "subtitulo": "Contexto breve" }
+2. "problema" — pain point (fundo escuro): { "tipo": "problema", "bg": "dark", "tag": "O PROBLEMA", "titulo": "O que muita gente erra", "itens": ["Erro comum 1", "Erro comum 2", "Erro comum 3"] }
+3. "solucao" — a resposta (fundo gradiente): { "tipo": "solucao", "bg": "gradient", "tag": "A RESPOSTA", "titulo": "O que a lei diz", "texto": "Explicação clara...", "citacao": "Trecho literal do artigo" }
+4. "features" — pontos-chave com ícones: { "tipo": "features", "bg": "light", "tag": "PONTOS-CHAVE", "titulo": "O que você precisa saber", "features": [{"icone": "⚖️", "label": "Requisito X", "desc": "Explicação curta"}] }
+5. "detalhes" — aprofundamento (fundo escuro): { "tipo": "detalhes", "bg": "dark", "tag": "APROFUNDANDO", "titulo": "Detalhes importantes", "texto": "Contexto...", "itens": ["Detalhe 1", "Detalhe 2"] }
+6. "passos" — how-to numerado: { "tipo": "passos", "bg": "light", "tag": "COMO APLICAR", "titulo": "Passo a passo", "passos": [{"titulo": "Identifique", "desc": "Verifique se..."}, {"titulo": "Aplique", "desc": "Use o artigo..."}] }
+7. "cta" — slide final (OBRIGATÓRIO como último): { "tipo": "cta", "bg": "gradient", "tag": "SALVE ESTE POST", "texto_engajamento": "Pergunta envolvente?", "cta_texto": "Salve para revisar antes da prova!" }
 
-Regras de conteúdo:
-- O primeiro slide DEVE ser tipo "capa"
-- O último slide DEVE ser tipo "cta"
-- Use linguagem acessível, tom de professor descontraído
-- Foque em pontos que são cobrados em provas OAB/concursos
+Regras de design narrativo:
+- O primeiro slide DEVE ser tipo "hero" com bg "light"
+- O último slide DEVE ser tipo "cta" com bg "gradient"
+- Alterne fundos: light → dark → gradient → light para ritmo visual
+- Use pelo menos 4 tipos diferentes de slides
+- O campo "bg" deve ser "light", "dark" ou "gradient"
+- O campo "tag" deve ser UPPERCASE e ter no máximo 25 caracteres
 - Cada item de lista deve ter no máximo 80 caracteres
-- Títulos devem ser curtos e impactantes`;
+- Use emojis nos ícones do tipo "features" (⚖️, 📌, ⚠️, 💡, 📋, 🔍, etc.)
+- Títulos devem ser curtos, impactantes e em tom viral
+- Tom: professor descontraído mas preciso, estilo Instagram jurídico`;
 
-      const prompt = `Lei: ${leiNome || ''}\nArtigo: ${artigoNumero || ''}\nTexto completo:\n\n${artText}`;
+      const prompt = `Lei: ${leiNome || ''}\nArtigo: ${artigoNumero || ''}\nTipo de conteúdo: ${tipoConteudo}\nTexto completo:\n\n${artText}`;
       contents = [{ role: 'user', parts: [{ text: prompt }] }];
     } else if (mode === 'explicar_alteracao' && artigoTexto) {
       systemPrompt = SYSTEM_PROMPT_ALTERACAO;
