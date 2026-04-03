@@ -439,9 +439,9 @@ Regras:
       system_instruction: { parts: [{ text: systemPrompt }] },
       contents,
       generationConfig: {
-        temperature: mode === 'headline' ? 0.6 : (mode === 'grifo_magico' || mode === 'sugerir_perguntas' || mode === 'sugerir-perguntas' || mode === 'mapa_mental_grafo') ? 0.3 : 0.7,
-        maxOutputTokens: mode === 'headline' ? 150 : mode === 'mapa_mental_grafo' ? 8192 : 4096,
-        ...((mode === 'grifo_magico' || mode === 'sugerir_perguntas' || mode === 'sugerir-perguntas' || mode === 'mapa_mental_grafo') ? { responseMimeType: 'application/json' } : {}),
+        temperature: mode === 'headline' ? 0.6 : (mode === 'grifo_magico' || mode === 'sugerir_perguntas' || mode === 'sugerir-perguntas' || mode === 'mapa_mental_grafo' || mode === 'carrossel_post') ? 0.3 : 0.7,
+        maxOutputTokens: mode === 'headline' ? 150 : (mode === 'mapa_mental_grafo' || mode === 'carrossel_post') ? 8192 : 4096,
+        ...((mode === 'grifo_magico' || mode === 'sugerir_perguntas' || mode === 'sugerir-perguntas' || mode === 'mapa_mental_grafo' || mode === 'carrossel_post') ? { responseMimeType: 'application/json' } : {}),
       },
     };
 
