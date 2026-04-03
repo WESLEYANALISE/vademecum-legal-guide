@@ -1,133 +1,71 @@
 
 
-## Plano: Kanban Legislativo com Rastreamento em Tempo Real
+## Plano: Corrigir Edge Function e Popular Kanban com Proposições em Todos os Estágios
 
-### Visão Geral
+### Problema
 
-Um painel Kanban que mostra o ciclo de vida de proposições legislativas em colunas visuais:
+1. **Edge Function timeout**: tenta processar 50 itens com 3 chamadas de API cada (detalhe + tramitações + autores), excedendo o tempo limite
+2. **Seed inadequado**: só puxou 100 PLs recentes do `radar_proposicoes` — todos novos, todos "tramitando"
+3. **Faltam proposições em estágios avançados**: não há itens em votação, sanção ou publicados
 
-```text
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│ 📋 Tramitando│  │ 🗳️ Em Votação│  │ ✍️ Sanção    │  │ ✅ Publicada  │
-│             │  │             │  │             │  │             │
-│ ┌─────────┐ │  │ ┌─────────┐ │  │             │  │ ┌─────────┐ │
-│ │PL 1234  │ │  │ │PLP 56   │ │  │             │  │ │Lei 15374│ │
-│ │Altera CP│ │  │ │Altera..│ │  │             │  │ │Cria...  │ │
-│ │⚖️ C.Penal│ │  │ │Aprovado│ │  │             │  │ │02/04/26 │ │
-│ └─────────┘ │  │ └─────────┘ │  │             │  │ └─────────┘ │
-└─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘
-```
+### Solução
 
-### Problema Atual dos Dados
+#### 1. Reescrever Edge Function `atualizar-kanban`
 
-A tabela `radar_proposicoes` tem 8.334 registros, mas `situacao` e `ultima_tramitacao` estão todos `NULL`. Precisamos enriquecer esses dados pela API da Câmara para classificar em colunas.
+- **Processar apenas 10 itens por execução** (em vez de 50) para caber no timeout
+- **Pular chamada de autores** no primeiro pass — preencher depois
+- **Adicionar logs** com `console.log` para debug
+- **Buscar proposições em estágios avançados** diretamente da API da Câmara no seed:
+  - Consultar `situacaoId=1257` (Transformada em Lei) para pegar publicadas
+  - Consultar `situacaoId=918` (Aguardando Sanção) para sanção
+  - Consultar `tramitacaoSenado=true` ou `codSituacao` para votação
 
-### Solução Técnica
+#### 2. Novo seed inteligente — buscar da API da Câmara
 
-#### 1. Nova tabela `kanban_proposicoes` (migration)
-
-Tabela dedicada para rastrear o status kanban de proposições monitoradas:
-
-```sql
-CREATE TABLE kanban_proposicoes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  id_externo TEXT NOT NULL,
-  sigla_tipo TEXT NOT NULL,         -- PL, PLP, PEC, MPV
-  numero INTEGER NOT NULL,
-  ano INTEGER NOT NULL,
-  ementa TEXT,
-  autor TEXT,
-  lei_afetada TEXT,                 -- ex: 'CP_CODIGO_PENAL'
-  status_kanban TEXT NOT NULL DEFAULT 'tramitando',  -- tramitando, votacao, sancao, publicada
-  situacao_camara TEXT,             -- descrição da situação na API
-  data_ultima_acao TIMESTAMPTZ,
-  data_votacao TIMESTAMPTZ,
-  resultado_votacao TEXT,           -- Aprovado, Rejeitado
-  data_publicacao TIMESTAMPTZ,
-  numero_lei_publicada TEXT,        -- ex: 'Lei nº 15.374'
-  dados_json JSONB,
-  atualizado_em TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(id_externo)
-);
-
-ALTER TABLE kanban_proposicoes ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "kanban_read" ON kanban_proposicoes FOR SELECT USING (true);
-```
-
-#### 2. Edge Function `atualizar-kanban` (nova)
-
-- Busca tramitação detalhada na API da Câmara para cada proposição monitorada
-- Classifica automaticamente em colunas com base no `despacho` e `situação`:
-  - **Tramitando**: em análise nas comissões
-  - **Em Votação**: pauta do plenário, votação agendada
-  - **Sanção/Veto**: aprovada na Câmara, aguardando presidente
-  - **Publicada**: sancionada e publicada no DOU
-- Quando detecta status "Publicada", dispara atualização na tabela da lei afetada (ex: `CP_CODIGO_PENAL`) via `monitorar-legislacao`
-- Cron job a cada 6 horas
-
-#### 3. Nova página `KanbanLegislativo.tsx`
-
-- **4 colunas** com scroll horizontal (swipe no mobile)
-- Cards coloridos por tipo (PL=violet, PEC=sky, MPV=rose, PLP=amber) — mesmas cores já definidas no Radar
-- Cada card mostra: tipo+número, ementa resumida, lei afetada (badge), data da última ação
-- Filtro por lei afetada (ex: "Código Penal", "CLT")
-- Ao clicar em um card → abre detalhe com timeline da tramitação
-- **Realtime**: subscription no Supabase para `kanban_proposicoes` com `on('UPDATE')` para atualizar cards ao vivo
-- Sem drag-and-drop (as colunas são determinadas automaticamente pelo status real)
-
-#### 4. Integração com Radar 360
-
-- Nova aba "Kanban" no Radar 360, ou link na página de Ferramentas
-- Quando uma proposição muda para "Publicada", a Edge Function:
-  1. Insere registro em `legislacao_alteracoes` (alimenta aba "Novidades")
-  2. Invoca `monitorar-legislacao` para atualizar os artigos da lei afetada
-
-### Layout Mobile
+Em vez de só puxar do `radar_proposicoes` (que não tem situação), buscar diretamente da API com filtros por situação:
 
 ```text
-┌──────────────────────────────┐
-│  ← Voltar                    │
-│  📊 Kanban Legislativo       │
-├──────────────────────────────┤
-│  [Filtrar por lei ▾]         │
-│                              │
-│  ← swipe horizontal →       │
-│ ┌──────────┐┌──────────┐    │
-│ │Tramitando ││Em Votação│    │
-│ │    12     ││    3     │    │
-│ │┌────────┐ ││┌────────┐│    │
-│ ││PL 1234 │ │││PEC 45  ││    │
-│ ││Altera  │ │││Reforma ││    │
-│ ││C.Penal │ │││Tribut. ││    │
-│ │└────────┘ ││└────────┘│    │
-│ │┌────────┐ ││          │    │
-│ ││PL 5678 │ ││          │    │
-│ │└────────┘ ││          │    │
-│ └──────────┘└──────────┘    │
-└──────────────────────────────┘
+API Câmara → /proposicoes?ano=2025&ano=2026&siglaTipo=PL,PLP,PEC,MPV
+  &situacaoId=1257  → Publicadas (transformadas em lei)
+  &situacaoId=918   → Sanção/Veto
+  &situacaoId=1141  → Votação/Plenário
+  &itens=30 cada
 ```
+
+Isso garante diversidade de status nas colunas.
+
+#### 3. Processar em lotes menores
+
+```text
+Execução 1: Seed (busca API Câmara por situação) → insere ~100 itens
+Execução 2+: Atualiza 10 itens por vez (os mais antigos primeiro)
+```
+
+#### 4. Adicionar botão "Atualizar" no Kanban UI
+
+O botão já existe mas chama a edge function que timeouta. Ajustar para chamar em lotes menores e mostrar progresso.
 
 ### Arquivos
 
 | Arquivo | Mudança |
 |---------|---------|
-| `supabase/migrations/...` | Criar tabela `kanban_proposicoes` |
-| `supabase/functions/atualizar-kanban/index.ts` | Edge Function para buscar tramitação e classificar status |
-| `src/pages/KanbanLegislativo.tsx` | Nova página com o board Kanban |
-| `src/services/radarService.ts` | Funções para fetch de dados kanban |
-| `src/App.tsx` | Rota `/kanban-legislativo` |
-| `src/pages/Radar360.tsx` ou `Ferramentas.tsx` | Link de acesso ao Kanban |
+| `supabase/functions/atualizar-kanban/index.ts` | Reescrever: seed inteligente via API, processar 10 itens por vez, logs |
+| `src/pages/KanbanLegislativo.tsx` | Melhorar feedback do refresh, mostrar loading por coluna |
 
-### Fluxo de Atualização Automática
+### Fluxo do novo seed
 
 ```text
-Cron (6h) → atualizar-kanban
-  ├─ API Câmara: busca tramitação de cada PL monitorado
-  ├─ Classifica status_kanban
-  ├─ UPDATE kanban_proposicoes
-  │   └─ Realtime → UI atualiza ao vivo
-  └─ Se status = "publicada":
-      ├─ INSERT legislacao_alteracoes (Novidades)
-      └─ INVOKE monitorar-legislacao (atualiza artigos)
+1ª chamada (kanban vazio):
+  ├─ Busca API: PL/PLP/PEC transformados em lei (2025-2026) → coluna "publicada"
+  ├─ Busca API: Aguardando sanção → coluna "sancao"
+  ├─ Busca API: Em votação/plenário → coluna "votacao"
+  ├─ Busca API: Em tramitação (recentes) → coluna "tramitando"
+  └─ INSERT kanban_proposicoes com status já classificado
+
+Chamadas seguintes:
+  ├─ Pega 10 itens não-publicados mais antigos
+  ├─ API: detalhe + tramitações (2 calls por item = 20 calls)
+  ├─ Classifica e UPDATE
+  └─ Retorna resultado
 ```
 
