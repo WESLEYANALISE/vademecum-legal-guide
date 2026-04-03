@@ -17,10 +17,10 @@ import capaForaDaToga from '@/assets/biblioteca/capa-fora-da-toga.jpg';
 type View = 'menu' | 'category' | 'area-detail';
 
 const CATEGORIES = [
-  { id: 'estudos', label: 'Estudos', desc: 'Materiais organizados por área do Direito', icon: GraduationCap, gradient: 'from-blue-600 to-blue-900' },
-  { id: 'classicos', label: 'Clássicos', desc: 'Obras fundamentais do Direito', icon: BookOpen, gradient: 'from-red-700 to-red-950' },
-  { id: 'lideranca', label: 'Liderança', desc: 'Desenvolvimento pessoal e profissional', icon: Award, gradient: 'from-amber-600 to-amber-900' },
-  { id: 'fora-da-toga', label: 'Fora da Toga', desc: 'Leituras complementares', icon: Coffee, gradient: 'from-purple-600 to-purple-900' },
+  { id: 'estudos', label: 'Estudos', desc: 'Materiais organizados por área do Direito', img: capaEstudos },
+  { id: 'classicos', label: 'Clássicos', desc: 'Obras fundamentais do Direito', img: capaClassicos },
+  { id: 'lideranca', label: 'Liderança', desc: 'Desenvolvimento pessoal e profissional', img: capaLideranca },
+  { id: 'fora-da-toga', label: 'Fora da Toga', desc: 'Leituras complementares', img: capaForaDaToga },
 ];
 
 const Biblioteca = () => {
