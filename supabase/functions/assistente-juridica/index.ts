@@ -360,6 +360,17 @@ Deno.serve(async (req) => {
         comparacao: 'Compare este artigo com outros artigos relacionados, mostrando diferenças e semelhanças. Use formato "Antes vs Depois" ou "Artigo X vs Artigo Y".',
       };
 
+      const comImagens = body.comImagens === true;
+      const imagemInstrucao = comImagens
+        ? `\n\nIMPORTANTE — GERAÇÃO DE IMAGENS:
+Para CADA slide, adicione o campo "imagem_prompt" com uma descrição em inglês para gerar uma imagem de fundo. A imagem deve ser:
+- Temática, relacionada ao conteúdo do slide
+- Sutil e escura o suficiente para texto branco ser legível
+- Estilo editorial premium, tons vinho/dourado/jurídico
+- SEM texto na imagem
+Exemplo: "imagem_prompt": "Dark elegant courtroom interior with marble columns and golden light, legal theme, moody atmosphere"`
+        : '';
+
       systemPrompt = `Você é um designer de conteúdo jurídico viral para Instagram com expertise em design editorial premium. Crie um carrossel educativo sobre o artigo de lei abaixo.
 
 TIPO DE CONTEÚDO: ${tipoConteudo}
@@ -388,7 +399,7 @@ Regras de design narrativo:
 - Cada item de lista deve ter no máximo 80 caracteres
 - Use emojis nos ícones do tipo "features" (⚖️, 📌, ⚠️, 💡, 📋, 🔍, etc.)
 - Títulos devem ser curtos, impactantes e em tom viral
-- Tom: professor descontraído mas preciso, estilo Instagram jurídico`;
+- Tom: professor descontraído mas preciso, estilo Instagram jurídico${imagemInstrucao}`;
 
       const prompt = `Lei: ${leiNome || ''}\nArtigo: ${artigoNumero || ''}\nTipo de conteúdo: ${tipoConteudo}\nTexto completo:\n\n${artText}`;
       contents = [{ role: 'user', parts: [{ text: prompt }] }];
