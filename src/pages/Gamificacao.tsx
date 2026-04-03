@@ -3,7 +3,7 @@ import { ArrowLeft, Gamepad2, Skull, Grid3X3, Hash, Loader2 } from 'lucide-react
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AnimatePresence } from 'framer-motion';
 import HangmanGame from '@/components/gamificacao/HangmanGame';
 import WordSearchGame from '@/components/gamificacao/WordSearchGame';
 import CrosswordGame from '@/components/gamificacao/CrosswordGame';
