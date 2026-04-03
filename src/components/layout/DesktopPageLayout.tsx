@@ -1,0 +1,86 @@
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Scale, BookOpen, GraduationCap, Wrench, Radar, ArrowLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
+import DesktopHeroBanner from '@/components/vademecum/DesktopHeroBanner';
+import { useIsDesktop } from '@/hooks/use-desktop';
+
+const TABS = [
+  { id: 'legislacao', label: 'Legislação', icon: Scale, path: '/' },
+  { id: 'aprender', label: 'Aprender', icon: BookOpen, path: '/aprender' },
+  { id: 'estudar', label: 'Estudar', icon: GraduationCap, path: '/estudar' },
+  { id: 'ferramentas', label: 'Ferramentas', icon: Wrench, path: '/ferramentas' },
+  { id: 'radar', label: 'Radar Legislativo', icon: Radar, path: '/radar/proposicoes' },
+];
+
+interface DesktopPageLayoutProps {
+  children: React.ReactNode;
+  activeId: string;
+  title: string;
+  subtitle?: string;
+  mobileHeader?: React.ReactNode;
+}
+
+const DesktopPageLayout = ({ children, activeId, title, subtitle, mobileHeader }: DesktopPageLayoutProps) => {
+  const navigate = useNavigate();
+  const isDesktop = useIsDesktop();
+  const location = useLocation();
+
+  if (!isDesktop) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        {mobileHeader}
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <DesktopHeroBanner />
+
+      {/* Tab bar */}
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border">
+        <div className="flex items-center gap-1 px-8 h-12">
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = tab.id === activeId;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => navigate(tab.path)}
+                className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-body font-medium transition-colors ${
+                  isActive
+                    ? 'text-primary bg-primary/10'
+                    : 'text-foreground/60 hover:text-foreground hover:bg-secondary/60'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+                {isActive && (
+                  <motion.div
+                    layoutId="desktop-page-tab-indicator"
+                    className="absolute bottom-0 left-3 right-3 h-0.5 bg-primary rounded-full"
+                    transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-5xl mx-auto px-8 py-8">
+          <div className="mb-6">
+            <h1 className="font-display text-2xl text-foreground font-bold">{title}</h1>
+            {subtitle && <p className="text-muted-foreground text-sm mt-1">{subtitle}</p>}
+          </div>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default DesktopPageLayout;
