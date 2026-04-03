@@ -62,12 +62,12 @@ const ArtigoTrail = ({ artigos, loading, loadingGame, onSelect }: ArtigoTrailPro
 
       {/* Trail area */}
       <div
-        className="relative w-full rounded-2xl overflow-hidden"
+        className="relative w-full rounded-2xl overflow-hidden border border-border/50"
         style={{
           background:
-            'radial-gradient(ellipse at 25% 15%, hsl(var(--primary) / 0.1) 0%, transparent 50%), ' +
-            'radial-gradient(ellipse at 75% 50%, hsl(var(--primary) / 0.06) 0%, transparent 50%), ' +
-            'hsl(var(--background))',
+            'radial-gradient(ellipse at 30% 10%, hsl(var(--signature) / 0.06) 0%, transparent 50%), ' +
+            'radial-gradient(ellipse at 70% 60%, hsl(var(--signature) / 0.04) 0%, transparent 50%), ' +
+            'hsl(var(--card))',
         }}
       >
         {/* Animated background shine */}
