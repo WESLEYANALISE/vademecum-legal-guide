@@ -150,21 +150,21 @@ const ArtigoTrail = ({ artigos, loading, loadingGame, onSelect }: ArtigoTrailPro
                 >
                   {/* Glow */}
                   <div className="relative">
-                    <div className="absolute -inset-2 rounded-full bg-primary/15 blur-lg group-hover:bg-primary/25 transition-all" />
+                    <div className="absolute -inset-2 rounded-full bg-signature/15 blur-lg group-hover:bg-signature/25 transition-all" />
                     <div
-                      className="relative rounded-full border-[3px] border-primary bg-primary/10
+                      className="relative rounded-full border-[3px] border-signature bg-signature/10
                         flex items-center justify-center
-                        group-hover:bg-primary/20 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-primary/30
+                        group-hover:bg-signature/20 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-signature/30
                         transition-all duration-300"
                       style={{ width: NODE_PX, height: NODE_PX }}
                     >
-                      <span className="text-sm font-display font-bold text-primary leading-none">
+                      <span className="text-sm font-display font-bold text-signature leading-none">
                         {shortNum}
                       </span>
                     </div>
                   </div>
 
-                  <span className="text-[10px] font-display font-semibold text-foreground/60 group-hover:text-primary transition-colors">
+                  <span className="text-[10px] font-display font-semibold text-muted-foreground group-hover:text-signature transition-colors">
                     {label}
                   </span>
                 </motion.button>
