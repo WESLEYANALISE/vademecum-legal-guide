@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Gamepad2, Skull, Grid3X3, Hash, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AnimatePresence } from 'framer-motion';
