@@ -90,6 +90,12 @@ const ArtigoTrail = ({ artigos, loading, loadingGame, onSelect }: ArtigoTrailPro
             style={{ height: totalH }}
             overflow="visible"
           >
+            <defs>
+              <linearGradient id="artigo-trail-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="hsl(var(--signature))" stopOpacity="0.6" />
+                <stop offset="100%" stopColor="hsl(var(--signature))" stopOpacity="0.2" />
+              </linearGradient>
+            </defs>
             {filtered.map((_, i) => {
               if (i === 0) return null;
               const x1 = X_POINTS[(i - 1) % 4];
@@ -103,12 +109,11 @@ const ArtigoTrail = ({ artigos, loading, loadingGame, onSelect }: ArtigoTrailPro
                   key={`line-${i}`}
                   d={`M ${x1}% ${y1} C ${x1}% ${midY}, ${x2}% ${midY}, ${x2}% ${y2}`}
                   fill="none"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="2"
-                  strokeDasharray="8 6"
-                  strokeOpacity="0.45"
-                  animate={{ strokeDashoffset: [0, -28] }}
-                  transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
+                  stroke="url(#artigo-trail-grad)"
+                  strokeWidth="2.5"
+                  strokeDasharray="10 6"
+                  animate={{ strokeDashoffset: [0, -32] }}
+                  transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
                 />
               );
             })}
