@@ -27,7 +27,6 @@ const SearchOverlay = ({ open, onClose, onSelectLei }: SearchOverlayProps) => {
   useEffect(() => {
     if (open) {
       setQuery('');
-      setArtigoResults([]);
       setTimeout(() => inputRef.current?.focus(), 300);
     }
   }, [open]);
