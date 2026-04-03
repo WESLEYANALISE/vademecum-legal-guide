@@ -477,7 +477,20 @@ const KanbanLegislativo = () => {
           </SelectContent>
         </Select>
 
-        <Button
+        {leisDisponiveis.length > 0 && (
+          <Select value={filterLei} onValueChange={setFilterLei}>
+            <SelectTrigger className="w-[160px] h-8 text-xs">
+              <SelectValue placeholder="Lei afetada" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as leis</SelectItem>
+              {leisDisponiveis.map(l => (
+                <SelectItem key={l} value={l}>{l}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
           variant="ghost"
           size="sm"
           className="ml-auto h-8 text-xs gap-1"
