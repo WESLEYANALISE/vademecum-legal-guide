@@ -69,17 +69,7 @@ const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProp
                 </div>
               </div>
 
-              {/* Synopsis */}
-              {livro.sinopse && (
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-foreground">Sobre o livro</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {livro.sinopse}
-                  </p>
-                </div>
-              )}
-
-              {/* Action buttons */}
+              {/* Action buttons - BEFORE synopsis */}
               <div className="flex gap-3 pt-2">
                 {livro.link && (
                   <Button className="flex-1 gap-2 h-12 text-base" onClick={() => onRead(livro)}>
@@ -101,6 +91,16 @@ const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProp
 
               {!livro.link && !livro.download && (
                 <p className="text-sm text-muted-foreground text-center">Nenhum link disponível</p>
+              )}
+
+              {/* Synopsis */}
+              {livro.sinopse && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-foreground">Sobre o livro</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {livro.sinopse}
+                  </p>
+                </div>
               )}
             </div>
           </div>
