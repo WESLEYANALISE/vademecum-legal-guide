@@ -268,7 +268,7 @@ const LeiOrdinariaDetail = ({ lei, onBack }: LeiOrdinariaDetailProps) => {
 
                 {/* Preâmbulo */}
                 {parsed.preambulo && (
-                  <p className="text-foreground/70 font-body text-sm leading-relaxed">
+                  <p className="text-foreground/70 font-body text-base leading-relaxed">
                     {parsed.preambulo}
                   </p>
                 )}
