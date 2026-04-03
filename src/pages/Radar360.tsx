@@ -92,15 +92,31 @@ const Radar360 = () => {
   // Helper: normalize text to sentence case (no ALL CAPS)
   const normalizeCase = (text: string) => {
     if (!text) return text;
-    // If more than 60% uppercase letters, convert to sentence case
     const letters = text.replace(/[^a-zA-ZÀ-ÿ]/g, '');
     const upper = letters.replace(/[^A-ZÀ-Ý]/g, '');
     if (letters.length > 3 && upper.length / letters.length > 0.6) {
-      return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
-        .replace(/\b(lei|decreto|nº|art\.|de|do|da|dos|das|no|na|nos|nas|em|por|para|com|sem|sob|que|e|ou|a|o|ao|à|um|uma)\b/gi, m => m.toLowerCase())
-        .replace(/^./, c => c.toUpperCase());
+      // Convert everything to lowercase first, then capitalize properly
+      let result = text.toLowerCase();
+      // Capitalize first letter
+      result = result.charAt(0).toUpperCase() + result.slice(1);
+      // Capitalize key legal terms
+      result = result
+        .replace(/\blei\b/g, 'Lei')
+        .replace(/\bdecreto\b/g, 'Decreto')
+        .replace(/\bmedida provisória\b/g, 'Medida Provisória')
+        .replace(/\bemenda constitucional\b/g, 'Emenda Constitucional')
+        .replace(/\bresolução\b/g, 'Resolução')
+        .replace(/\bnº\b/g, 'nº');
+      return result;
     }
     return text;
+  };
+
+  // Extract just type + number from resenha titles (remove date part)
+  const cleanResenhaTitle = (titulo: string) => {
+    // "DECRETO Nº 12.909, DE 27 DE MARÇO DE 2026" → "Decreto nº 12.909"
+    const match = titulo.match(/^(.+?nº\s*[\d.]+)/i);
+    return match ? normalizeCase(match[1]) : normalizeCase(titulo);
   };
 
   // Unified item type for the "Recentes" tab
