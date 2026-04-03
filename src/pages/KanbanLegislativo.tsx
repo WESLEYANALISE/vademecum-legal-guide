@@ -116,9 +116,15 @@ function DraggableCard({ item, onClick }: { item: KanbanItem; onClick: () => voi
 
             <div className="flex items-center gap-2 flex-wrap mt-2">
               {item.lei_afetada && (
-                <Badge variant="outline" className="text-[9px] h-4 px-1">
-                  {item.lei_afetada}
+                <Badge variant="outline" className="text-[9px] h-4 px-1 bg-amber-500/10 text-amber-400 border-amber-500/25">
+                  ⚖️ {item.lei_afetada}
                 </Badge>
+              )}
+              {item.autor && (
+                <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 truncate max-w-[140px]">
+                  <User className="w-2.5 h-2.5 shrink-0" />
+                  {item.autor.split(',')[0]}
+                </span>
               )}
               {item.data_ultima_acao && (
                 <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
