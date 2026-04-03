@@ -159,16 +159,18 @@ const Biblioteca = () => {
             <button
               key={cat.id}
               onClick={() => handleSelectCategory(cat.id)}
-              className="w-full flex items-center gap-4 p-3 rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden"
+              className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden"
             >
-              <img src={cat.img} alt={cat.label} className="w-14 h-14 rounded-xl object-cover shadow-lg flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{cat.label}</p>
-                <p className="text-xs text-muted-foreground">{cat.desc}</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs text-muted-foreground">{livros.length}</span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              <img src={cat.img} alt={cat.label} className="w-20 object-cover flex-shrink-0" />
+              <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{cat.label}</p>
+                  <p className="text-xs text-muted-foreground">{cat.desc}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs text-muted-foreground">{livros.length}</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
               </div>
             </button>
           );
