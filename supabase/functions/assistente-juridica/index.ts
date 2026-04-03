@@ -490,6 +490,18 @@ Regras:
           console.log(`mapa_mental_grafo attempt ${attempt + 1}: invalid JSON, retrying...`);
           await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
           continue;
+        } else if (mode === 'carrossel_post' && candidateReply) {
+          const trimmed = candidateReply.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+          try {
+            const parsed = JSON.parse(trimmed);
+            if (parsed?.slides && Array.isArray(parsed.slides) && parsed.slides.length >= 3) {
+              reply = JSON.stringify(parsed);
+              break;
+            }
+          } catch { /* retry */ }
+          console.log(`carrossel_post attempt ${attempt + 1}: invalid JSON, retrying...`);
+          await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
+          continue;
         } else if ((mode === 'sugerir_perguntas' || mode === 'sugerir-perguntas') && candidateReply) {
           const trimmed = candidateReply.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
           try {
