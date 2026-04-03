@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Search, Hash, Tag, Camera } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
+
 import { useFuzzySearch } from '@/hooks/useFuzzySearch';
 import OcrScanner from './OcrScanner';
 
