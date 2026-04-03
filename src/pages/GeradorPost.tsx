@@ -137,18 +137,18 @@ function SlideRenderer({ slide, index, total }: { slide: SlideData; index: numbe
 
   const contentStyle: React.CSSProperties = {
     flex: 1, display: 'flex', flexDirection: 'column',
-    justifyContent: slide.tipo === 'hero' || slide.tipo === 'cta' ? 'center' : 'flex-end',
-    padding: '36px 36px 52px',
+    justifyContent: slide.tipo === 'hero' || slide.tipo === 'cta' ? 'center' : 'flex-start',
+    padding: '28px 32px 48px',
   };
 
   const headingStyle: React.CSSProperties = {
-    fontSize: slide.tipo === 'hero' ? 32 : 28, fontWeight: 600, color: textColor,
-    lineHeight: 1.12, letterSpacing: -0.4, fontFamily: "'Playfair Display', Georgia, serif", marginBottom: 12,
+    fontSize: slide.tipo === 'hero' ? 28 : 22, fontWeight: 600, color: textColor,
+    lineHeight: 1.15, letterSpacing: -0.3, fontFamily: "'Playfair Display', Georgia, serif", marginBottom: 10, marginTop: 0,
   };
 
   const bodyStyle: React.CSSProperties = {
-    fontSize: 14, fontWeight: 400, lineHeight: 1.5, color: bodyColor,
-    fontFamily: "'DM Sans', sans-serif",
+    fontSize: 13, fontWeight: 400, lineHeight: 1.5, color: bodyColor,
+    fontFamily: "'DM Sans', sans-serif", margin: 0,
   };
 
   // ── Hero slide
