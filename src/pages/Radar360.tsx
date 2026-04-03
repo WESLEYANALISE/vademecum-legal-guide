@@ -748,7 +748,7 @@ const Radar360 = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </DesktopPageLayout>
   );
 };
 
