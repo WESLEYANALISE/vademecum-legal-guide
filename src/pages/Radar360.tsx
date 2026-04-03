@@ -413,6 +413,82 @@ const Radar360 = () => {
             ))}
           </TabsContent>
 
+
+            {/* ── Leis Ordinárias Recentes ── */}
+            {!loadingLeisDec && leisRecentes.length > 0 && (
+              <div className="space-y-2 mt-2">
+                <div className="flex items-center gap-2 px-1">
+                  <ScrollText className="w-3.5 h-3.5 text-violet-500" />
+                  <span className="text-xs font-display text-violet-500 font-semibold">Leis Ordinárias Recentes</span>
+                </div>
+                {leisRecentes.map((lei, i) => (
+                  <motion.div
+                    key={lei.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.02 }}
+                    onClick={() => navigate(`/legislacao/lei-ordinaria?id=${lei.id}`)}
+                    className="border border-border rounded-lg p-3 bg-card hover:border-violet-500/30 transition-colors cursor-pointer flex gap-3 items-start"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <ScrollText className="w-4 h-4 text-violet-500" />
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-display text-sm text-foreground font-semibold">{lei.numero_lei}</span>
+                        {lei.data_publicacao && (
+                          <span className="text-[10px] text-muted-foreground">{lei.data_publicacao}</span>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground text-xs line-clamp-2 leading-relaxed">{lei.ementa}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {/* ── Decretos Recentes ── */}
+            {!loadingLeisDec && decretosRecentes.length > 0 && (
+              <div className="space-y-2 mt-2">
+                <div className="flex items-center gap-2 px-1">
+                  <Gavel className="w-3.5 h-3.5 text-emerald-500" />
+                  <span className="text-xs font-display text-emerald-500 font-semibold">Decretos Recentes</span>
+                </div>
+                {decretosRecentes.map((dec, i) => (
+                  <motion.div
+                    key={dec.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.02 }}
+                    onClick={() => navigate(`/legislacao/decreto?id=${dec.id}`)}
+                    className="border border-border rounded-lg p-3 bg-card hover:border-emerald-500/30 transition-colors cursor-pointer flex gap-3 items-start"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <Gavel className="w-4 h-4 text-emerald-500" />
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-display text-sm text-foreground font-semibold">{dec.numero_lei}</span>
+                        {dec.data_publicacao && (
+                          <span className="text-[10px] text-muted-foreground">{dec.data_publicacao}</span>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground text-xs line-clamp-2 leading-relaxed">{dec.ementa}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {loadingLeisDec && (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            )}
+          </TabsContent>
+
           {/* ── Tab: Novidades ── */}
           <TabsContent value="novidades" className="mt-4">
             <Accordion type="multiple" className="space-y-2" onValueChange={handleNovidadesAccordion}>
