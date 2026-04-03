@@ -57,6 +57,13 @@ const TOOLS = [
     icon: Newspaper,
     gradient: 'from-blue-500 to-cyan-600',
   },
+  {
+    id: 'newsletter',
+    label: 'Newsletter',
+    desc: 'Receba um resumo jurídico diário no e-mail',
+    icon: Mail,
+    gradient: 'from-red-500 to-rose-600',
+  },
 ];
 
 const Ferramentas = () => {
