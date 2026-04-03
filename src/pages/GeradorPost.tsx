@@ -12,18 +12,22 @@ import { Label } from '@/components/ui/label';
 import html2canvas from 'html2canvas';
 import logoImg from '@/assets/logo-vacatio.jpeg';
 
+// ─── Background Images ───
+import bgHero from '@/assets/carousel-bg/bg-hero.jpg';
+import bgDark from '@/assets/carousel-bg/bg-dark.jpg';
+import bgComparison from '@/assets/carousel-bg/bg-comparison.jpg';
+import bgFeatures from '@/assets/carousel-bg/bg-features.jpg';
+import bgDestaque from '@/assets/carousel-bg/bg-destaque.jpg';
+import bgPassos from '@/assets/carousel-bg/bg-passos.jpg';
+import bgCta from '@/assets/carousel-bg/bg-cta.jpg';
+import bgContentA from '@/assets/carousel-bg/bg-content-a.jpg';
+import bgDarkB from '@/assets/carousel-bg/bg-dark-b.jpg';
+import bgContentB from '@/assets/carousel-bg/bg-content-b.jpg';
+
 // ─── Types ───
 
-interface SlideFeature {
-  icone: string;
-  label: string;
-  desc: string;
-}
-
-interface SlidePasso {
-  titulo: string;
-  desc: string;
-}
+interface SlideFeature { icone: string; label: string; desc: string; }
+interface SlidePasso { titulo: string; desc: string; }
 
 interface SlideData {
   tipo: 'hero' | 'problema' | 'solucao' | 'features' | 'detalhes' | 'passos' | 'cta';
@@ -45,15 +49,21 @@ interface CarrosselData {
   slides: SlideData[];
 }
 
-// ─── Design System Tokens ───
+// ─── Background Mapping ───
 
-const BRAND_PRIMARY = 'hsl(340, 55%, 22%)';
-const BRAND_LIGHT = 'hsl(340, 40%, 45%)';
-const BRAND_DARK = 'hsl(340, 55%, 12%)';
-const LIGHT_BG = 'hsl(40, 15%, 95%)';
-const LIGHT_BORDER = 'hsl(40, 10%, 88%)';
-const DARK_BG = 'hsl(340, 30%, 8%)';
-const BRAND_GRADIENT = `linear-gradient(165deg, ${BRAND_DARK} 0%, ${BRAND_PRIMARY} 50%, ${BRAND_LIGHT} 100%)`;
+const BG_MAP: Record<string, string> = {
+  hero: bgHero,
+  problema: bgDark,
+  solucao: bgDarkB,
+  features: bgFeatures,
+  detalhes: bgPassos,
+  passos: bgContentA,
+  cta: bgCta,
+  // Alternates
+  'features-alt': bgContentB,
+  'detalhes-alt': bgDestaque,
+  'problema-alt': bgComparison,
+};
 
 const SLIDE_W = 420;
 const SLIDE_H = 525;
@@ -66,231 +76,214 @@ const TIPOS_CONTEUDO = [
   { value: 'comparacao', label: 'Comparação', desc: 'Antes vs Depois / Artigo X vs Artigo Y' },
 ];
 
-// ─── Slide Sub-Components ───
+// ─── Design tokens ───
+const WINE = 'hsl(340, 55%, 12%)';
+const GOLD = '#B8860B';
 
-function ProgressBar({ index, total, isLight }: { index: number; total: number; isLight: boolean }) {
-  const pct = ((index + 1) / total) * 100;
-  const trackColor = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)';
-  const fillColor = isLight ? BRAND_PRIMARY : '#fff';
-  const labelColor = isLight ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.4)';
-  return (
-    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 28px 20px', zIndex: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
-      <div style={{ flex: 1, height: 3, background: trackColor, borderRadius: 2, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${pct}%`, background: fillColor, borderRadius: 2 }} />
-      </div>
-      <span style={{ fontSize: 11, color: labelColor, fontWeight: 500, fontFamily: "'DM Sans', sans-serif" }}>{index + 1}/{total}</span>
-    </div>
-  );
+// ─── Get background image for slide type ───
+function getBgImage(tipo: string, index: number): string {
+  // Use alternates for variety on repeated types
+  if (index % 2 === 1 && BG_MAP[`${tipo}-alt`]) return BG_MAP[`${tipo}-alt`];
+  return BG_MAP[tipo] || bgHero;
 }
 
-function SwipeArrow({ isLight }: { isLight: boolean }) {
-  const bg = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
-  const stroke = isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.35)';
-  return (
-    <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 48, zIndex: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(to right, transparent, ${bg})` }}>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M9 6l6 6-6 6" stroke={stroke} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </div>
-  );
+function isDarkBg(tipo: string): boolean {
+  return ['problema', 'solucao', 'detalhes', 'cta'].includes(tipo);
 }
 
-function TagLabel({ text, isLight, isGradient }: { text: string; isLight: boolean; isGradient: boolean }) {
-  const color = isGradient ? 'rgba(255,255,255,0.6)' : isLight ? BRAND_PRIMARY : BRAND_LIGHT;
-  return (
-    <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 600, letterSpacing: 2, color, marginBottom: 16, fontFamily: "'DM Sans', sans-serif", textTransform: 'uppercase' }}>
-      {text}
-    </span>
-  );
-}
-
-function LogoLockup({ isLight }: { isLight: boolean }) {
-  const textColor = isLight ? BRAND_DARK : '#fff';
-  const subColor = isLight ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.5)';
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-      <img src={logoImg} alt="Vacatio" style={{ width: 32, height: 32, borderRadius: '50%' }} crossOrigin="anonymous" />
-      <div>
-        <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: 0.5, color: textColor, fontFamily: "'DM Sans', sans-serif" }}>Vacatio</div>
-        <div style={{ fontSize: 9, color: subColor, fontFamily: "'DM Sans', sans-serif" }}>@vacatio.app</div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Main Slide Renderer ───
+// ─── Slide Renderer ───
 
 function SlideRenderer({ slide, index, total }: { slide: SlideData; index: number; total: number }) {
-  const isLight = slide.bg === 'light';
-  const isGradient = slide.bg === 'gradient';
-  const isLast = index === total - 1;
-
-  const bgStyle = isGradient ? BRAND_GRADIENT : isLight ? LIGHT_BG : DARK_BG;
-  const textColor = isLight ? BRAND_DARK : '#fff';
-  const bodyColor = isLight ? '#3a3530' : 'rgba(255,255,255,0.85)';
-  const borderColor = isLight ? LIGHT_BORDER : 'rgba(255,255,255,0.1)';
+  const dark = isDarkBg(slide.tipo);
+  const textColor = dark ? '#fff' : WINE;
+  const subColor = dark ? 'rgba(255,255,255,0.75)' : '#5a3040';
+  const bgImage = getBgImage(slide.tipo, index);
 
   const baseStyle: React.CSSProperties = {
-    width: SLIDE_W, height: SLIDE_H, background: bgStyle, display: 'flex', flexDirection: 'column',
+    width: SLIDE_W, height: SLIDE_H,
+    backgroundImage: `url(${bgImage})`,
+    backgroundSize: 'cover', backgroundPosition: 'center',
+    display: 'flex', flexDirection: 'column',
     position: 'relative', overflow: 'hidden', boxSizing: 'border-box',
+    fontFamily: "'DM Sans', Arial, sans-serif",
   };
 
-  const contentStyle: React.CSSProperties = {
-    flex: 1, display: 'flex', flexDirection: 'column',
-    justifyContent: slide.tipo === 'hero' || slide.tipo === 'cta' ? 'center' : 'flex-start',
-    padding: '28px 32px 48px',
+  const headingFont: React.CSSProperties = {
+    fontFamily: "'Playfair Display', Georgia, serif",
+    fontWeight: 700, lineHeight: 1.15, letterSpacing: -0.3,
+    color: textColor, margin: 0,
   };
 
-  const headingStyle: React.CSSProperties = {
-    fontSize: slide.tipo === 'hero' ? 28 : 22, fontWeight: 600, color: textColor,
-    lineHeight: 1.15, letterSpacing: -0.3, fontFamily: "'Playfair Display', Georgia, serif", marginBottom: 10, marginTop: 0,
+  const bodyFont: React.CSSProperties = {
+    fontFamily: "'DM Sans', Arial, sans-serif",
+    fontWeight: 400, lineHeight: 1.5, color: subColor, margin: 0,
   };
 
-  const bodyStyle: React.CSSProperties = {
-    fontSize: 13, fontWeight: 400, lineHeight: 1.5, color: bodyColor,
-    fontFamily: "'DM Sans', sans-serif", margin: 0,
-  };
+  // Logo in top-left corner
+  const Logo = () => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+      <img src={logoImg} alt="" style={{ width: 28, height: 28, borderRadius: '50%' }} crossOrigin="anonymous" />
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: textColor }}>Vacatio</div>
+        <div style={{ fontSize: 8, color: dark ? 'rgba(255,255,255,0.5)' : GOLD }}>Vade Mecum 2026</div>
+      </div>
+    </div>
+  );
 
-  // ── Hero slide
+  // Tag label
+  const Tag = () => (
+    <span style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: dark ? GOLD : WINE, textTransform: 'uppercase', marginBottom: 8 }}>
+      {slide.tag}
+    </span>
+  );
+
+  // Bottom bar
+  const BottomBar = () => (
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 32, background: WINE, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span style={{ color: '#d4c9a8', fontSize: 10, letterSpacing: 1.5 }}>@vacatio.app</span>
+    </div>
+  );
+
+  // ── HERO
   if (slide.tipo === 'hero') {
     return (
       <div style={baseStyle}>
-        <div style={contentStyle}>
-          <LogoLockup isLight={isLight} />
-          <TagLabel text={slide.tag} isLight={isLight} isGradient={isGradient} />
-          <h1 style={headingStyle}>{slide.titulo}</h1>
-          {slide.subtitulo && <p style={{ ...bodyStyle, marginTop: 4 }}>{slide.subtitulo}</p>}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px 40px 50px' }}>
+          <Logo />
+          <Tag />
+          <h1 style={{ ...headingFont, fontSize: 26 }}>{slide.titulo}</h1>
+          {slide.subtitulo && <p style={{ ...bodyFont, fontSize: 13, marginTop: 8 }}>{slide.subtitulo}</p>}
         </div>
-        {!isLast && <SwipeArrow isLight={isLight} />}
-        <ProgressBar index={index} total={total} isLight={isLight && !isGradient} />
+        <BottomBar />
       </div>
     );
   }
 
-  // ── Problema slide (dark)
+  // ── PROBLEMA
   if (slide.tipo === 'problema') {
     return (
       <div style={baseStyle}>
-        <div style={contentStyle}>
-          <TagLabel text={slide.tag} isLight={isLight} isGradient={isGradient} />
-          <h2 style={headingStyle}>{slide.titulo}</h2>
-          {slide.itens?.map((item, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '8px 0', borderBottom: `1px solid ${borderColor}` }}>
-              <span style={{ color: BRAND_LIGHT, fontSize: 15, width: 18, textAlign: 'center', flexShrink: 0 }}>•</span>
-              <p style={bodyStyle}>{item}</p>
-            </div>
-          ))}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '36px 44px 50px' }}>
+          <Tag />
+          <h2 style={{ ...headingFont, fontSize: 20, marginBottom: 16 }}>{slide.titulo}</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {slide.itens?.map((item, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <span style={{ color: GOLD, fontSize: 14, marginTop: 1, flexShrink: 0 }}>⚠</span>
+                <p style={{ ...bodyFont, fontSize: 12 }}>{item}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        {!isLast && <SwipeArrow isLight={isLight} />}
-        <ProgressBar index={index} total={total} isLight={isLight && !isGradient} />
+        <BottomBar />
       </div>
     );
   }
 
-  // ── Solução slide (gradient)
+  // ── SOLUÇÃO
   if (slide.tipo === 'solucao') {
     return (
       <div style={baseStyle}>
-        <div style={contentStyle}>
-          <TagLabel text={slide.tag} isLight={false} isGradient={true} />
-          <h2 style={{ ...headingStyle, color: '#fff' }}>{slide.titulo}</h2>
-          {slide.texto && <p style={{ ...bodyStyle, color: 'rgba(255,255,255,0.85)', marginBottom: 16 }}>{slide.texto}</p>}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '36px 44px 50px' }}>
+          <Tag />
+          <h2 style={{ ...headingFont, fontSize: 20, marginBottom: 12 }}>{slide.titulo}</h2>
+          {slide.texto && <p style={{ ...bodyFont, fontSize: 12, marginBottom: 14 }}>{slide.texto}</p>}
           {slide.citacao && (
-            <div style={{ padding: 16, background: 'rgba(0,0,0,0.15)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)' }}>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>Dispositivo legal</p>
-              <p style={{ fontSize: 15, color: '#fff', fontStyle: 'italic', lineHeight: 1.4, fontFamily: "'Playfair Display', serif" }}>"{slide.citacao}"</p>
+            <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: 10, padding: 14, borderLeft: `3px solid ${GOLD}` }}>
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontStyle: 'italic', lineHeight: 1.5, fontFamily: "'Playfair Display', serif", margin: 0 }}>
+                "{slide.citacao}"
+              </p>
             </div>
           )}
         </div>
-        {!isLast && <SwipeArrow isLight={false} />}
-        <ProgressBar index={index} total={total} isLight={false} />
+        <BottomBar />
       </div>
     );
   }
 
-  // ── Features slide
+  // ── FEATURES
   if (slide.tipo === 'features') {
     return (
       <div style={baseStyle}>
-        <div style={contentStyle}>
-          <TagLabel text={slide.tag} isLight={isLight} isGradient={isGradient} />
-          <h2 style={headingStyle}>{slide.titulo}</h2>
-          {slide.features?.map((f, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '10px 0', borderBottom: `1px solid ${borderColor}` }}>
-              <span style={{ color: isLight ? BRAND_PRIMARY : BRAND_LIGHT, fontSize: 15, width: 18, textAlign: 'center', flexShrink: 0 }}>{f.icone}</span>
-              <div>
-                <span style={{ fontSize: 14, fontWeight: 600, color: textColor, fontFamily: "'DM Sans', sans-serif", display: 'block' }}>{f.label}</span>
-                <span style={{ fontSize: 12, color: isLight ? '#8A8580' : 'rgba(255,255,255,0.5)', fontFamily: "'DM Sans', sans-serif" }}>{f.desc}</span>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '36px 36px 50px' }}>
+          <Tag />
+          <h2 style={{ ...headingFont, fontSize: 18, marginBottom: 14 }}>{slide.titulo}</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {slide.features?.map((f, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'rgba(184,134,11,0.08)', borderRadius: 8, padding: '8px 10px' }}>
+                <span style={{ fontSize: 16, flexShrink: 0 }}>{f.icone}</span>
+                <div>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: WINE, display: 'block' }}>{f.label}</span>
+                  <span style={{ fontSize: 10, color: '#7a6a5a' }}>{f.desc}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-        {!isLast && <SwipeArrow isLight={isLight} />}
-        <ProgressBar index={index} total={total} isLight={isLight && !isGradient} />
+        <BottomBar />
       </div>
     );
   }
 
-  // ── Detalhes slide (dark)
+  // ── DETALHES
   if (slide.tipo === 'detalhes') {
     return (
       <div style={baseStyle}>
-        <div style={contentStyle}>
-          <TagLabel text={slide.tag} isLight={isLight} isGradient={isGradient} />
-          <h2 style={headingStyle}>{slide.titulo}</h2>
-          {slide.texto && <p style={{ ...bodyStyle, marginBottom: 12 }}>{slide.texto}</p>}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '36px 44px 50px' }}>
+          <Tag />
+          <h2 style={{ ...headingFont, fontSize: 20, marginBottom: 12 }}>{slide.titulo}</h2>
+          {slide.texto && <p style={{ ...bodyFont, fontSize: 12, marginBottom: 12 }}>{slide.texto}</p>}
           {slide.itens?.map((item, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '8px 0', borderBottom: `1px solid ${borderColor}` }}>
-              <span style={{ color: isLight ? BRAND_PRIMARY : BRAND_LIGHT, fontSize: 15, width: 18, textAlign: 'center', flexShrink: 0 }}>•</span>
-              <p style={bodyStyle}>{item}</p>
+            <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 6 }}>
+              <span style={{ color: GOLD, fontSize: 12, marginTop: 1, flexShrink: 0 }}>●</span>
+              <p style={{ ...bodyFont, fontSize: 12 }}>{item}</p>
             </div>
           ))}
         </div>
-        {!isLast && <SwipeArrow isLight={isLight} />}
-        <ProgressBar index={index} total={total} isLight={isLight && !isGradient} />
+        <BottomBar />
       </div>
     );
   }
 
-  // ── Passos slide
+  // ── PASSOS
   if (slide.tipo === 'passos') {
     return (
       <div style={baseStyle}>
-        <div style={contentStyle}>
-          <TagLabel text={slide.tag} isLight={isLight} isGradient={isGradient} />
-          <h2 style={headingStyle}>{slide.titulo}</h2>
-          {slide.passos?.map((p, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: '14px 0', borderBottom: `1px solid ${borderColor}` }}>
-              <span style={{ fontSize: 26, fontWeight: 300, color: isLight ? BRAND_PRIMARY : BRAND_LIGHT, minWidth: 34, lineHeight: '1', fontFamily: "'Playfair Display', serif" }}>
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <div>
-                <span style={{ fontSize: 14, fontWeight: 600, color: textColor, fontFamily: "'DM Sans', sans-serif", display: 'block' }}>{p.titulo}</span>
-                <span style={{ fontSize: 12, color: isLight ? '#8A8580' : 'rgba(255,255,255,0.5)', fontFamily: "'DM Sans', sans-serif" }}>{p.desc}</span>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '36px 36px 50px' }}>
+          <Tag />
+          <h2 style={{ ...headingFont, fontSize: 18, marginBottom: 14 }}>{slide.titulo}</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {slide.passos?.map((p, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <span style={{ ...headingFont, fontSize: 22, fontWeight: 300, color: GOLD, minWidth: 28 }}>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <div>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: WINE, display: 'block' }}>{p.titulo}</span>
+                  <span style={{ fontSize: 10, color: '#7a6a5a' }}>{p.desc}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-        {!isLast && <SwipeArrow isLight={isLight} />}
-        <ProgressBar index={index} total={total} isLight={isLight && !isGradient} />
+        <BottomBar />
       </div>
     );
   }
 
-  // ── CTA slide (gradient, no arrow)
+  // ── CTA
   if (slide.tipo === 'cta') {
     return (
       <div style={baseStyle}>
-        <div style={{ ...contentStyle, alignItems: 'center', textAlign: 'center', padding: '28px 32px 48px' }}>
-          <LogoLockup isLight={false} />
-          <TagLabel text={slide.tag} isLight={false} isGradient={true} />
-          <h2 style={{ ...headingStyle, color: '#fff', fontSize: 22 }}>{slide.texto_engajamento}</h2>
-          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 24px', background: LIGHT_BG, color: BRAND_DARK, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 12, borderRadius: 24, marginTop: 16 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '40px 40px 50px' }}>
+          <Logo />
+          <Tag />
+          <h2 style={{ ...headingFont, fontSize: 20, color: '#fff', marginBottom: 16 }}>{slide.texto_engajamento}</h2>
+          <div style={{ display: 'inline-flex', padding: '10px 24px', background: GOLD, color: '#fff', fontWeight: 700, fontSize: 12, borderRadius: 20 }}>
             {slide.cta_texto || 'Salve para revisar!'}
           </div>
-          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 12, fontFamily: "'DM Sans', sans-serif" }}>@vacatio.app</p>
         </div>
-        <ProgressBar index={index} total={total} isLight={false} />
+        <BottomBar />
       </div>
     );
   }
@@ -298,13 +291,12 @@ function SlideRenderer({ slide, index, total }: { slide: SlideData; index: numbe
   // Fallback
   return (
     <div style={baseStyle}>
-      <div style={contentStyle}>
-        <TagLabel text={slide.tag || ''} isLight={isLight} isGradient={isGradient} />
-        {slide.titulo && <h2 style={headingStyle}>{slide.titulo}</h2>}
-        {slide.texto && <p style={bodyStyle}>{slide.texto}</p>}
+      <div style={{ flex: 1, padding: '36px 36px 50px' }}>
+        <Tag />
+        {slide.titulo && <h2 style={{ ...headingFont, fontSize: 20 }}>{slide.titulo}</h2>}
+        {slide.texto && <p style={{ ...bodyFont, fontSize: 12, marginTop: 8 }}>{slide.texto}</p>}
       </div>
-      {!isLast && <SwipeArrow isLight={isLight} />}
-      <ProgressBar index={index} total={total} isLight={isLight && !isGradient} />
+      <BottomBar />
     </div>
   );
 }
@@ -388,21 +380,21 @@ const GeradorPost = () => {
     }
   };
 
+  const previewScale = 280 / SLIDE_W;
+
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Google Fonts */}
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
       {/* Header */}
-      <div className="relative overflow-hidden px-4 pt-10 pb-8 sm:px-6" style={{ background: `linear-gradient(135deg, ${BRAND_DARK}, ${BRAND_PRIMARY})` }}>
-        <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/5" />
+      <div className="relative overflow-hidden px-4 pt-10 pb-8 sm:px-6" style={{ background: `linear-gradient(135deg, ${WINE}, hsl(340, 45%, 18%))` }}>
         <ImageIcon className="absolute top-5 right-5 w-10 h-10 text-white/15 rotate-12" />
         <div className="relative max-w-2xl mx-auto z-10">
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm mb-4">
             <ArrowLeft className="w-4 h-4" /> Voltar
           </button>
           <h1 className="text-2xl text-white font-bold" style={{ fontFamily: "'Playfair Display', serif" }}>Gerador de Post</h1>
-          <p className="text-white/70 text-sm mt-1" style={{ fontFamily: "'DM Sans', sans-serif" }}>Crie carrosséis profissionais para Instagram</p>
+          <p className="text-white/70 text-sm mt-1">Crie carrosséis profissionais para Instagram</p>
         </div>
       </div>
 
@@ -464,7 +456,7 @@ const GeradorPost = () => {
           onClick={handleGerar}
           disabled={!selectedLei || !selectedArtigo || loading}
           className="w-full text-white"
-          style={{ background: BRAND_PRIMARY }}
+          style={{ background: WINE }}
         >
           {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Gerando...</> : 'Gerar Carrossel'}
         </Button>
@@ -481,7 +473,6 @@ const GeradorPost = () => {
               </Button>
             </div>
 
-            {/* Navigation */}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentSlide(Math.max(0, currentSlide - 1))}
@@ -491,15 +482,17 @@ const GeradorPost = () => {
                 <ChevronLeft className="w-5 h-5" />
               </button>
 
-              <div className="flex-1 overflow-hidden rounded-xl border border-border bg-card" style={{ aspectRatio: `${SLIDE_W}/${SLIDE_H}`, position: 'relative' }}>
+              <div
+                className="flex-1 overflow-hidden rounded-xl border border-border bg-card"
+                style={{ aspectRatio: `${SLIDE_W}/${SLIDE_H}`, position: 'relative' }}
+              >
                 {carrossel.slides.map((slide, i) => (
                   <div
                     key={i}
                     className={i === currentSlide ? 'block' : 'hidden'}
                     style={{
                       position: 'absolute', top: 0, left: 0, width: SLIDE_W, height: SLIDE_H,
-                      transform: `scale(${1 / (SLIDE_W / 280)})`,
-                      transformOrigin: 'top left',
+                      transform: `scale(${previewScale})`, transformOrigin: 'top left',
                     }}
                   >
                     <SlideRenderer slide={slide} index={i} total={carrossel.slides.length} />
@@ -516,19 +509,17 @@ const GeradorPost = () => {
               </button>
             </div>
 
-            {/* Download individual */}
             <Button variant="outline" size="sm" onClick={() => downloadSlide(currentSlide)} className="w-full">
               <Download className="w-4 h-4 mr-1" /> Baixar Slide {currentSlide + 1}
             </Button>
 
-            {/* Dots */}
             <div className="flex justify-center gap-1.5">
               {carrossel.slides.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setCurrentSlide(i)}
                   className={`w-2 h-2 rounded-full transition-colors ${i === currentSlide ? 'bg-primary' : 'bg-muted'}`}
-                  style={i === currentSlide ? { background: BRAND_PRIMARY } : {}}
+                  style={i === currentSlide ? { background: WINE } : {}}
                 />
               ))}
             </div>
