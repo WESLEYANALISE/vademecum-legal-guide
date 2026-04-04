@@ -41,7 +41,8 @@ function SimuladoLogs({ simuladoId, isProcessing }: { simuladoId: string; isProc
         .from("simulado_process_logs")
         .select("*")
         .eq("simulado_id", simuladoId)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true })
+        .limit(10000);
       if (data) setLogs(data as ProcessLog[]);
     };
     load();
