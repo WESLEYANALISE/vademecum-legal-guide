@@ -74,6 +74,7 @@ export default function CompressaoImagens() {
   const [compressing, setCompressing] = useState<Set<string>>(new Set());
   const [results, setResults] = useState<Map<string, CompressionResult>>(cachedResults.current);
   const [batchRunning, setBatchRunning] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({ done: 0, total: 0 });
   const batchCancelRef = useRef(false);
 
   // If no cache, fetch on mount
