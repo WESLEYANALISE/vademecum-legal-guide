@@ -531,8 +531,8 @@ const Biblioteca = () => {
     >
       {areasByCategory.length <= 1 ? (
         <>
-          {renderSearchBar('Buscar livro...')}
           {renderFilterTabs()}
+          {renderSearchBar('Buscar livro...')}
           <div className="space-y-3">
             {filteredFlatLivros.map((livro, i) => renderLivroRow(livro, i))}
             {filteredFlatLivros.length === 0 && (
