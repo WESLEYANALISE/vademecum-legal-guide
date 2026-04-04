@@ -113,7 +113,8 @@ const GeracaoAdmin = () => {
     const { data } = await supabase
       .from(lei.tabela_nome as any)
       .select('numero, caput')
-      .order('ordem_numero', { ascending: true });
+      .order('ordem_numero', { ascending: true })
+      .limit(10000);
     setArtigos((data as any[]) || []);
     setArtigosLoading(false);
   };
