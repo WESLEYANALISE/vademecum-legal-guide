@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { cdnImg } from '@/lib/cdnImg';
+import { cdnImg, directImg } from '@/lib/cdnImg';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Library, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
