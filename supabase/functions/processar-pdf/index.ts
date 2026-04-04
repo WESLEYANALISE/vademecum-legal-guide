@@ -783,6 +783,7 @@ function buildStructureResult(
     }
 
     return result;
+}
 
 // ── Gemini edge-page cleaning (first/last pages only) ───────────────
 
