@@ -74,6 +74,7 @@ export default function CompressaoImagens() {
   const [compressing, setCompressing] = useState<Set<string>>(new Set());
   const [results, setResults] = useState<Map<string, CompressionResult>>(cachedResults.current);
   const [batchRunning, setBatchRunning] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({ done: 0, total: 0 });
   const batchCancelRef = useRef(false);
 
   // If no cache, fetch on mount
@@ -150,10 +151,17 @@ export default function CompressaoImagens() {
     setBatchRunning(true);
     
     const pending = filtered.filter(f => !results.has(`${f.bucket}/${f.path}`));
-    
-    for (const file of pending) {
+    setBatchProgress({ done: 0, total: pending.length });
+
+    const CHUNK_SIZE = 5;
+    let processed = 0;
+
+    for (let i = 0; i < pending.length; i += CHUNK_SIZE) {
       if (batchCancelRef.current) break;
-      await compressFile(file);
+      const chunk = pending.slice(i, i + CHUNK_SIZE);
+      await Promise.all(chunk.map(file => compressFile(file)));
+      processed += chunk.length;
+      setBatchProgress({ done: processed, total: pending.length });
     }
     
     setBatchRunning(false);
@@ -282,9 +290,9 @@ export default function CompressaoImagens() {
         {/* Batch progress */}
         {batchRunning && (
           <div className="space-y-1">
-            <Progress value={(totalCompressed / Math.max(files.length, 1)) * 100} className="h-2" />
+            <Progress value={(batchProgress.done / Math.max(batchProgress.total, 1)) * 100} className="h-2" />
             <p className="text-[10px] text-muted-foreground text-center">
-              {totalCompressed} de {files.length} processadas
+              Comprimindo {batchProgress.done} de {batchProgress.total} (5 simultâneas)
             </p>
           </div>
         )}
