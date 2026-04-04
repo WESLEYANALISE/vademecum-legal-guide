@@ -1,71 +1,73 @@
 
+Diagnóstico confirmado
 
-## Plano: Biblioteca Admin com Todos os Livros + 3 Modos de Leitura
+- Sim, eu sei qual é o problema.
+- O backend está escrevendo status: no banco há registro recente em `cleaning:80`, então o problema não é só “não processou”.
+- O que está quebrando a visualização é a combinação de 3 pontos:
+  1. `src/pages/BibliotecaAdmin.tsx`: o polling é iniciado, mas o `useEffect` limpa o intervalo a cada atualização de `ebookMap` e não zera `pollRef`; depois da primeira atualização ele para de consultar.
+  2. `BibliotecaAdmin` usa só `titulo` como chave e não prioriza o registro mais recente; tentativas antigas (`ready/error`) podem sobrescrever a atual.
+  3. O fluxo de “retomar limpeza” existe em `BibliotecaView`, mas não no admin; se o job travar em `cleaning:*`, ele fica congelado. E hoje o `resumeCleaning()` ainda tem bug com variáveis indefinidas.
 
-### Resumo
+Plano de correção
 
-1. **BibliotecaAdmin** mostrará todos os livros das 4 bibliotecas (classicos, liderança, estudos, fora_da_toga — total ~767 livros), usando as capas já salvas no Supabase. Cada livro terá um botão para "formatar e-book" que dispara o pipeline existente de `processar-pdf` usando o `download` (Google Drive) do livro.
+1. Corrigir o polling do Admin
+- Reescrever o efeito de polling para depender de `hasProcessing` e manter o intervalo vivo durante todo o processamento.
+- No cleanup, limpar e também zerar `pollRef.current = null`.
+- Assim a porcentagem continuará atualizando em vez de parar após a primeira leitura.
 
-2. **LivroDetailSheet** (tela de detalhe ao clicar "Ler agora") oferecerá 3 modos de leitura em vez de um só botão.
+2. Fazer o status aparecer imediatamente ao clicar em “Formatar”
+- Em `handleFormat`, usar o `livro_id` retornado pela Edge Function e injetar localmente o status inicial `ocr`.
+- Resultado: o card já troca para progresso logo após o clique, sem esperar a próxima rodada de polling.
 
-### Parte 1 — BibliotecaAdmin mostra todos os livros
+3. Tornar o mapeamento de status determinístico
+- Em `refreshEbooks`, buscar também `created_at` e ordenar do mais recente para o mais antigo.
+- Ao montar o mapa, manter só o registro mais novo por título normalizado.
+- Isso evita que tentativas antigas com `error`/`ready` escondam o processamento atual.
 
-**Arquivo**: `src/pages/BibliotecaAdmin.tsx` (reescrever)
+4. Levar o auto-resume também para `BibliotecaAdmin`
+- Reaproveitar a lógica já existente em `src/components/estudar/BibliotecaView.tsx`.
+- Se um livro ficar tempo demais no mesmo `cleaning:*`, disparar `action: "resume"` automaticamente.
+- Isso resolve o caso “começa e depois para”.
 
-- Substituir o wrapper simples por uma página completa que:
-  - Busca livros das 4 tabelas (`biblioteca_classicos`, `biblioteca_lideranca`, `biblioteca_estudos`, `biblioteca_fora_da_toga`)
-  - Busca também `biblioteca_livros` (livros do usuário já processados) para saber quais já estão formatados
-  - Exibe todos em lista única (ou agrupados por categoria), com a capa existente (`imagem`/`capa_livro`)
-  - Cada livro mostra status: "Não formatado", "Processando...", ou "Pronto"
-  - Botão para iniciar formatação: pega o `download` URL (Google Drive), envia para `processar-pdf` que faz OCR e cria o e-book no `biblioteca_livros`
+5. Corrigir a Edge Function de retomada
+- Em `supabase/functions/processar-pdf/index.ts`, remover/corrigir o log quebrado de `resumeCleaning()` que usa variáveis inexistentes.
+- Garantir que a retomada finalize com `ready` ou `error`, nunca falhe silenciosamente.
+- Adicionar logs finais mais claros para confirmar quando a retomada concluiu.
 
-**Fluxo de formatação em escala**:
+6. Ajustar o restante do app para reconhecer todos os estados intermediários
+- Em `src/pages/Biblioteca.tsx`, o “modo dinâmico” hoje só entende `processing`.
+- Atualizar para também tratar `ocr`, `structuring` e `cleaning:*` como “em processamento”, evitando duplicar formatações.
+
+Arquivos a alterar
+
+- `src/pages/BibliotecaAdmin.tsx`
+  - polling robusto
+  - status otimista após clique
+  - deduplicação por registro mais recente
+  - auto-resume de jobs travados
+- `src/components/estudar/BibliotecaView.tsx`
+  - opcionalmente extrair helper compartilhado de status/resume
+- `src/pages/Biblioteca.tsx`
+  - reconhecer todos os status intermediários no “modo dinâmico”
+- `supabase/functions/processar-pdf/index.ts`
+  - corrigir `resumeCleaning()`
+  - reforçar logs e finalização
+
+Detalhes técnicos
+
 ```text
-Livro (biblioteca_estudos) → botão "Formatar" → 
-  download PDF do Drive → processar-pdf (OCR + IA) → 
-  salva em biblioteca_livros → status "ready"
+Clique em "Formatar"
+  → processar-pdf retorna livro_id
+  → Admin já marca localmente como ocr (10%)
+  → polling contínuo busca status mais recente
+  → ocr → structuring → cleaning:10/50/80 → ready
+  → se travar em cleaning:* por 30s, Admin chama resume
 ```
 
-- A capa será a `capa_livro` / `imagem` já existente nas tabelas de origem (não precisa extrair de novo)
+Critérios de aceite
 
-### Parte 2 — 3 Modos de Leitura no LivroDetailSheet
-
-**Arquivo**: `src/components/biblioteca/LivroDetailSheet.tsx`
-
-O botão "Ler agora" será substituído por 3 opções:
-
-| Modo | Descrição | Implementação |
-|------|-----------|---------------|
-| **Empaginação** | Leitor atual FlipHTML5 (webview do link) | Abre `LeitorWebView` com o `link` do livro |
-| **Na vertical** | Visualização direta do PDF em iframe | Abre `LeitorWebView` com o `download` URL convertido para visualização (`/preview`) |
-| **Modo dinâmico** | E-book formatado (LeitorEbook) | Busca de `biblioteca_livros` pelo título/download, abre `LeitorEbook` |
-
-- Se o livro ainda não foi formatado (não existe em `biblioteca_livros`), o botão "Modo dinâmico" mostrará "Formatar primeiro" e iniciará o processamento
-- Os 3 botões ficam lado a lado (ou empilhados em mobile) com ícones distintos
-
-**Arquivo**: `src/components/biblioteca/LivroDetailSheet.tsx`
-- Adicionar prop `onReadMode: (livro, mode: 'fliphtml5' | 'vertical' | 'dinamico') => void`
-- Renderizar 3 botões em vez de 1
-
-**Arquivo**: `src/pages/Biblioteca.tsx`
-- `handleRead` recebe o mode e age conforme:
-  - `fliphtml5`: abre `LeitorWebView` com `livro.link`
-  - `vertical`: abre `LeitorWebView` com URL do Drive em modo preview
-  - `dinamico`: busca em `biblioteca_livros`, se existe abre `LeitorEbook`, senão inicia formatação
-
-### Parte 3 — Conversão do URL do Drive para preview vertical
-
-O Google Drive permite visualizar PDFs via:
-```
-https://drive.google.com/file/d/{FILE_ID}/preview
-```
-Isso será usado para o modo "Na vertical".
-
-### Arquivos Alterados
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/BibliotecaAdmin.tsx` | Reescrever: lista todos os livros das 4 bibliotecas com opção de formatar em e-book |
-| `src/components/biblioteca/LivroDetailSheet.tsx` | 3 botões de modo de leitura em vez de 1 |
-| `src/pages/Biblioteca.tsx` | `handleRead` suporta 3 modos; lógica de busca em `biblioteca_livros` para modo dinâmico |
-
+- Ao clicar em “Formatar”, o card troca imediatamente de botão para progresso.
+- A porcentagem não some após a primeira atualização.
+- Livros repetidos/tentativas antigas não sobrescrevem o status atual.
+- Se travar em `cleaning:*`, o Admin retoma sozinho.
+- No “modo dinâmico”, o usuário vê “ainda formatando” para qualquer status intermediário.
