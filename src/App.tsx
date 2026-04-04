@@ -66,7 +66,7 @@ const queryClient = new QueryClient({
 
 const preloadImage = new Image();
 preloadImage.src = brasaoImg;
-preloadImage.decoding = 'sync';
+preloadImage.decoding = 'async';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
