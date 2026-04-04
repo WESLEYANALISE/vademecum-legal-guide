@@ -44,6 +44,7 @@ export default function CompressaoImagens() {
   const [compressing, setCompressing] = useState<Set<string>>(new Set());
   const [results, setResults] = useState<Map<string, CompressionResult>>(new Map());
   const [batchRunning, setBatchRunning] = useState(false);
+  const batchCancelRef = useRef(false);
 
   const loadFiles = async () => {
     setLoading(true);
@@ -63,7 +64,7 @@ export default function CompressaoImagens() {
 
   useEffect(() => { loadFiles(); }, []);
 
-  const compressFile = async (file: StorageFile) => {
+  const compressFile = useCallback(async (file: StorageFile): Promise<boolean> => {
     const key = `${file.bucket}/${file.path}`;
     setCompressing(prev => new Set(prev).add(key));
 
@@ -76,23 +77,38 @@ export default function CompressaoImagens() {
 
       setResults(prev => new Map(prev).set(key, data));
       toast.success(`${file.name}: -${data.pctSaved}% (${formatBytes(data.saved)} economizados)`);
+      return true;
     } catch (err: any) {
       toast.error(`Erro em ${file.name}: ${err.message}`);
+      return false;
     } finally {
       setCompressing(prev => { const s = new Set(prev); s.delete(key); return s; });
     }
-  };
+  }, []);
 
-  const compressBatch = async () => {
+  const compressBatch = useCallback(async () => {
+    batchCancelRef.current = false;
     setBatchRunning(true);
+    
+    // snapshot the current filtered list
     const pending = filtered.filter(f => !results.has(`${f.bucket}/${f.path}`));
+    
     for (const file of pending) {
-      if (!batchRunning) break;
+      if (batchCancelRef.current) break;
       await compressFile(file);
     }
+    
     setBatchRunning(false);
-    toast.success('Compressão em lote finalizada!');
-  };
+    if (!batchCancelRef.current) {
+      toast.success('Compressão em lote finalizada!');
+    }
+  }, [filtered, results, compressFile]);
+
+  const cancelBatch = useCallback(() => {
+    batchCancelRef.current = true;
+    setBatchRunning(false);
+    toast.info('Compressão em lote cancelada');
+  }, []);
 
   const filtered = useMemo(() => {
     let list = files;
