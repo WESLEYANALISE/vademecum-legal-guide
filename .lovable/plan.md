@@ -1,48 +1,36 @@
 
 
-## Plano: Remover Limites de 1000 Linhas em Todas as Consultas
+## Plano: Compressão Paralela — Máximo de Imagens por Vez
 
-### O Problema
+### Situação Atual
 
-O Supabase tem um limite padrão de **1000 linhas** por consulta. Qualquer `.select()` sem `.limit()` explícito retorna no máximo 1000 registros. Isso significa que tabelas com mais de 1000 artigos (Constituição, Código Civil, CPC, etc.) ou dados acumulados ficam truncados silenciosamente.
-
-### Consultas Afetadas (sem limite ou com limite baixo)
-
-| Arquivo | Consulta | Problema |
-|---------|----------|----------|
-| `src/pages/Gamificacao.tsx` | `.from(tabela).select('numero, rotulo, caput')` | Sem limite — tabelas com >1000 artigos ficam cortadas |
-| `src/pages/GeracaoAdmin.tsx` | `.from('artigo_ai_cache').select(...)` | Sem limite — cache pode ter milhares de entradas |
-| `src/pages/GeracaoAdmin.tsx` | `.from(tabela).select('numero, caput')` | Sem limite — leis grandes cortadas |
-| `src/pages/GeracaoAdmin.tsx` | `.from(tabela).select('numero')` (batch) | Sem limite — mesma situação |
-| `src/pages/Radar360.tsx` | `.from('radar_proposicoes').select(...)` | Sem limite — pode ultrapassar 1000 PLs |
-| `src/pages/Radar360.tsx` | `.from('radar_pl_headlines').select(...).in(...)` | Sem limite |
-| `src/components/radar/ProposicoesPanel.tsx` | `.from('radar_proposicoes').select(...)` | Sem limite |
-| `src/components/radar/ProposicoesPanel.tsx` | `.from('radar_pl_headlines').select(...)` | Sem limite |
-| `src/pages/AdminMonitor.tsx` | `.from('legislacao_alteracoes').limit(200)` | 200 pode ser pouco |
-| `src/hooks/useStudyStats.ts` | `.from('study_sessions').limit(500)` | 500 pode truncar dados de usuários ativos |
-| `src/pages/SimuladoAdmin.tsx` | `.from('simulado_process_logs').select(...)` | Sem limite |
-| `src/pages/SimuladoAdmin.tsx` | `.from('simulado_questoes').select(...)` | Sem limite |
-
-### Consultas que JÁ estão OK
-
-- `legislacaoService.ts` — usa `limit=10000` no fetch direto
-- `sumulasService.ts` — usa `limit=10000`
-- `noticiasService.ts` — `.limit(50)` intencional (últimas 50 notícias)
-- `radarService.ts` — `.limit(50)` intencional
+O batch processa **1 imagem por vez** — o loop faz `await compressFile(file)` sequencialmente. Para 100 imagens, são 100 chamadas sequenciais.
 
 ### Solução
 
-Adicionar `.limit(10000)` em todas as consultas que podem retornar mais de 1000 linhas. Para consultas que são intencionalmente pequenas (`.maybeSingle()`, `.limit(1)`, etc.), manter como está.
+Processar **5 imagens em paralelo** no frontend usando `Promise.all` em lotes (chunks). Isso é seguro porque:
+- Cada chamada à Edge Function é independente
+- O TinyPNG suporta requisições paralelas (rate limit generoso)
+- 5 paralelas = ~5x mais rápido sem arriscar 429
 
-### Arquivos a Alterar
+Não vamos além de 5 porque a Edge Function do Supabase tem limites de concorrência e cada chamada faz download + upload + 2 requests ao TinyPNG.
+
+### Mudanças
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/Gamificacao.tsx` | Adicionar `.limit(10000)` na query de artigos |
-| `src/pages/GeracaoAdmin.tsx` | Adicionar `.limit(10000)` nas 3 queries sem limite |
-| `src/pages/Radar360.tsx` | Adicionar `.limit(10000)` nas queries de proposições e headlines |
-| `src/components/radar/ProposicoesPanel.tsx` | Adicionar `.limit(10000)` nas queries de proposições e headlines |
-| `src/pages/AdminMonitor.tsx` | Aumentar `.limit(200)` → `.limit(10000)` em alterações |
-| `src/hooks/useStudyStats.ts` | Aumentar `.limit(500)` → `.limit(10000)` em sessões |
-| `src/pages/SimuladoAdmin.tsx` | Adicionar `.limit(10000)` nas queries de logs e questões |
+| `src/pages/CompressaoImagens.tsx` | Alterar `compressBatch` para processar em chunks de 5 com `Promise.all`; mostrar progresso (ex: "12/47") |
+
+### Lógica do batch paralelo
+
+```text
+pending = [img1, img2, ..., img47]
+
+chunk1 = [img1..img5]  → Promise.all → 5 simultâneas
+chunk2 = [img6..img10] → Promise.all → 5 simultâneas
+...
+chunk10 = [img46..img47] → Promise.all → 2 simultâneas
+```
+
+Adicionar contador de progresso visível: "Comprimindo 12 de 47..."
 
