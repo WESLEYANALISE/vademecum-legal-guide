@@ -98,7 +98,12 @@ export function normalizeOcrMarkdown(markdown: string): string {
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .split("\n")
-    .map((line) => line.replace(/[ \t]{2,}/g, " ").trim());
+    .map((line) => {
+      const trimmed = line.trim();
+      // Preserve table lines — don't collapse internal spacing
+      if (TABLE_LINE_RE.test(trimmed)) return trimmed;
+      return line.replace(/[ \t]{2,}/g, " ").trim();
+    });
 
   const mergedLines: string[] = [];
 
