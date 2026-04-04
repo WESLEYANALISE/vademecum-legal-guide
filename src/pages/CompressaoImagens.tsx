@@ -86,11 +86,20 @@ export default function CompressaoImagens() {
     }
   }, []);
 
+  const filtered = useMemo(() => {
+    let list = files;
+    if (filterBucket !== 'all') list = list.filter(f => f.bucket === filterBucket);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(f => f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q));
+    }
+    return list;
+  }, [files, filterBucket, search]);
+
   const compressBatch = useCallback(async () => {
     batchCancelRef.current = false;
     setBatchRunning(true);
     
-    // snapshot the current filtered list
     const pending = filtered.filter(f => !results.has(`${f.bucket}/${f.path}`));
     
     for (const file of pending) {
@@ -109,16 +118,6 @@ export default function CompressaoImagens() {
     setBatchRunning(false);
     toast.info('Compressão em lote cancelada');
   }, []);
-
-  const filtered = useMemo(() => {
-    let list = files;
-    if (filterBucket !== 'all') list = list.filter(f => f.bucket === filterBucket);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(f => f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q));
-    }
-    return list;
-  }, [files, filterBucket, search]);
 
   const buckets = useMemo(() => {
     const set = new Set(files.map(f => f.bucket));
