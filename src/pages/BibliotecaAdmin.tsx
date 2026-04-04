@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, BookOpen, Loader2, CheckCircle, Zap, Search, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { cdnImg } from '@/lib/cdnImg';
+import { directImg } from '@/lib/cdnImg';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
