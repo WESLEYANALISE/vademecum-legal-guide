@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { getNoticiasCache, prefetchNoticias, type Noticia } from '@/services/noticiasService';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cdnImg } from '@/lib/cdnImg';
+import { directImg } from '@/lib/cdnImg';
 
 const SkeletonCards = () => (
   <div className="relative bg-card/50 border-b border-border">
