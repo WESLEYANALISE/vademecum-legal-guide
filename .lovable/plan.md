@@ -1,37 +1,48 @@
 
 
-## Plano: Compressão Real com TinyPNG (Resize + Convert)
+## Plano: Remover Limites de 1000 Linhas em Todas as Consultas
 
-### Problema
+### O Problema
 
-A função atual faz `/shrink` (compressão lossless) e depois converte para WebP, mas **não redimensiona**. Uma capa de 1500x2000px continua enorme — só muda o formato. O site que você testou (176KB → 32KB = -82%) aplica **resize + compress + convert** juntos.
+O Supabase tem um limite padrão de **1000 linhas** por consulta. Qualquer `.select()` sem `.limit()` explícito retorna no máximo 1000 registros. Isso significa que tabelas com mais de 1000 artigos (Constituição, Código Civil, CPC, etc.) ou dados acumulados ficam truncados silenciosamente.
 
-Pela documentação do TinyPNG, resize e convert podem ser combinados no mesmo POST ao `output URL`:
+### Consultas Afetadas (sem limite ou com limite baixo)
 
-```text
-POST /output/xxxxx
-{
-  "resize": { "method": "fit", "width": 800, "height": 1200 },
-  "convert": { "type": "image/webp" }
-}
-```
+| Arquivo | Consulta | Problema |
+|---------|----------|----------|
+| `src/pages/Gamificacao.tsx` | `.from(tabela).select('numero, rotulo, caput')` | Sem limite — tabelas com >1000 artigos ficam cortadas |
+| `src/pages/GeracaoAdmin.tsx` | `.from('artigo_ai_cache').select(...)` | Sem limite — cache pode ter milhares de entradas |
+| `src/pages/GeracaoAdmin.tsx` | `.from(tabela).select('numero, caput')` | Sem limite — leis grandes cortadas |
+| `src/pages/GeracaoAdmin.tsx` | `.from(tabela).select('numero')` (batch) | Sem limite — mesma situação |
+| `src/pages/Radar360.tsx` | `.from('radar_proposicoes').select(...)` | Sem limite — pode ultrapassar 1000 PLs |
+| `src/pages/Radar360.tsx` | `.from('radar_pl_headlines').select(...).in(...)` | Sem limite |
+| `src/components/radar/ProposicoesPanel.tsx` | `.from('radar_proposicoes').select(...)` | Sem limite |
+| `src/components/radar/ProposicoesPanel.tsx` | `.from('radar_pl_headlines').select(...)` | Sem limite |
+| `src/pages/AdminMonitor.tsx` | `.from('legislacao_alteracoes').limit(200)` | 200 pode ser pouco |
+| `src/hooks/useStudyStats.ts` | `.from('study_sessions').limit(500)` | 500 pode truncar dados de usuários ativos |
+| `src/pages/SimuladoAdmin.tsx` | `.from('simulado_process_logs').select(...)` | Sem limite |
+| `src/pages/SimuladoAdmin.tsx` | `.from('simulado_questoes').select(...)` | Sem limite |
 
-Cada operação (resize, convert) conta como 1 compressão extra. Então: upload + resize + convert = 3 créditos por imagem.
+### Consultas que JÁ estão OK
 
-### Mudanças na Edge Function `comprimir-imagens`
+- `legislacaoService.ts` — usa `limit=10000` no fetch direto
+- `sumulasService.ts` — usa `limit=10000`
+- `noticiasService.ts` — `.limit(50)` intencional (últimas 50 notícias)
+- `radarService.ts` — `.limit(50)` intencional
 
-1. Após o `/shrink`, fazer um único POST ao `outputUrl` combinando `resize` + `convert` na mesma chamada (2 créditos em vez de 3)
-2. Para imagens que já são WebP: aplicar apenas `resize` (sem convert)
-3. Pular arquivos menores que 5KB
-4. Usar `method: "fit"` com `width: 800, height: 1200` — suficiente para telas mobile (390px) e tablets
+### Solução
 
-### Resultado esperado
+Adicionar `.limit(10000)` em todas as consultas que podem retornar mais de 1000 linhas. Para consultas que são intencionalmente pequenas (`.maybeSingle()`, `.limit(1)`, etc.), manter como está.
 
-De ~176KB para ~30-40KB (70-85% de redução), igual ao site que você testou.
-
-### Arquivo a alterar
+### Arquivos a Alterar
 
 | Arquivo | Mudança |
 |---------|---------|
-| `supabase/functions/comprimir-imagens/index.ts` | Combinar resize+convert no POST ao output URL; skip <5KB; tratar WebP existente |
+| `src/pages/Gamificacao.tsx` | Adicionar `.limit(10000)` na query de artigos |
+| `src/pages/GeracaoAdmin.tsx` | Adicionar `.limit(10000)` nas 3 queries sem limite |
+| `src/pages/Radar360.tsx` | Adicionar `.limit(10000)` nas queries de proposições e headlines |
+| `src/components/radar/ProposicoesPanel.tsx` | Adicionar `.limit(10000)` nas queries de proposições e headlines |
+| `src/pages/AdminMonitor.tsx` | Aumentar `.limit(200)` → `.limit(10000)` em alterações |
+| `src/hooks/useStudyStats.ts` | Aumentar `.limit(500)` → `.limit(10000)` em sessões |
+| `src/pages/SimuladoAdmin.tsx` | Adicionar `.limit(10000)` nas queries de logs e questões |
 
