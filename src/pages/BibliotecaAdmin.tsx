@@ -336,9 +336,18 @@ export default function BibliotecaAdmin() {
 
                       <div className="shrink-0 flex items-center gap-1.5">
                         {ebook?.status === 'ready' ? (
-                          <Badge variant="default" className="text-[10px]">
-                            <CheckCircle className="w-3 h-3 mr-1" />Pronto
-                          </Badge>
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant="default" className="text-[10px]">
+                              <CheckCircle className="w-3 h-3 mr-1" />Pronto
+                            </Badge>
+                            <Button
+                              size="sm" variant="ghost" className="text-xs h-7 w-7 p-0"
+                              onClick={() => navigate('/estudar', { state: { openBiblioteca: true, previewLivroId: ebook.id } })}
+                              title="Ver livro"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
                         ) : ebook?.status === 'error' ? (
                           <Badge variant="destructive" className="text-[10px]">
                             <AlertCircle className="w-3 h-3 mr-1" />Erro
