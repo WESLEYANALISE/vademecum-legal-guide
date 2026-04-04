@@ -464,6 +464,9 @@ async function processPdfInBackground({
                   new RegExp(`!\\[.*?\\]\\(${img.id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\)`, "g"),
                   `![Imagem](${imgUrlData.publicUrl})`
                 );
+              } else {
+                // Orphan image: not referenced in markdown, append at end
+                markdown += `\n\n![Imagem](${imgUrlData.publicUrl})`;
               }
               imagensToInsert.push({
                 livro_id: livroId,
