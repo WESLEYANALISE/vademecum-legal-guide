@@ -131,6 +131,7 @@ const Radar360 = () => {
     data: string; // sortable date string
     dataDisplay: string;
     source: 'resenha' | 'lei' | 'decreto';
+    resenhaRef?: ResenhaItem;
   };
 
   const allRecentes = useMemo(() => {
