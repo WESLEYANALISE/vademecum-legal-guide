@@ -52,6 +52,7 @@ const KanbanLegislativo = lazy(() => import("./pages/KanbanLegislativo.tsx"));
 const Newsletter = lazy(() => import("./pages/Newsletter.tsx"));
 import Biblioteca from "./pages/Biblioteca.tsx";
 const BibliotecaAdmin = lazy(() => import("./pages/BibliotecaAdmin.tsx"));
+const CompressaoImagens = lazy(() => import("./pages/CompressaoImagens.tsx"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -155,6 +156,7 @@ function AnimatedRoutes() {
           <Route path="/newsletter" element={<ProtectedRoute><PageTransition><Newsletter /></PageTransition></ProtectedRoute>} />
           <Route path="/biblioteca" element={<ProtectedRoute><Biblioteca /></ProtectedRoute>} />
           <Route path="/biblioteca-admin" element={<ProtectedRoute><PageTransition><BibliotecaAdmin /></PageTransition></ProtectedRoute>} />
+          <Route path="/compressao-imagens" element={<ProtectedRoute><PageTransition><CompressaoImagens /></PageTransition></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
