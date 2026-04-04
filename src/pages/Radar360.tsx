@@ -147,6 +147,7 @@ const Radar360 = () => {
         data: item.data_dou || '',
         dataDisplay: item.data_publicacao,
         source: 'resenha',
+        resenhaRef: item,
       });
     }
 
