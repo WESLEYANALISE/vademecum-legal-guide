@@ -63,7 +63,8 @@ const GeracaoAdmin = () => {
 
     const cachePromise = supabase
       .from('artigo_ai_cache')
-      .select('tabela_nome, modo, artigo_numero');
+      .select('tabela_nome, modo, artigo_numero')
+      .limit(10000);
 
     const [counts, cacheResult] = await Promise.all([
       Promise.all(countPromises),
