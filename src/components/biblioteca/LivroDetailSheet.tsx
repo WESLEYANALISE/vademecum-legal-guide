@@ -2,7 +2,7 @@ import { ArrowLeft, BookOpen, Download, FileText, Smartphone } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { LivroUnificado } from './LivroCard';
-import { cdnImg } from '@/lib/cdnImg';
+import { directImg } from '@/lib/cdnImg';
 
 export type ReadMode = 'fliphtml5' | 'vertical' | 'dinamico';
 
