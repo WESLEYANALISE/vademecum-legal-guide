@@ -27,6 +27,18 @@ const TIPO_CONFIG: Record<string, { label: string; icon: React.ElementType; bg: 
   previdenciario: { label: 'Previdenciário', icon: HeartPulse, bg: 'from-teal-500/90 to-teal-700/80' },
 };
 
+// Subcategorias para Leis Especiais
+const LEI_ESPECIAL_SUBCATEGORIAS: { id: string; label: string; ids: Set<string> }[] = [
+  { id: 'todas', label: 'Todas', ids: new Set() },
+  { id: 'penal', label: 'Penal', ids: new Set(['lep','lmp','ld','loc','laa','lit','lat','lch','ltort','lca','lrac','llav','lcp','lcsf','lpt','lci']) },
+  { id: 'admin', label: 'Administrativo', ids: new Set(['l8112','lia','nll','lpaf','lrf','lai','lap','lace','lotcu','ces','lomp','loman']) },
+  { id: 'civil', label: 'Civil / Família', ids: new Set(['lindb','li','lrp','la','lalp','lalim','lpsu','lda']) },
+  { id: 'processual', label: 'Processual', ids: new Set(['lms','lacp','lje','lhd','lmi']) },
+  { id: 'empresarial', label: 'Empresarial', ids: new Set(['lf','lgpd','mci','lsa','lpi','lcon','lppp','lcade','lle','lmls','lrt']) },
+  { id: 'eleitoral', label: 'Eleitoral', ids: new Set(['lpp','lele','lfl','line']) },
+  { id: 'social', label: 'Social / Saúde', ids: new Set(['ldb','lsus','lbio']) },
+];
+
 const LEI_ICON_MAP: Record<string, React.ElementType> = {
   CP: Gavel,
   CC: Building2,
@@ -57,6 +69,7 @@ const CategoriaLegislacao = () => {
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [openArtigo, setOpenArtigo] = useState<ArtigoLei | null>(null);
   const [openFromNovidades, setOpenFromNovidades] = useState(false);
+  const [subcat, setSubcat] = useState('todas');
   const [openModInfo, setOpenModInfo] = useState<import('@/components/vademecum/ArtigoBottomSheet').ModificationInfo | null>(null);
   const [activeTab, setActiveTab] = useState<'art' | 'cap'>('art');
   const [overlayPanel, setOverlayPanel] = useState<'fav' | 'playlist' | 'novidades' | 'anotacoes' | 'radar' | null>(null);
@@ -284,14 +297,20 @@ const CategoriaLegislacao = () => {
   }, [decretos, searchDecretos]);
 
   const filteredLeis = useMemo(() => {
-    if (!searchQuery) return leis;
+    let result = leis;
+    // Apply subcategory filter for lei-especial
+    if (tipo === 'lei-especial' && subcat !== 'todas') {
+      const subcatObj = LEI_ESPECIAL_SUBCATEGORIAS.find(s => s.id === subcat);
+      if (subcatObj) result = result.filter(lei => subcatObj.ids.has(lei.id));
+    }
+    if (!searchQuery) return result;
     const q = searchQuery.toLowerCase();
-    return leis.filter(lei =>
+    return result.filter(lei =>
       lei.nome.toLowerCase().includes(q) ||
       lei.sigla.toLowerCase().includes(q) ||
       lei.descricao.toLowerCase().includes(q)
     );
-  }, [leis, searchQuery]);
+  }, [leis, searchQuery, tipo, subcat]);
 
   useEffect(() => {
     if (!selectedLeiId || !selectedTabelaNome) return;
@@ -1628,6 +1647,30 @@ const CategoriaLegislacao = () => {
             className="pl-10 bg-secondary border-border"
           />
         </div>
+
+        {/* Subcategory filter tabs for lei-especial */}
+        {tipo === 'lei-especial' && (
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+            {LEI_ESPECIAL_SUBCATEGORIAS.map(sc => (
+              <button
+                key={sc.id}
+                onClick={() => setSubcat(sc.id)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  subcat === sc.id
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80'
+                }`}
+              >
+                {sc.label}
+                {sc.id !== 'todas' && (
+                  <span className="ml-1 opacity-70">
+                    ({leis.filter(l => sc.ids.has(l.id)).length})
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
 
         {loadingLeis ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
