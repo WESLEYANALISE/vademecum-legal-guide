@@ -168,7 +168,6 @@ const App = () => (
       <AuthProvider>
         <ThemeProvider>
           <TooltipProvider>
-            <Toaster />
             <Sonner />
             <AnimatedRoutes />
           </TooltipProvider>
