@@ -421,7 +421,7 @@ const Biblioteca = () => {
   );
 
   const getCapaUrl = (livro: LivroUnificado) => {
-    if (livro.capa) return cdnImg(livro.capa, 300);
+    if (livro.capa) return directImg(livro.capa, 300);
     return '';
   };
 
