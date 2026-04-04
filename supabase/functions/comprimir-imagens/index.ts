@@ -111,7 +111,20 @@ Deno.serve(async (req) => {
         .download(filePath);
 
       if (dlError || !fileData) {
-        return new Response(JSON.stringify({ error: "Falha ao baixar arquivo: " + dlError?.message }), {
+        // Check if file was already converted to .webp
+        const webpPath = filePath.replace(/\.[^.]+$/, '.webp');
+        if (webpPath !== filePath) {
+          const { data: webpData } = await supabase.storage.from(bucket).download(webpPath);
+          if (webpData) {
+            const webpSize = (await webpData.arrayBuffer()).byteLength;
+            return new Response(JSON.stringify({
+              success: true, originalSize: webpSize, compressedSize: webpSize,
+              saved: 0, pctSaved: 0, converted: true, newPath: webpPath,
+              alreadyDone: true,
+            }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+        }
+        return new Response(JSON.stringify({ error: "Falha ao baixar arquivo: " + (dlError?.message || "not found") }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
