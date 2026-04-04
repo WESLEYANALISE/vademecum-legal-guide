@@ -691,8 +691,54 @@ ${pagesPayload}`;
       return buildFallbackStructure(conteudo, totalPages);
     }
 
+    // Retry: if only 1 chapter for a book with >15 pages, try again with full context
+    if (parsed.chapters.length === 1 && totalPages > 15 && isLargeBook) {
+      console.warn(`Only 1 chapter for ${totalPages}-page book. Retrying with full context...`);
+      const fullPayload = conteudo.map(p =>
+        `--- Página ${p.pagina} ---\n${p.markdown}`
+      ).join("\n\n");
+
+      const retryPrompt = prompt.replace(pagesPayload, fullPayload);
+      const retryResponse = await fetch(geminiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: retryPrompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            maxOutputTokens: 16384,
+          },
+        }),
+      });
+
+      if (retryResponse.ok) {
+        const retryData = await retryResponse.json();
+        let retryText = retryData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        retryText = retryText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+        try {
+          const retryParsed = JSON.parse(retryText) as EstruturaLeitura;
+          if (retryParsed.chapters && retryParsed.chapters.length > 1) {
+            console.log(`Retry succeeded: ${retryParsed.chapters.length} chapters found`);
+            return buildStructureResult(retryParsed, conteudo, totalPages);
+          }
+        } catch { /* use original */ }
+      }
+    }
+
+    return buildStructureResult(parsed, conteudo, totalPages);
+  } catch (parseErr) {
+    console.error("Failed to parse Gemini JSON:", parseErr, "Raw:", rawText.slice(0, 500));
+    return buildFallbackStructure(conteudo, totalPages);
+  }
+}
+
+function buildStructureResult(
+  parsed: EstruturaLeitura,
+  conteudo: { pagina: number; markdown: string }[],
+  totalPages: number
+): EstruturaLeitura {
     const skipSet = new Set(parsed.skip_pages || []);
-    console.log(`Gemini skip_pages: ${parsed.skip_pages?.length || 0}, content_start_page: ${parsed.content_start_page || 'N/A'}`);
+    console.log(`Gemini skip_pages: ${parsed.skip_pages?.length || 0}, content_start_page: ${parsed.content_start_page || 'N/A'}, chapters: ${parsed.chapters.length}`);
 
     const result: EstruturaLeitura = {
       version: 2,
@@ -737,11 +783,6 @@ ${pagesPayload}`;
     }
 
     return result;
-  } catch (parseErr) {
-    console.error("Failed to parse Gemini JSON:", parseErr, "Raw:", rawText.slice(0, 500));
-    return buildFallbackStructure(conteudo, totalPages);
-  }
-}
 
 // ── Gemini edge-page cleaning (first/last pages only) ───────────────
 
