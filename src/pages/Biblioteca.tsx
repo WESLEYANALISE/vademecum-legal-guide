@@ -473,7 +473,7 @@ const Biblioteca = () => {
             onClick={(e) => toggleFavorite(livro, e)}
             className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm"
           >
-            <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-primary text-primary' : 'text-white/70'}`} />
+            <Star className={`w-3.5 h-3.5 transition-all duration-300 ${isFav ? 'fill-yellow-400 text-yellow-400 scale-125' : 'text-white/70 scale-100'}`} />
           </button>
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none" />
         </div>
