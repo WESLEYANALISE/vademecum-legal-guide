@@ -210,9 +210,29 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Remove original if converted to different path
+      // Remove original if converted to different path + update DB references
       if (converted && finalPath !== filePath) {
         await supabase.storage.from(bucket).remove([filePath]);
+
+        // Build old and new public URLs
+        const SB_URL = Deno.env.get("SUPABASE_URL")!;
+        const oldUrl = `${SB_URL}/storage/v1/object/public/${bucket}/${filePath}`;
+        const newUrl = `${SB_URL}/storage/v1/object/public/${bucket}/${finalPath}`;
+
+        // Update all known image columns in DB tables
+        const updates: [string, string][] = [
+          ["biblioteca_estudos", "capa_livro"],
+          ["biblioteca_fora_da_toga", "capa_livro"],
+          ["biblioteca_classicos", "imagem"],
+          ["biblioteca_lideranca", "imagem"],
+          ["biblioteca_estudos", "capa_area"],
+          ["biblioteca_classicos", "url_capa_gerada"],
+          ["biblioteca_lideranca", "url_capa_gerada"],
+          ["noticias_cache", "imagem_url"],
+        ];
+        for (const [table, col] of updates) {
+          await supabase.from(table).update({ [col]: newUrl }).eq(col, oldUrl);
+        }
       }
 
       const saved = originalSize - finalSize;
