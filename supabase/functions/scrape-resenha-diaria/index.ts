@@ -49,7 +49,7 @@ async function fetchPage(url: string): Promise<string | null> {
           "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
         },
       });
-      if (resp.ok) { const t = await resp.text(); if (t.length > 200) { console.log(`Direct OK: ${t.length} chars`); return t; } }
+      if (resp.ok) { const t = await resp.text(); if (t.length > 15000) { console.log(`Direct OK: ${t.length} chars`); return t; } else { console.log(`Direct too short (${t.length} chars), need Browserless`); } }
     } catch (e) { console.log(`Direct attempt ${attempt} failed: ${e}`); }
   }
 
