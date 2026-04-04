@@ -43,7 +43,7 @@ export function useStudyStats() {
         .select('id,tabela_nome,artigo_numero,mode,total,correct,created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(500);
+        .limit(10000);
       setSessions((sessionsData as Session[]) || []);
 
       // Use RPC for aggregated law stats

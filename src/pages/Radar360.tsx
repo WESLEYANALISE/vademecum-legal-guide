@@ -357,7 +357,8 @@ const Radar360 = () => {
           const { data: hlData } = await supabase
             .from('radar_pl_headlines')
             .select('id_externo, headline')
-            .in('id_externo', ids);
+            .in('id_externo', ids)
+            .limit(10000);
           if (hlData) {
             const map = new Map<string, string>();
             for (const h of hlData) {

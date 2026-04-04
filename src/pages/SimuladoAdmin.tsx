@@ -116,7 +116,8 @@ function SimuladoQuestoes({ simuladoId }: { simuladoId: string }) {
         .from("simulado_questoes")
         .select("id, numero, enunciado, materia, imagem_url, gabarito")
         .eq("simulado_id", simuladoId)
-        .order("numero", { ascending: true });
+        .order("numero", { ascending: true })
+        .limit(10000);
       return (data || []) as Questao[];
     },
   });

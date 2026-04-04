@@ -51,7 +51,8 @@ const Gamificacao = () => {
     const { data } = await supabase
       .from(tabela as any)
       .select('numero, rotulo, caput')
-      .order('ordem_numero', { ascending: true });
+      .order('ordem_numero', { ascending: true })
+      .limit(10000);
     setArtigos((data as any[]) || []);
     setLoadingArtigos(false);
   };

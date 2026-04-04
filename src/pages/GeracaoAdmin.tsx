@@ -163,7 +163,8 @@ const GeracaoAdmin = () => {
     const { data: allArt } = await supabase
       .from(tabela as any)
       .select('numero')
-      .order('ordem_numero', { ascending: true });
+      .order('ordem_numero', { ascending: true })
+      .limit(10000);
     if (!allArt?.length) return;
 
     const cached = cacheMap[tabela]?.[modo] ?? new Set();

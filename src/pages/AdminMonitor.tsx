@@ -110,7 +110,7 @@ const AdminMonitor = () => {
         .select('*')
         .eq('revisado', false)
         .order('detectado_em', { ascending: false })
-        .limit(200);
+        .limit(10000);
       if (error) throw error;
       setAlteracoes((rows as any as Alteracao[]) || []);
     } catch (e: any) {
