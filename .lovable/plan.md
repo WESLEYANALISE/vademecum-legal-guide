@@ -1,36 +1,35 @@
 
 
-## Plano: Compressão Paralela — Máximo de Imagens por Vez
+## Plano: Corrigir Scraper da Resenha Diária
 
-### Situação Atual
+### Problema
 
-O batch processa **1 imagem por vez** — o loop faz `await compressFile(file)` sequencialmente. Para 100 imagens, são 100 chamadas sequenciais.
+O `fetchPage` no scraper aceita qualquer HTML > 200 chars como válido. O Planalto retorna ~6142 chars de navegação/menu mesmo sem o conteúdo real (que é carregado via JS). O parser então não encontra nenhum ato.
+
+Além disso, não existe cron job configurado para rodar o scraper automaticamente.
 
 ### Solução
 
-Processar **5 imagens em paralelo** no frontend usando `Promise.all` em lotes (chunks). Isso é seguro porque:
-- Cada chamada à Edge Function é independente
-- O TinyPNG suporta requisições paralelas (rate limit generoso)
-- 5 paralelas = ~5x mais rápido sem arriscar 429
+**1. Aumentar threshold de validação do HTML**
 
-Não vamos além de 5 porque a Edge Function do Supabase tem limites de concorrência e cada chamada faz download + upload + 2 requests ao TinyPNG.
+Mudar de 200 para **15.000 chars** no `fetchPage`. O HTML com conteúdo real tem 30-100K+ chars. Se o fetch direto retornar menos que isso, tentar Browserless (que renderiza JS).
 
-### Mudanças
+**2. Forçar Browserless como fallback mais agressivo**
+
+Quando o HTML direto for menor que 15K, não aceitar — ir direto para Browserless que renderiza o JavaScript e obtém o conteúdo completo.
+
+**3. Adicionar cron job**
+
+Configurar no `config.toml` para rodar o scraper 2x por dia (8h e 18h, horário de Brasília = 11:00 e 21:00 UTC).
+
+### Arquivos a alterar
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/CompressaoImagens.tsx` | Alterar `compressBatch` para processar em chunks de 5 com `Promise.all`; mostrar progresso (ex: "12/47") |
+| `supabase/functions/scrape-resenha-diaria/index.ts` | Aumentar threshold de 200 → 15000 no `fetchPage` |
+| `supabase/config.toml` | Adicionar cron job para `scrape-resenha-diaria` 2x/dia |
 
-### Lógica do batch paralelo
+### Resultado
 
-```text
-pending = [img1, img2, ..., img47]
-
-chunk1 = [img1..img5]  → Promise.all → 5 simultâneas
-chunk2 = [img6..img10] → Promise.all → 5 simultâneas
-...
-chunk10 = [img46..img47] → Promise.all → 2 simultâneas
-```
-
-Adicionar contador de progresso visível: "Comprimindo 12 de 47..."
+Após a correção, o scraper vai detectar que o fetch direto retorna HTML incompleto, usar Browserless para obter o conteúdo real, e parsear as leis de abril corretamente. O cron garante execução automática.
 
