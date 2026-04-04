@@ -97,13 +97,14 @@ async function fetchPage(url: string): Promise<string | null> {
           body: JSON.stringify({
             url,
             gotoOptions: { waitUntil: "domcontentloaded", timeout: 30000 },
-            waitForSelector: { selector: "a[href*='planalto.gov.br']", timeout: 15000 },
+            waitForTimeout: 8000,
           }),
         });
         if (resp.ok) {
           const t = await resp.text();
           console.log(`Browserless response: ${t.length} chars`);
           if (t.length > MIN_CHARS) return t;
+          else console.log(`Browserless too short: ${t.length}`);
         } else {
           console.log(`Browserless ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
         }
@@ -111,14 +112,14 @@ async function fetchPage(url: string): Promise<string | null> {
     }
   }
 
-  // Strategy 4: Google cache
+  // Strategy 4: Archive.org as last resort
   try {
-    const cacheUrl = `https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}`;
-    const resp = await fetch(cacheUrl, {
+    const archiveUrl = `https://web.archive.org/web/2026/${url}`;
+    const resp = await fetch(archiveUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
     });
-    if (resp.ok) { const t = await resp.text(); if (t.length > MIN_CHARS) { console.log(`Google cache OK: ${t.length} chars`); return t; } }
-  } catch (e) { console.log(`Google cache failed: ${e}`); }
+    if (resp.ok) { const t = await resp.text(); if (t.length > MIN_CHARS) { console.log(`Archive OK: ${t.length} chars`); return t; } }
+  } catch (e) { console.log(`Archive failed: ${e}`); }
 
   return null;
 }
