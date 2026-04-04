@@ -8,6 +8,7 @@ const HEADING_RE = /^#{1,6}\s+/;
 const FULL_LINE_BOLD_RE = /^\*\*(.*?)\*\*$/;
 const LOOSE_NUMERIC_MARKER_RE = /^\s*(\d{1,4})\.\s*$/;
 const PAGE_ARTIFACT_RE = /^\s*(?:[—–-]\s*)?\d{1,4}\.?(?:\s*[—–-])?\s*$/;
+const TABLE_LINE_RE = /^\|.+\|$/;
 
 function stripMarkdown(line: string): string {
   return line
@@ -97,7 +98,12 @@ export function normalizeOcrMarkdown(markdown: string): string {
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .split("\n")
-    .map((line) => line.replace(/[ \t]{2,}/g, " ").trim());
+    .map((line) => {
+      const trimmed = line.trim();
+      // Preserve table lines — don't collapse internal spacing
+      if (TABLE_LINE_RE.test(trimmed)) return trimmed;
+      return line.replace(/[ \t]{2,}/g, " ").trim();
+    });
 
   const mergedLines: string[] = [];
 
@@ -154,7 +160,33 @@ export function normalizeOcrMarkdown(markdown: string): string {
     cleanedLines.push(trimmed);
   }
 
-  return collapseBlankLines(cleanedLines).join("\n").trim();
+  // Post-process: ensure markdown tables have separator rows
+  const finalLines = collapseBlankLines(cleanedLines);
+  const withSeparators: string[] = [];
+
+  for (let i = 0; i < finalLines.length; i++) {
+    const line = finalLines[i];
+    const nextLine = finalLines[i + 1] ?? "";
+
+    withSeparators.push(line);
+
+    // If this line is a table row and next line is also a table row (but not a separator),
+    // inject a separator after the first table row (header)
+    if (TABLE_LINE_RE.test(line.trim()) && TABLE_LINE_RE.test(nextLine.trim())) {
+      const isSeparator = /^\|[\s\-:]+\|$/.test(nextLine.trim());
+      // Only inject if no separator exists yet and the previous line wasn't already a table row
+      const prevLine = withSeparators[withSeparators.length - 2]?.trim() ?? "";
+      const prevIsTable = TABLE_LINE_RE.test(prevLine);
+      if (!isSeparator && !prevIsTable) {
+        // Count columns from the header
+        const cols = line.trim().split("|").filter(Boolean).length;
+        const sep = "|" + Array(cols).fill(" --- ").join("|") + "|";
+        withSeparators.push(sep);
+      }
+    }
+  }
+
+  return withSeparators.join("\n").trim();
 }
 
 export function normalizeMarkdownPages(pages: MarkdownPage[]): MarkdownPage[] {
