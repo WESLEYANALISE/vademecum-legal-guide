@@ -1,4 +1,5 @@
-import { ArrowLeft, BookOpen, Download, FileText, Smartphone } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, BookOpen, Download, FileText, Smartphone, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { LivroUnificado } from './LivroCard';
@@ -19,11 +20,19 @@ function extractDriveFileId(url: string): string | null {
 }
 
 const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProps) => {
+  const [modePickerOpen, setModePickerOpen] = useState(false);
+
   if (!livro && !open) return null;
 
   const capaUrl = livro?.capa ? directImg(livro.capa, 400) : '';
   const hasFliphtml5 = !!livro?.link;
   const hasDrivePreview = !!livro?.download && !!extractDriveFileId(livro.download);
+
+  const handleReadMode = (mode: ReadMode) => {
+    if (!livro) return;
+    setModePickerOpen(false);
+    onRead(livro, mode);
+  };
 
   return (
     <AnimatePresence>
@@ -38,7 +47,7 @@ const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProp
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card">
             <button
-              onClick={onClose}
+              onClick={() => { setModePickerOpen(false); onClose(); }}
               className="flex items-center justify-center w-9 h-9 rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-foreground" />
@@ -48,7 +57,6 @@ const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProp
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
-            {/* Cover hero */}
             {capaUrl && (
               <div className="flex justify-center py-8 bg-gradient-to-b from-secondary/40 to-transparent">
                 <img
@@ -78,34 +86,20 @@ const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProp
                 </div>
               </div>
 
-              {/* 3 Reading mode buttons */}
+              {/* Two main buttons */}
               <div className="space-y-2 pt-2">
-                {hasFliphtml5 && (
-                  <Button className="w-full gap-2 h-12 text-base" onClick={() => onRead(livro, 'fliphtml5')}>
-                    <BookOpen className="w-5 h-5" />
-                    Empaginação
-                  </Button>
-                )}
-
-                {hasDrivePreview && (
-                  <Button variant="outline" className="w-full gap-2 h-12 text-base" onClick={() => onRead(livro, 'vertical')}>
-                    <FileText className="w-5 h-5" />
-                    Na vertical
-                  </Button>
-                )}
-
-                <Button variant="outline" className="w-full gap-2 h-12 text-base" onClick={() => onRead(livro, 'dinamico')}>
-                  <Smartphone className="w-5 h-5" />
-                  Modo dinâmico
+                <Button className="w-full gap-2 h-12 text-base" onClick={() => setModePickerOpen(true)}>
+                  <BookOpen className="w-5 h-5" />
+                  Ler agora
                 </Button>
 
                 {livro.download && (
                   <Button
-                    variant="ghost"
-                    className="w-full gap-2 h-10 text-sm text-muted-foreground"
+                    variant="outline"
+                    className="w-full gap-2 h-12 text-base"
                     onClick={() => window.open(livro.download!, '_blank')}
                   >
-                    <Download className="w-4 h-4" />
+                    <Download className="w-5 h-5" />
                     Download PDF
                   </Button>
                 )}
@@ -126,6 +120,68 @@ const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProp
               )}
             </div>
           </div>
+
+          {/* Mode picker floating card */}
+          <AnimatePresence>
+            {modePickerOpen && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-black/40 z-10"
+                  onClick={() => setModePickerOpen(false)}
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 40 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 40 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                  className="absolute bottom-6 left-4 right-4 z-20 bg-card border border-border rounded-2xl p-5 shadow-2xl max-w-md mx-auto"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-foreground">Como deseja ler?</h3>
+                    <button
+                      onClick={() => setModePickerOpen(false)}
+                      className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"
+                    >
+                      <X className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {hasFliphtml5 && (
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2 h-11 justify-start text-sm"
+                        onClick={() => handleReadMode('fliphtml5')}
+                      >
+                        <BookOpen className="w-4 h-4 text-primary" />
+                        Paginação
+                      </Button>
+                    )}
+                    {hasDrivePreview && (
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2 h-11 justify-start text-sm"
+                        onClick={() => handleReadMode('vertical')}
+                      >
+                        <FileText className="w-4 h-4 text-primary" />
+                        Vertical
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2 h-11 justify-start text-sm"
+                      onClick={() => handleReadMode('dinamico')}
+                    >
+                      <Smartphone className="w-4 h-4 text-primary" />
+                      Modo dinâmico
+                    </Button>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>
