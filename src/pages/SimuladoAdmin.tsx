@@ -41,7 +41,8 @@ function SimuladoLogs({ simuladoId, isProcessing }: { simuladoId: string; isProc
         .from("simulado_process_logs")
         .select("*")
         .eq("simulado_id", simuladoId)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true })
+        .limit(10000);
       if (data) setLogs(data as ProcessLog[]);
     };
     load();
@@ -115,7 +116,8 @@ function SimuladoQuestoes({ simuladoId }: { simuladoId: string }) {
         .from("simulado_questoes")
         .select("id, numero, enunciado, materia, imagem_url, gabarito")
         .eq("simulado_id", simuladoId)
-        .order("numero", { ascending: true });
+        .order("numero", { ascending: true })
+        .limit(10000);
       return (data || []) as Questao[];
     },
   });

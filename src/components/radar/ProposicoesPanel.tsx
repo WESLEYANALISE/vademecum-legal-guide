@@ -44,8 +44,8 @@ const ProposicoesPanel = ({ searchQuery, dataInicial }: ProposicoesPanelProps) =
 
       // Fetch proposições and ALL headlines in parallel
       const [{ data: propsData }, { data: headlinesData }] = await Promise.all([
-        query.order('numero', { ascending: false }),
-        (supabase as any).from('radar_pl_headlines').select('id_externo, headline'),
+        query.order('numero', { ascending: false }).limit(10000),
+        (supabase as any).from('radar_pl_headlines').select('id_externo, headline').limit(10000),
       ]);
 
       const headlineMap = new Map<string, string>();

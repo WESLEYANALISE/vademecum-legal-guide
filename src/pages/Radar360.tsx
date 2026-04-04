@@ -347,7 +347,8 @@ const Radar360 = () => {
           .from('radar_proposicoes')
           .select('id_externo, sigla_tipo, numero, ano, ementa, autor, autor_foto, dados_json')
           .order('ano', { ascending: false })
-          .order('numero', { ascending: false });
+          .order('numero', { ascending: false })
+          .limit(10000);
         setAllProposals(data || []);
 
         // Fetch headlines for matched proposals
@@ -356,7 +357,8 @@ const Radar360 = () => {
           const { data: hlData } = await supabase
             .from('radar_pl_headlines')
             .select('id_externo, headline')
-            .in('id_externo', ids);
+            .in('id_externo', ids)
+            .limit(10000);
           if (hlData) {
             const map = new Map<string, string>();
             for (const h of hlData) {

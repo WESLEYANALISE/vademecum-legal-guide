@@ -63,7 +63,8 @@ const GeracaoAdmin = () => {
 
     const cachePromise = supabase
       .from('artigo_ai_cache')
-      .select('tabela_nome, modo, artigo_numero');
+      .select('tabela_nome, modo, artigo_numero')
+      .limit(10000);
 
     const [counts, cacheResult] = await Promise.all([
       Promise.all(countPromises),
@@ -112,7 +113,8 @@ const GeracaoAdmin = () => {
     const { data } = await supabase
       .from(lei.tabela_nome as any)
       .select('numero, caput')
-      .order('ordem_numero', { ascending: true });
+      .order('ordem_numero', { ascending: true })
+      .limit(10000);
     setArtigos((data as any[]) || []);
     setArtigosLoading(false);
   };
@@ -161,7 +163,8 @@ const GeracaoAdmin = () => {
     const { data: allArt } = await supabase
       .from(tabela as any)
       .select('numero')
-      .order('ordem_numero', { ascending: true });
+      .order('ordem_numero', { ascending: true })
+      .limit(10000);
     if (!allArt?.length) return;
 
     const cached = cacheMap[tabela]?.[modo] ?? new Set();
