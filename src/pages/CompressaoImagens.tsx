@@ -257,10 +257,13 @@ export default function CompressaoImagens() {
 
                         {/* Result info */}
                         {result && (
-                          <div className="flex items-center gap-1 mt-0.5">
+                          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                             <TrendingDown className="w-3 h-3 text-green-500" />
-                            <span className="text-[10px] text-green-500 font-medium">
-                              -{result.pctSaved}% ({formatBytes(result.saved)})
+                            <span className="text-[10px] text-green-500 font-bold">
+                              {formatBytes(result.originalSize)} → {formatBytes(result.compressedSize)}
+                            </span>
+                            <span className="text-[10px] text-green-400">
+                              (-{result.pctSaved}%)
                             </span>
                             {result.converted && (
                               <Badge variant="outline" className="text-[8px] h-4 px-1">WebP</Badge>
