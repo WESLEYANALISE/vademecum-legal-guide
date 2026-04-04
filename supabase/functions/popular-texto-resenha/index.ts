@@ -321,7 +321,78 @@ Use linguagem simples e amigável, como se estivesse batendo um papo com o aluno
   }
 }
 
-Deno.serve(async (req) => {
+// ── Detect references to existing codes/laws and create alteração entries ──
+
+const REFERENCE_PATTERNS: { pattern: RegExp; tabela_nome: string; nome: string }[] = [
+  { pattern: /Constitui[çc][ãa]o\s+Federal/i, tabela_nome: "CF88_CONSTITUICAO_FEDERAL", nome: "Constituição Federal" },
+  { pattern: /C[óo]digo\s+Penal(?!\s+Militar)/i, tabela_nome: "CP_CODIGO_PENAL", nome: "Código Penal" },
+  { pattern: /C[óo]digo\s+Civil/i, tabela_nome: "CC_CODIGO_CIVIL", nome: "Código Civil" },
+  { pattern: /C[óo]digo\s+de\s+Processo\s+Civil/i, tabela_nome: "CPC_CODIGO_PROCESSO_CIVIL", nome: "CPC" },
+  { pattern: /C[óo]digo\s+de\s+Processo\s+Penal(?!\s+Militar)/i, tabela_nome: "CPP_CODIGO_PROCESSO_PENAL", nome: "CPP" },
+  { pattern: /C[óo]digo\s+Tribut[áa]rio\s+Nacional/i, tabela_nome: "CTN_CODIGO_TRIBUTARIO_NACIONAL", nome: "CTN" },
+  { pattern: /C[óo]digo\s+de\s+Defesa\s+do\s+Consumidor/i, tabela_nome: "CDC_CODIGO_DEFESA_CONSUMIDOR", nome: "CDC" },
+  { pattern: /Consolida[çc][ãa]o\s+das\s+Leis\s+do\s+Trabalho|CLT/i, tabela_nome: "CLT_CONSOLIDACAO_LEIS_TRABALHO", nome: "CLT" },
+  { pattern: /C[óo]digo\s+de\s+Tr[âa]nsito/i, tabela_nome: "CTB_CODIGO_TRANSITO_BRASILEIRO", nome: "CTB" },
+  { pattern: /C[óo]digo\s+Eleitoral/i, tabela_nome: "CE_CODIGO_ELEITORAL", nome: "Código Eleitoral" },
+  { pattern: /C[óo]digo\s+Penal\s+Militar/i, tabela_nome: "CPM_CODIGO_PENAL_MILITAR", nome: "CPM" },
+  { pattern: /C[óo]digo\s+Florestal/i, tabela_nome: "CFLOR_CODIGO_FLORESTAL", nome: "Código Florestal" },
+  { pattern: /Estatuto\s+da\s+Crian[çc]a/i, tabela_nome: "ECA_ESTATUTO_CRIANCA_ADOLESCENTE", nome: "ECA" },
+  { pattern: /Estatuto\s+do\s+Idoso/i, tabela_nome: "EI_ESTATUTO_IDOSO", nome: "Estatuto do Idoso" },
+  { pattern: /Estatuto\s+da\s+Pessoa\s+com\s+Defici[êe]ncia/i, tabela_nome: "EPD_ESTATUTO_PESSOA_DEFICIENCIA", nome: "EPD" },
+  { pattern: /Lei\s+de\s+Execu[çc][ãa]o\s+Penal/i, tabela_nome: "LEP_EXECUCAO_PENAL", nome: "LEP" },
+  { pattern: /Lei\s+Maria\s+da\s+Penha/i, tabela_nome: "LMP_MARIA_PENHA", nome: "Maria da Penha" },
+  { pattern: /Lei\s+de\s+Drogas/i, tabela_nome: "LD_LEI_DROGAS", nome: "Lei de Drogas" },
+  { pattern: /Lei\s+de\s+Improbidade/i, tabela_nome: "LIA_IMPROBIDADE_ADMINISTRATIVA", nome: "LIA" },
+  { pattern: /Lei\s+de\s+Licita[çc][õo]es/i, tabela_nome: "NLL_LICITACOES", nome: "Licitações" },
+  { pattern: /Lei\s+n[ºo°]\s*8\.112/i, tabela_nome: "L8112_SERVIDORES_FEDERAIS", nome: "Lei 8.112" },
+  { pattern: /Lei\s+de\s+Diretrizes\s+e\s+Bases|LDB/i, tabela_nome: "LDB_DIRETRIZES_BASES", nome: "LDB" },
+];
+
+async function detectarReferencias(
+  ementa: string, texto: string, numeroAto: string, supabase: any
+) {
+  const combined = `${ementa}\n${texto.substring(0, 5000)}`;
+  const artPattern = /art(?:igo)?\.?\s*(\d+[ºª°]?(?:-[A-Z])?)/gi;
+
+  for (const ref of REFERENCE_PATTERNS) {
+    if (!ref.pattern.test(combined)) continue;
+
+    // Extract specific article numbers mentioned
+    const artigosMencionados: string[] = [];
+    let am;
+    // Search near the reference match
+    const matchIdx = combined.search(ref.pattern);
+    const nearby = combined.substring(Math.max(0, matchIdx - 50), matchIdx + 500);
+    while ((am = artPattern.exec(nearby)) !== null) {
+      artigosMencionados.push(`Art. ${am[1]}`);
+    }
+
+    const artigoRef = artigosMencionados.length > 0 ? artigosMencionados[0] : 'Geral';
+
+    // Check if already registered
+    const { data: existing } = await supabase
+      .from('legislacao_alteracoes')
+      .select('id')
+      .eq('tabela_nome', ref.tabela_nome)
+      .eq('artigo_numero', artigoRef)
+      .gte('detectado_em', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+      .maybeSingle();
+
+    if (existing) continue;
+
+    console.log(`Referência detectada: ${numeroAto} → ${ref.nome} (${artigoRef})`);
+
+    await supabase.from('legislacao_alteracoes').insert({
+      tabela_nome: ref.tabela_nome,
+      tipo_alteracao: 'nova_lei',
+      artigo_numero: artigoRef,
+      texto_anterior: null,
+      texto_atual: `${numeroAto}: ${ementa.substring(0, 300)}`,
+      revisado: false,
+    });
+  }
+}
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
