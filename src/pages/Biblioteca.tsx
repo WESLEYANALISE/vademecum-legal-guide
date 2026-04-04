@@ -137,6 +137,27 @@ const Biblioteca = () => {
       });
   }, [user]);
 
+  // Auto-open book from ?livro=ID query param
+  useEffect(() => {
+    const livroId = searchParams.get('livro');
+    if (!livroId) return;
+    // Clear param so it doesn't re-trigger
+    setSearchParams({}, { replace: true });
+
+    (async () => {
+      const { data: full } = await supabase
+        .from('biblioteca_livros')
+        .select('id,titulo,total_paginas,ultima_pagina,conteudo,estrutura_leitura')
+        .eq('id', livroId)
+        .single();
+      if (full) {
+        setEbookData(full);
+      } else {
+        toast.error('Livro não encontrado');
+      }
+    })();
+  }, [searchParams]);
+
   const toggleFavorite = useCallback(async (livro: LivroUnificado, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) { toast.error('Faça login para favoritar'); return; }
