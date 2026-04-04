@@ -1,0 +1,292 @@
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Image, Loader2, CheckCircle, Zap, Search, HardDrive, TrendingDown, AlertCircle, RefreshCw } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { toast } from 'sonner';
+
+interface StorageFile {
+  name: string;
+  bucket: string;
+  size: number;
+  type: string;
+  publicUrl: string;
+  path: string;
+}
+
+interface CompressionResult {
+  originalSize: number;
+  compressedSize: number;
+  saved: number;
+  pctSaved: number;
+  converted: boolean;
+  newPath?: string;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+export default function CompressaoImagens() {
+  const navigate = useNavigate();
+  const [files, setFiles] = useState<StorageFile[]>([]);
+  const [totalSize, setTotalSize] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [filterBucket, setFilterBucket] = useState('all');
+  const [compressing, setCompressing] = useState<Set<string>>(new Set());
+  const [results, setResults] = useState<Map<string, CompressionResult>>(new Map());
+  const [batchRunning, setBatchRunning] = useState(false);
+
+  const loadFiles = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('comprimir-imagens', {
+        body: { action: 'list' },
+      });
+      if (error) throw error;
+      setFiles(data.files || []);
+      setTotalSize(data.totalSize || 0);
+    } catch (err: any) {
+      toast.error('Erro ao carregar imagens: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadFiles(); }, []);
+
+  const compressFile = async (file: StorageFile) => {
+    const key = `${file.bucket}/${file.path}`;
+    setCompressing(prev => new Set(prev).add(key));
+
+    try {
+      const { data, error } = await supabase.functions.invoke('comprimir-imagens', {
+        body: { action: 'compress', bucket: file.bucket, path: file.path },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      setResults(prev => new Map(prev).set(key, data));
+      toast.success(`${file.name}: -${data.pctSaved}% (${formatBytes(data.saved)} economizados)`);
+    } catch (err: any) {
+      toast.error(`Erro em ${file.name}: ${err.message}`);
+    } finally {
+      setCompressing(prev => { const s = new Set(prev); s.delete(key); return s; });
+    }
+  };
+
+  const compressBatch = async () => {
+    setBatchRunning(true);
+    const pending = filtered.filter(f => !results.has(`${f.bucket}/${f.path}`));
+    for (const file of pending) {
+      if (!batchRunning) break;
+      await compressFile(file);
+    }
+    setBatchRunning(false);
+    toast.success('Compressão em lote finalizada!');
+  };
+
+  const filtered = useMemo(() => {
+    let list = files;
+    if (filterBucket !== 'all') list = list.filter(f => f.bucket === filterBucket);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(f => f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q));
+    }
+    return list;
+  }, [files, filterBucket, search]);
+
+  const buckets = useMemo(() => {
+    const set = new Set(files.map(f => f.bucket));
+    return ['all', ...Array.from(set)];
+  }, [files]);
+
+  const totalSaved = useMemo(() => {
+    let saved = 0;
+    results.forEach(r => { saved += r.saved; });
+    return saved;
+  }, [results]);
+
+  const totalCompressed = results.size;
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="bg-gradient-to-br from-card to-secondary px-4 pt-10 pb-6">
+        <div className="max-w-4xl mx-auto">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium text-sm px-3 py-1.5 rounded-lg mb-4">
+            <ArrowLeft className="w-4 h-4" /> Voltar
+          </button>
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Image className="w-6 h-6" /> Compressão de Imagens
+          </h1>
+          <p className="text-white/70 text-sm mt-1">
+            {files.length} imagens · {formatBytes(totalSize)} total
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 py-4 space-y-4">
+        {/* Stats cards */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-xl bg-card border border-border p-3 text-center">
+            <HardDrive className="w-5 h-5 mx-auto text-muted-foreground mb-1" />
+            <p className="text-lg font-bold text-foreground">{formatBytes(totalSize)}</p>
+            <p className="text-[10px] text-muted-foreground">Total Original</p>
+          </div>
+          <div className="rounded-xl bg-card border border-border p-3 text-center">
+            <TrendingDown className="w-5 h-5 mx-auto text-green-500 mb-1" />
+            <p className="text-lg font-bold text-green-500">{formatBytes(totalSaved)}</p>
+            <p className="text-[10px] text-muted-foreground">Economia Total</p>
+          </div>
+          <div className="rounded-xl bg-card border border-border p-3 text-center">
+            <CheckCircle className="w-5 h-5 mx-auto text-primary mb-1" />
+            <p className="text-lg font-bold text-foreground">{totalCompressed}/{files.length}</p>
+            <p className="text-[10px] text-muted-foreground">Comprimidas</p>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Buscar imagem..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+          </div>
+          <Button variant="outline" size="icon" onClick={loadFiles} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+
+        {/* Bucket filter */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {buckets.map(b => (
+            <button
+              key={b}
+              onClick={() => setFilterBucket(b)}
+              className={`shrink-0 text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${filterBucket === b ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}
+            >
+              {b === 'all' ? 'Todos' : b}
+            </button>
+          ))}
+        </div>
+
+        {/* Batch compress */}
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">{filtered.length} imagens</p>
+          <Button
+            size="sm"
+            onClick={compressBatch}
+            disabled={batchRunning || filtered.length === 0}
+            className="text-xs"
+          >
+            {batchRunning ? (
+              <><Loader2 className="w-3 h-3 animate-spin mr-1" /> Comprimindo...</>
+            ) : (
+              <><Zap className="w-3 h-3 mr-1" /> Comprimir Todas ({filtered.filter(f => !results.has(`${f.bucket}/${f.path}`)).length})</>
+            )}
+          </Button>
+        </div>
+
+        {/* Batch progress */}
+        {batchRunning && (
+          <div className="space-y-1">
+            <Progress value={(totalCompressed / filtered.length) * 100} className="h-2" />
+            <p className="text-[10px] text-muted-foreground text-center">
+              {totalCompressed} de {filtered.length} processadas
+            </p>
+          </div>
+        )}
+
+        {/* File list */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {filtered.map((file) => {
+              const key = `${file.bucket}/${file.path}`;
+              const isCompressing = compressing.has(key);
+              const result = results.get(key);
+
+              return (
+                <div key={key} className="rounded-xl bg-card border border-border overflow-hidden">
+                  <div className="flex items-stretch">
+                    {/* Thumbnail */}
+                    <div className="w-14 h-14 flex-shrink-0 relative overflow-hidden bg-muted">
+                      <img
+                        src={file.publicUrl}
+                        alt={file.name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    </div>
+
+                    <div className="flex-1 min-w-0 px-3 py-2 flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-foreground line-clamp-1">{file.name}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground">{file.bucket}</span>
+                          <span className="text-[10px] text-muted-foreground">{formatBytes(file.size)}</span>
+                          <span className="text-[10px] text-muted-foreground">{file.type.split('/')[1]?.toUpperCase()}</span>
+                        </div>
+
+                        {/* Result info */}
+                        {result && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <TrendingDown className="w-3 h-3 text-green-500" />
+                            <span className="text-[10px] text-green-500 font-medium">
+                              -{result.pctSaved}% ({formatBytes(result.saved)})
+                            </span>
+                            {result.converted && (
+                              <Badge variant="outline" className="text-[8px] h-4 px-1">WebP</Badge>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="shrink-0">
+                        {result ? (
+                          <Badge variant="default" className="text-[10px]">
+                            <CheckCircle className="w-3 h-3 mr-1" />OK
+                          </Badge>
+                        ) : isCompressing ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-7 px-2"
+                            onClick={() => compressFile(file)}
+                          >
+                            <Zap className="w-3 h-3 mr-1" /> Comprimir
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {filtered.length === 0 && !loading && (
+              <div className="text-center py-12">
+                <AlertCircle className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">Nenhuma imagem encontrada</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
