@@ -269,6 +269,30 @@ export type Database = {
         }
         Relationships: []
       }
+      biblioteca_favoritos: {
+        Row: {
+          categoria: string
+          created_at: string
+          id: string
+          livro_key: string
+          user_id: string
+        }
+        Insert: {
+          categoria?: string
+          created_at?: string
+          id?: string
+          livro_key: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          id?: string
+          livro_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       biblioteca_fora_da_toga: {
         Row: {
           area: string | null
