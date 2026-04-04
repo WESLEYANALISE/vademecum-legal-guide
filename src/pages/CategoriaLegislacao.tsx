@@ -27,6 +27,18 @@ const TIPO_CONFIG: Record<string, { label: string; icon: React.ElementType; bg: 
   previdenciario: { label: 'Previdenciário', icon: HeartPulse, bg: 'from-teal-500/90 to-teal-700/80' },
 };
 
+// Subcategorias para Leis Especiais
+const LEI_ESPECIAL_SUBCATEGORIAS: { id: string; label: string; ids: Set<string> }[] = [
+  { id: 'todas', label: 'Todas', ids: new Set() },
+  { id: 'penal', label: 'Penal', ids: new Set(['lep','lmp','ld','loc','laa','lit','lat','lch','ltort','lca','lrac','llav','lcp','lcsf','lpt','lci']) },
+  { id: 'admin', label: 'Administrativo', ids: new Set(['l8112','lia','nll','lpaf','lrf','lai','lap','lace','lotcu','ces','lomp','loman']) },
+  { id: 'civil', label: 'Civil / Família', ids: new Set(['lindb','li','lrp','la','lalp','lalim','lpsu','lda']) },
+  { id: 'processual', label: 'Processual', ids: new Set(['lms','lacp','lje','lhd','lmi']) },
+  { id: 'empresarial', label: 'Empresarial', ids: new Set(['lf','lgpd','mci','lsa','lpi','lcon','lppp','lcade','lle','lmls','lrt']) },
+  { id: 'eleitoral', label: 'Eleitoral', ids: new Set(['lpp','lele','lfl','line']) },
+  { id: 'social', label: 'Social / Saúde', ids: new Set(['ldb','lsus','lbio']) },
+];
+
 const LEI_ICON_MAP: Record<string, React.ElementType> = {
   CP: Gavel,
   CC: Building2,
