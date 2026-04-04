@@ -120,81 +120,75 @@ Deno.serve(async (req) => {
       const originalBytes = await fileData.arrayBuffer();
       const originalSize = originalBytes.byteLength;
 
-      // Send to TinyPNG
+      // Skip tiny files
+      if (originalSize < 5000) {
+        return new Response(JSON.stringify({
+          success: true, originalSize, compressedSize: originalSize,
+          saved: 0, pctSaved: 0, converted: false, newPath: filePath,
+          skipped: true,
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const authHeader = { Authorization: "Basic " + btoa(`api:${TINIFY_KEY}`) };
+
+      // Step 1: Shrink (upload to TinyPNG)
       const shrinkRes = await fetch("https://api.tinify.com/shrink", {
         method: "POST",
-        headers: {
-          Authorization: "Basic " + btoa(`api:${TINIFY_KEY}`),
-        },
+        headers: authHeader,
         body: new Uint8Array(originalBytes),
       });
 
       if (!shrinkRes.ok) {
         const errText = await shrinkRes.text();
-        return new Response(JSON.stringify({ error: "TinyPNG falhou: " + errText }), {
+        return new Response(JSON.stringify({ error: "TinyPNG shrink falhou: " + errText }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       const shrinkData = await shrinkRes.json();
-      const compressedSize = shrinkData.output.size;
       const outputUrl = shrinkData.output.url;
 
-      // Determine if we should convert to WebP
+      // Step 2: Resize + Convert in a single POST to outputUrl
       const ext = filePath.split('.').pop()?.toLowerCase() || '';
-      const canConvert = ['jpg', 'jpeg', 'png', 'bmp', 'tiff'].includes(ext);
+      const isWebp = ext === 'webp';
+
+      const transformBody: Record<string, unknown> = {
+        resize: { method: "fit", width: 800, height: 1200 },
+      };
+      if (!isWebp) {
+        transformBody.convert = { type: ["image/webp"] };
+      }
+
+      const convertRes = await fetch(outputUrl, {
+        method: "POST",
+        headers: { ...authHeader, "Content-Type": "application/json" },
+        body: JSON.stringify(transformBody),
+      });
 
       let finalBytes: Uint8Array;
-      let finalSize: number;
       let finalPath = filePath;
       let converted = false;
 
-      if (canConvert) {
-        // Convert to WebP
-        const convertRes = await fetch(outputUrl, {
-          method: "POST",
-          headers: {
-            Authorization: "Basic " + btoa(`api:${TINIFY_KEY}`),
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            convert: { type: ["image/webp"] },
-          }),
-        });
-
-        if (convertRes.ok) {
-          finalBytes = new Uint8Array(await convertRes.arrayBuffer());
-          finalSize = finalBytes.byteLength;
+      if (convertRes.ok) {
+        finalBytes = new Uint8Array(await convertRes.arrayBuffer());
+        if (!isWebp) {
           finalPath = filePath.replace(/\.[^.]+$/, '.webp');
           converted = true;
-        } else {
-          // Fallback: download compressed without conversion
-          const dlRes = await fetch(outputUrl, {
-            headers: { Authorization: "Basic " + btoa(`api:${TINIFY_KEY}`) },
-          });
-          finalBytes = new Uint8Array(await dlRes.arrayBuffer());
-          finalSize = finalBytes.byteLength;
         }
       } else {
-        // Download compressed version
-        const dlRes = await fetch(outputUrl, {
-          headers: { Authorization: "Basic " + btoa(`api:${TINIFY_KEY}`) },
-        });
+        // Fallback: just download the shrunk version
+        const dlRes = await fetch(outputUrl, { headers: authHeader });
         finalBytes = new Uint8Array(await dlRes.arrayBuffer());
-        finalSize = finalBytes.byteLength;
       }
 
-      // Upload compressed back to storage
-      const contentType = converted ? "image/webp" : (shrinkData.output.type || "image/png");
+      const finalSize = finalBytes.byteLength;
+      const contentType = converted ? "image/webp" : (isWebp ? "image/webp" : shrinkData.output.type || "image/png");
 
-      // If converted, upload new webp and optionally delete old
+      // Upload back
       const { error: upError } = await supabase.storage
         .from(bucket)
-        .upload(finalPath, finalBytes, {
-          contentType,
-          upsert: true,
-        });
+        .upload(finalPath, finalBytes, { contentType, upsert: true });
 
       if (upError) {
         return new Response(JSON.stringify({ error: "Falha ao fazer upload: " + upError.message }), {
@@ -203,7 +197,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      // If converted to webp and path changed, remove original
+      // Remove original if converted to different path
       if (converted && finalPath !== filePath) {
         await supabase.storage.from(bucket).remove([filePath]);
       }
@@ -212,13 +206,8 @@ Deno.serve(async (req) => {
       const pctSaved = originalSize > 0 ? Math.round((saved / originalSize) * 100) : 0;
 
       return new Response(JSON.stringify({
-        success: true,
-        originalSize,
-        compressedSize: finalSize,
-        saved,
-        pctSaved,
-        converted,
-        newPath: finalPath,
+        success: true, originalSize, compressedSize: finalSize,
+        saved, pctSaved, converted, newPath: finalPath,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
