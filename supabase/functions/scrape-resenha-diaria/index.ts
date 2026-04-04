@@ -39,6 +39,8 @@ function normalizeDateToISO(dateStr: string): string {
 }
 
 async function fetchPage(url: string): Promise<string | null> {
+  const MIN_CHARS = 15000;
+
   // Strategy 1: Direct fetch with retries
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
@@ -47,16 +49,41 @@ async function fetchPage(url: string): Promise<string | null> {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
           "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+          "Cache-Control": "no-cache",
         },
+        redirect: "follow",
       });
-      if (resp.ok) { const t = await resp.text(); if (t.length > 15000) { console.log(`Direct OK: ${t.length} chars`); return t; } else { console.log(`Direct too short (${t.length} chars), need Browserless`); } }
+      if (resp.ok) {
+        const t = await resp.text();
+        if (t.length > MIN_CHARS) { console.log(`Direct OK: ${t.length} chars`); return t; }
+        else { console.log(`Direct too short (${t.length} chars)`); }
+      }
     } catch (e) { console.log(`Direct attempt ${attempt} failed: ${e}`); }
   }
 
-  // Strategy 2: Browserless v2 API
+  // Strategy 2: CORS proxies (render full page)
+  const proxies = [
+    (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+  ];
+  for (const mkUrl of proxies) {
+    try {
+      const proxyUrl = mkUrl(url);
+      console.log(`Trying proxy: ${proxyUrl.slice(0, 60)}...`);
+      const resp = await fetch(proxyUrl, {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; LegalBot/1.0)" },
+      });
+      if (resp.ok) {
+        const t = await resp.text();
+        console.log(`Proxy response: ${t.length} chars`);
+        if (t.length > MIN_CHARS) return t;
+      }
+    } catch (e) { console.log(`Proxy failed: ${e}`); }
+  }
+
+  // Strategy 3: Browserless v2 API
   const key = Deno.env.get("BROWSERLESS_API_KEY");
   if (key) {
-    // Try v2 /content endpoint
     for (const baseUrl of [
       `https://production-sfo.browserless.io/content?token=${key}`,
       `https://chrome.browserless.io/content?token=${key}`,
@@ -68,25 +95,23 @@ async function fetchPage(url: string): Promise<string | null> {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url, gotoOptions: { waitUntil: "networkidle2", timeout: 20000 } }),
         });
-        console.log(`Browserless status: ${resp.status}`);
         if (resp.ok) {
           const t = await resp.text();
-          console.log(`Browserless response length: ${t.length}`);
-          if (t.length > 15000) return t;
+          if (t.length > MIN_CHARS) return t;
         } else {
-          console.log(`Browserless error body: ${(await resp.text()).slice(0, 300)}`);
+          console.log(`Browserless ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
         }
       } catch (e) { console.log(`Browserless failed: ${e}`); }
     }
   }
 
-  // Strategy 3: Google cache as last resort
+  // Strategy 4: Google cache
   try {
     const cacheUrl = `https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}`;
     const resp = await fetch(cacheUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
     });
-    if (resp.ok) { const t = await resp.text(); if (t.length > 15000) { console.log(`Google cache OK: ${t.length} chars`); return t; } }
+    if (resp.ok) { const t = await resp.text(); if (t.length > MIN_CHARS) { console.log(`Google cache OK: ${t.length} chars`); return t; } }
   } catch (e) { console.log(`Google cache failed: ${e}`); }
 
   return null;
