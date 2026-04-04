@@ -72,7 +72,7 @@ async function fetchPage(url: string): Promise<string | null> {
         if (resp.ok) {
           const t = await resp.text();
           console.log(`Browserless response length: ${t.length}`);
-          if (t.length > 200) return t;
+          if (t.length > 15000) return t;
         } else {
           console.log(`Browserless error body: ${(await resp.text()).slice(0, 300)}`);
         }
