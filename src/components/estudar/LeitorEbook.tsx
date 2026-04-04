@@ -420,7 +420,7 @@ export default function LeitorEbook({ livro, onBack, onUpdateBookmark }: LeitorE
               <div className="px-5 py-6 sm:px-8 sm:py-8" style={{ fontSize: `${FONT_SIZES[fontSize]}px`, lineHeight: 1.85 }}>
                 <div className="max-w-3xl mx-auto">
                   <ReactMarkdown components={markdownComponents}>
-                    {currentDisplayPage?.markdown || ''}
+                    {fixMarkdownTables(currentDisplayPage?.markdown || '')}
                   </ReactMarkdown>
                 </div>
               </div>
