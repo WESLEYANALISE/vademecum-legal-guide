@@ -86,7 +86,7 @@ async function fetchPage(url: string): Promise<string | null> {
     const resp = await fetch(cacheUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
     });
-    if (resp.ok) { const t = await resp.text(); if (t.length > 200) { console.log(`Google cache OK: ${t.length} chars`); return t; } }
+    if (resp.ok) { const t = await resp.text(); if (t.length > 15000) { console.log(`Google cache OK: ${t.length} chars`); return t; } }
   } catch (e) { console.log(`Google cache failed: ${e}`); }
 
   return null;
