@@ -595,8 +595,8 @@ async function structureWithGemini(
   let pagesPayload: string;
   if (isLargeBook) {
     pagesPayload = conteudo.map(p => {
-      const isInitial = p.pagina <= 15;
-      const text = isInitial ? p.markdown : p.markdown.slice(0, 500);
+      const isInitial = p.pagina <= 25;
+      const text = isInitial ? p.markdown : p.markdown.slice(0, 800);
       return `--- Página ${p.pagina} ---\n${text}`;
     }).join("\n\n");
   } else {
@@ -608,11 +608,12 @@ async function structureWithGemini(
   const prompt = `Você é um organizador de livros digitais. Recebeu o conteúdo OCR de um PDF com ${totalPages} páginas.
 
 TAREFA:
-1. Identifique o SUMÁRIO/ÍNDICE do livro (geralmente nas primeiras páginas)
-2. Use o sumário como referência principal para identificar os capítulos E subcapítulos/seções
-3. Confirme onde cada capítulo/seção realmente começa no conteúdo
-4. Organize TODAS as ${totalPages} páginas em capítulos, sem pular nenhuma
-5. Identifique páginas DESCARTÁVEIS e a página onde o conteúdo principal começa
+1. Identifique o SUMÁRIO/ÍNDICE do livro (geralmente nas primeiras 20-25 páginas)
+2. Use o sumário como referência PRINCIPAL para identificar os capítulos E subcapítulos/seções
+3. Se o sumário listar múltiplos capítulos, você DEVE criar múltiplos capítulos — NUNCA reduza a 1 só
+4. Confirme onde cada capítulo/seção realmente começa no conteúdo
+5. Organize TODAS as ${totalPages} páginas em capítulos, sem pular nenhuma
+6. Identifique páginas DESCARTÁVEIS e a página onde o conteúdo principal começa
 
 REGRAS IMPORTANTES:
 - TODAS as páginas de 1 a ${totalPages} devem estar cobertas (sem buracos nem sobreposições)
@@ -623,6 +624,7 @@ REGRAS IMPORTANTES:
 - Use TODOS os níveis de divisão encontrados no sumário
 - NÃO reescreva o conteúdo, apenas organize
 - Se não encontrar sumário, divida por títulos/headings visíveis no texto
+- Para livros com mais de 15 páginas, é MUITO IMPROVÁVEL ter apenas 1 capítulo. Procure melhor!
 
 PÁGINAS DESCARTÁVEIS (skip_pages):
 Marque como descartáveis páginas que contêm APENAS:
@@ -689,8 +691,54 @@ ${pagesPayload}`;
       return buildFallbackStructure(conteudo, totalPages);
     }
 
+    // Retry: if only 1 chapter for a book with >15 pages, try again with full context
+    if (parsed.chapters.length === 1 && totalPages > 15 && isLargeBook) {
+      console.warn(`Only 1 chapter for ${totalPages}-page book. Retrying with full context...`);
+      const fullPayload = conteudo.map(p =>
+        `--- Página ${p.pagina} ---\n${p.markdown}`
+      ).join("\n\n");
+
+      const retryPrompt = prompt.replace(pagesPayload, fullPayload);
+      const retryResponse = await fetch(geminiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: retryPrompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            maxOutputTokens: 16384,
+          },
+        }),
+      });
+
+      if (retryResponse.ok) {
+        const retryData = await retryResponse.json();
+        let retryText = retryData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        retryText = retryText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+        try {
+          const retryParsed = JSON.parse(retryText) as EstruturaLeitura;
+          if (retryParsed.chapters && retryParsed.chapters.length > 1) {
+            console.log(`Retry succeeded: ${retryParsed.chapters.length} chapters found`);
+            return buildStructureResult(retryParsed, conteudo, totalPages);
+          }
+        } catch { /* use original */ }
+      }
+    }
+
+    return buildStructureResult(parsed, conteudo, totalPages);
+  } catch (parseErr) {
+    console.error("Failed to parse Gemini JSON:", parseErr, "Raw:", rawText.slice(0, 500));
+    return buildFallbackStructure(conteudo, totalPages);
+  }
+}
+
+function buildStructureResult(
+  parsed: EstruturaLeitura,
+  conteudo: { pagina: number; markdown: string }[],
+  totalPages: number
+): EstruturaLeitura {
     const skipSet = new Set(parsed.skip_pages || []);
-    console.log(`Gemini skip_pages: ${parsed.skip_pages?.length || 0}, content_start_page: ${parsed.content_start_page || 'N/A'}`);
+    console.log(`Gemini skip_pages: ${parsed.skip_pages?.length || 0}, content_start_page: ${parsed.content_start_page || 'N/A'}, chapters: ${parsed.chapters.length}`);
 
     const result: EstruturaLeitura = {
       version: 2,
@@ -735,10 +783,6 @@ ${pagesPayload}`;
     }
 
     return result;
-  } catch (parseErr) {
-    console.error("Failed to parse Gemini JSON:", parseErr, "Raw:", rawText.slice(0, 500));
-    return buildFallbackStructure(conteudo, totalPages);
-  }
 }
 
 // ── Gemini edge-page cleaning (first/last pages only) ───────────────

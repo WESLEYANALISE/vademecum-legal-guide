@@ -1,4 +1,4 @@
-import { cdnImg } from '@/lib/cdnImg';
+import { directImg } from '@/lib/cdnImg';
 
 export interface LivroUnificado {
   id: string | number;
@@ -15,10 +15,11 @@ export interface LivroUnificado {
 interface LivroCardProps {
   livro: LivroUnificado;
   onClick: () => void;
+  priority?: boolean;
 }
 
-const LivroCard = ({ livro, onClick }: LivroCardProps) => {
-  const capaUrl = livro.capa ? cdnImg(livro.capa, 300) : '';
+const LivroCard = ({ livro, onClick, priority }: LivroCardProps) => {
+  const capaUrl = livro.capa ? directImg(livro.capa, 300) : '';
 
   return (
     <button
@@ -31,7 +32,9 @@ const LivroCard = ({ livro, onClick }: LivroCardProps) => {
             src={capaUrl}
             alt={livro.titulo}
             className="w-full h-full object-cover"
-            loading="lazy"
+            loading={priority ? undefined : 'lazy'}
+            fetchPriority={priority ? 'high' : undefined}
+            decoding="async"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 p-2">

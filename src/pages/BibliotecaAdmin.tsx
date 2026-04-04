@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, BookOpen, Loader2, CheckCircle, Zap, Search, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { cdnImg } from '@/lib/cdnImg';
+import { directImg } from '@/lib/cdnImg';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -306,7 +306,7 @@ export default function BibliotecaAdmin() {
         ) : (
           <div className="space-y-2">
             {filtered.map((livro) => {
-              const capaUrl = livro.capa ? cdnImg(livro.capa, 200) : '';
+              const capaUrl = livro.capa ? directImg(livro.capa, 200) : '';
               const ebook = getEbookInfo(livro.titulo);
               const isFormatting = formatting.has(livro.id);
               const isProcessing = !!ebook && isProcessingStatus(ebook.status);
