@@ -1648,6 +1648,30 @@ const CategoriaLegislacao = () => {
           />
         </div>
 
+        {/* Subcategory filter tabs for lei-especial */}
+        {tipo === 'lei-especial' && (
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+            {LEI_ESPECIAL_SUBCATEGORIAS.map(sc => (
+              <button
+                key={sc.id}
+                onClick={() => setSubcat(sc.id)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  subcat === sc.id
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80'
+                }`}
+              >
+                {sc.label}
+                {sc.id !== 'todas' && (
+                  <span className="ml-1 opacity-70">
+                    ({leis.filter(l => sc.ids.has(l.id)).length})
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
         {loadingLeis ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
