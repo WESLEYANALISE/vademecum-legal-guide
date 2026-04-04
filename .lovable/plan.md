@@ -1,54 +1,48 @@
 
 
-## Plano: Capítulos na Formatação + Capas Instantâneas
+## Plano: Cache Agressivo Nível 3 — Biblioteca Instantânea
 
-### Problema 1: Livros formatados sem capítulos
+### O que é o "Nível 3"
 
-Alguns livros (ex: "Direito financeiro" 52pg, "Preâmbulo constitucional" 25pg) terminam com apenas 1 capítulo genérico "Conteúdo" — o fallback, ou seja, o Gemini não conseguiu identificar capítulos.
+Combinação de 3 camadas de cache para que a Biblioteca abra instantaneamente, mesmo após fechar e reabrir o app:
 
-**Causa raiz**: Para livros >60 páginas, o prompt envia apenas 500 caracteres por página (exceto as 15 primeiras). Mas mesmo livros menores podem falhar se o Gemini retornar JSON inválido ou `chapters: []`.
+1. **Cache de dados em localStorage** — Os 4 catálogos de livros (clássicos, liderança, estudos, fora da toga) são salvos localmente. Na próxima visita, renderiza imediatamente com os dados salvos enquanto atualiza em background.
 
-**Correção** em `supabase/functions/processar-pdf/index.ts`:
+2. **Pré-carregamento de capas** — Assim que os dados chegam, as URLs das capas são pré-carregadas no cache do navegador usando `new Image()` em batch (10 por vez), para que quando o usuário scrollar, as imagens já estejam prontas.
 
-1. Aumentar o contexto do sumário: para livros grandes, enviar as **primeiras 25 páginas completas** (em vez de 15), pois muitos sumários vão até a página 20+
-2. Para páginas após as 25, enviar os **primeiros 800 caracteres** (em vez de 500) — o título do capítulo geralmente aparece no topo da página
-3. Adicionar retry: se o Gemini retornar apenas 1 capítulo para um livro com >15 páginas, tentar novamente com mais contexto (todas as páginas completas, limitado a ~100k tokens)
-4. No prompt, enfatizar que o sumário/índice é a fonte principal e que DEVE haver múltiplos capítulos se o sumário listar múltiplos
+3. **Service Worker para cache persistente de imagens** — Um Service Worker intercepta todas as requisições de imagem do Supabase Storage e as guarda no Cache API do navegador. Na segunda visita, as capas carregam do disco local (0ms de rede). Funciona inclusive offline.
 
-### Problema 2: Capas demorando a carregar
+### Como funciona para o usuário
 
-**Causa raiz**: O `LivroCard` usa `cdnImg()` que redireciona TODAS as imagens pelo proxy `wsrv.nl`. Isso adiciona uma viagem extra desnecessária para capas que já estão no Supabase Storage (URL direta, CDN do Supabase).
-
-**Correção** em `src/lib/cdnImg.ts` e `src/components/biblioteca/LivroCard.tsx`:
-
-1. Criar uma função `directImg()` que detecta URLs do Supabase Storage e as usa diretamente, sem proxy
-2. URLs do Supabase (`akaeinqkhdwzopfsckgg.supabase.co/storage`) já são públicas e rápidas — não precisam do wsrv.nl
-3. Apenas URLs externas (outros domínios) continuam usando o proxy
-4. Remover `loading="lazy"` dos cards visíveis na viewport inicial (primeiros 8-10 livros)
-5. Adicionar `fetchpriority="high"` e `decoding="async"` nas imagens dos cards
+```text
+1ª visita: Dados vêm do Supabase → salva no localStorage + pré-carrega capas
+2ª visita: Renderiza INSTANTANEAMENTE do localStorage → atualiza em background
+           Capas carregam do cache do Service Worker (sem rede)
+```
 
 ### Detalhes Técnicos
 
-**Lógica de detecção para pular proxy:**
-```text
-Se URL contém "supabase.co/storage" → usar URL direta
-Senão → usar wsrv.nl como hoje
-```
+**Cache de dados (localStorage):**
+- Chave: `vacatio_biblioteca_cache`
+- Salva: `{ classicos, lideranca, estudos, foraDaToga, timestamp }`
+- TTL: 1 hora (após isso, ainda mostra o cache mas busca dados novos)
+- No `useEffect`, primeiro lê do localStorage e popula os estados. Depois faz o fetch normal e atualiza.
 
-**Retry de estruturação com mais contexto:**
-```text
-1ª tentativa: primeiras 25 páginas completas + resto truncado a 800 chars
-Se resultado = 1 capítulo e totalPages > 15:
-  2ª tentativa: todas as páginas completas (até limite de tokens)
-Se ainda 1 capítulo: aceitar fallback
-```
+**Pré-carregamento de capas:**
+- Função `preloadCovers(urls: string[])` que carrega em batches de 10
+- Executada após os dados chegarem (tanto do cache quanto do fetch)
+
+**Service Worker (com guards de segurança):**
+- Arquivo `public/sw-cache.js` — intercepta apenas URLs de imagem do Supabase Storage
+- Estratégia: Cache-First (se tem no cache, usa; senão busca e guarda)
+- Registrado apenas em produção (NÃO em iframes do Lovable preview)
+- Guard em `main.tsx`: não registra se `window.self !== window.top` ou se hostname contém `id-preview--`
 
 ### Arquivos a Alterar
 
 | Arquivo | Mudança |
 |---------|---------|
-| `supabase/functions/processar-pdf/index.ts` | `structureWithGemini`: mais contexto inicial, retry se 1 capítulo |
-| `src/lib/cdnImg.ts` | Nova função `directImg()` que pula proxy para URLs Supabase |
-| `src/components/biblioteca/LivroCard.tsx` | Usar `directImg()` em vez de `cdnImg()`, otimizar atributos da tag `<img>` |
-| `src/pages/BibliotecaAdmin.tsx` | Usar `directImg()` nos thumbnails |
+| `src/pages/Biblioteca.tsx` | Ler/salvar dados no localStorage; pré-carregar capas |
+| `public/sw-cache.js` | Novo: Service Worker cache-first para imagens Supabase |
+| `src/main.tsx` | Registrar SW com guards de segurança |
 
