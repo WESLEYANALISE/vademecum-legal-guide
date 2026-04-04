@@ -1,73 +1,91 @@
 
-Diagnóstico confirmado
 
-- Sim, eu sei qual é o problema.
-- O backend está escrevendo status: no banco há registro recente em `cleaning:80`, então o problema não é só “não processou”.
-- O que está quebrando a visualização é a combinação de 3 pontos:
-  1. `src/pages/BibliotecaAdmin.tsx`: o polling é iniciado, mas o `useEffect` limpa o intervalo a cada atualização de `ebookMap` e não zera `pollRef`; depois da primeira atualização ele para de consultar.
-  2. `BibliotecaAdmin` usa só `titulo` como chave e não prioriza o registro mais recente; tentativas antigas (`ready/error`) podem sobrescrever a atual.
-  3. O fluxo de “retomar limpeza” existe em `BibliotecaView`, mas não no admin; se o job travar em `cleaning:*`, ele fica congelado. E hoje o `resumeCleaning()` ainda tem bug com variáveis indefinidas.
+## Inspeção Completa do App Vacatio — Problemas Encontrados
 
-Plano de correção
+### 1. Sistemas de Toast Duplicados (Redundância)
 
-1. Corrigir o polling do Admin
-- Reescrever o efeito de polling para depender de `hasProcessing` e manter o intervalo vivo durante todo o processamento.
-- No cleanup, limpar e também zerar `pollRef.current = null`.
-- Assim a porcentagem continuará atualizando em vez de parar após a primeira leitura.
+O app carrega **dois sistemas de toast ao mesmo tempo** no `App.tsx`:
+- `<Toaster />` — baseado em `@/hooks/use-toast.ts` (sistema custom com reducer)
+- `<Sonner />` — baseado na lib `sonner`
 
-2. Fazer o status aparecer imediatamente ao clicar em “Formatar”
-- Em `handleFormat`, usar o `livro_id` retornado pela Edge Function e injetar localmente o status inicial `ocr`.
-- Resultado: o card já troca para progresso logo após o clique, sem esperar a próxima rodada de polling.
+Nenhuma página ou componente usa o `useToast()` custom — **todas usam `toast` do sonner**. O `<Toaster />` e todo o sistema em `src/hooks/use-toast.ts` + `src/components/ui/toaster.tsx` + `src/components/ui/use-toast.ts` são código morto.
 
-3. Tornar o mapeamento de status determinístico
-- Em `refreshEbooks`, buscar também `created_at` e ordenar do mais recente para o mais antigo.
-- Ao montar o mapa, manter só o registro mais novo por título normalizado.
-- Isso evita que tentativas antigas com `error`/`ready` escondam o processamento atual.
+**Correção**: Remover `<Toaster />` do `App.tsx` e os 3 arquivos do sistema custom de toast.
 
-4. Levar o auto-resume também para `BibliotecaAdmin`
-- Reaproveitar a lógica já existente em `src/components/estudar/BibliotecaView.tsx`.
-- Se um livro ficar tempo demais no mesmo `cleaning:*`, disparar `action: "resume"` automaticamente.
-- Isso resolve o caso “começa e depois para”.
+---
 
-5. Corrigir a Edge Function de retomada
-- Em `supabase/functions/processar-pdf/index.ts`, remover/corrigir o log quebrado de `resumeCleaning()` que usa variáveis inexistentes.
-- Garantir que a retomada finalize com `ready` ou `error`, nunca falhe silenciosamente.
-- Adicionar logs finais mais claros para confirmar quando a retomada concluiu.
+### 2. `sonner.tsx` importa `next-themes` (biblioteca inexistente)
 
-6. Ajustar o restante do app para reconhecer todos os estados intermediários
-- Em `src/pages/Biblioteca.tsx`, o “modo dinâmico” hoje só entende `processing`.
-- Atualizar para também tratar `ocr`, `structuring` e `cleaning:*` como “em processamento”, evitando duplicar formatações.
+O `src/components/ui/sonner.tsx` importa `useTheme` de `next-themes`, mas o app usa um `useTheme` custom em `src/hooks/useTheme.tsx`. O `next-themes` provavelmente funciona porque está como dependência instalada, mas é **desnecessário e semanticamente errado** — o tema real do app (paleta vinho/marfim) não é comunicado ao Sonner.
 
-Arquivos a alterar
+**Correção**: Substituir a importação de `next-themes` pelo `useTheme` do próprio projeto ou simplesmente fixar o tema como `"light"`.
 
-- `src/pages/BibliotecaAdmin.tsx`
-  - polling robusto
-  - status otimista após clique
-  - deduplicação por registro mais recente
-  - auto-resume de jobs travados
-- `src/components/estudar/BibliotecaView.tsx`
-  - opcionalmente extrair helper compartilhado de status/resume
-- `src/pages/Biblioteca.tsx`
-  - reconhecer todos os status intermediários no “modo dinâmico”
-- `supabase/functions/processar-pdf/index.ts`
-  - corrigir `resumeCleaning()`
-  - reforçar logs e finalização
+---
 
-Detalhes técnicos
+### 3. Página Órfã: `GerarVideo.tsx`
 
-```text
-Clique em "Formatar"
-  → processar-pdf retorna livro_id
-  → Admin já marca localmente como ocr (10%)
-  → polling contínuo busca status mais recente
-  → ocr → structuring → cleaning:10/50/80 → ready
-  → se travar em cleaning:* por 30s, Admin chama resume
-```
+O arquivo `src/pages/GerarVideo.tsx` existe mas **não tem rota no `App.tsx`** e nenhum componente importa ou navega para ele. É código morto.
 
-Critérios de aceite
+**Correção**: Remover `src/pages/GerarVideo.tsx` e os 6 arquivos `.asset.json` em `src/assets/videos/`.
 
-- Ao clicar em “Formatar”, o card troca imediatamente de botão para progresso.
-- A porcentagem não some após a primeira atualização.
-- Livros repetidos/tentativas antigas não sobrescrevem o status atual.
-- Se travar em `cleaning:*`, o Admin retoma sozinho.
-- No “modo dinâmico”, o usuário vê “ainda formatando” para qualquer status intermediário.
+---
+
+### 4. Segurança: 37 Políticas RLS com `USING (true)` para INSERT/UPDATE/DELETE
+
+O linter do Supabase encontrou **37 tabelas com RLS policies excessivamente permissivas** — permitindo que qualquer usuário autenticado insira, atualize ou delete dados sem restrição. Isso inclui tabelas sensíveis como `biblioteca_livros`, `study_sessions`, `profiles`, etc.
+
+**Risco**: Qualquer usuário autenticado pode modificar dados de outros usuários.
+
+**Correção**: Revisar as policies e restringir INSERT/UPDATE/DELETE com `auth.uid() = user_id` onde aplicável.
+
+---
+
+### 5. Segurança: Proteção contra Senhas Vazadas Desabilitada
+
+O Supabase reporta que a verificação de senhas vazadas (HaveIBeenPwned) está desativada.
+
+**Correção**: Ativar em Dashboard > Auth > Settings.
+
+---
+
+### 6. Materialized View Exposta na API
+
+Uma materialized view está acessível via API REST pública sem necessidade. Pode expor dados internos.
+
+**Correção**: Remover da API ou adicionar RLS.
+
+---
+
+### 7. Preload de `brasaoImg` no Escopo Global
+
+O `App.tsx` cria um `new Image()` no escopo global para pré-carregar `brasao-republica.png`. Isso funciona, mas o `decoding = 'sync'` força o browser a decodificar sincronamente — pode travar a thread principal em dispositivos lentos.
+
+**Correção**: Mudar para `decoding = 'async'` ou remover.
+
+---
+
+### Resumo de Prioridades
+
+| # | Problema | Severidade | Impacto |
+|---|----------|-----------|---------|
+| 1 | Toast duplicado (código morto) | Baixa | Performance/bundle |
+| 2 | `next-themes` incorreto no sonner | Média | Tema inconsistente |
+| 3 | `GerarVideo.tsx` órfão | Baixa | Bundle desnecessário |
+| 4 | RLS permissiva em 37 tabelas | Alta | Segurança |
+| 5 | Senhas vazadas desabilitado | Média | Segurança |
+| 6 | Materialized view na API | Média | Segurança |
+| 7 | `decoding: sync` no preload | Baixa | Performance |
+
+### Arquivos a Alterar
+
+| Arquivo | Ação |
+|---------|------|
+| `src/App.tsx` | Remover import/uso de `<Toaster />` |
+| `src/components/ui/sonner.tsx` | Substituir `next-themes` |
+| `src/hooks/use-toast.ts` | Deletar |
+| `src/components/ui/toaster.tsx` | Deletar |
+| `src/components/ui/use-toast.ts` | Deletar |
+| `src/pages/GerarVideo.tsx` | Deletar |
+| `src/assets/videos/*.asset.json` (6 arquivos) | Deletar |
+| Supabase RLS policies | Migration para restringir as 37 policies |
+
