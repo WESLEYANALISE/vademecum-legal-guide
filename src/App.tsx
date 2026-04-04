@@ -4,7 +4,6 @@ import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-route
 
 import PageTransition from "@/components/PageTransition";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
@@ -67,7 +66,7 @@ const queryClient = new QueryClient({
 
 const preloadImage = new Image();
 preloadImage.src = brasaoImg;
-preloadImage.decoding = 'sync';
+preloadImage.decoding = 'async';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -169,7 +168,6 @@ const App = () => (
       <AuthProvider>
         <ThemeProvider>
           <TooltipProvider>
-            <Toaster />
             <Sonner />
             <AnimatedRoutes />
           </TooltipProvider>
