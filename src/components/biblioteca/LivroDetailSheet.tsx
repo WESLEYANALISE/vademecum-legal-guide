@@ -2,7 +2,7 @@ import { ArrowLeft, BookOpen, Download, FileText, Smartphone } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { LivroUnificado } from './LivroCard';
-import { cdnImg } from '@/lib/cdnImg';
+import { directImg } from '@/lib/cdnImg';
 
 export type ReadMode = 'fliphtml5' | 'vertical' | 'dinamico';
 
@@ -21,7 +21,7 @@ function extractDriveFileId(url: string): string | null {
 const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProps) => {
   if (!livro && !open) return null;
 
-  const capaUrl = livro?.capa ? cdnImg(livro.capa, 400) : '';
+  const capaUrl = livro?.capa ? directImg(livro.capa, 400) : '';
   const hasFliphtml5 = !!livro?.link;
   const hasDrivePreview = !!livro?.download && !!extractDriveFileId(livro.download);
 

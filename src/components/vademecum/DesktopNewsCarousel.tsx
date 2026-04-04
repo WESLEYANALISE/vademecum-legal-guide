@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { getNoticiasCache, prefetchNoticias, type Noticia } from '@/services/noticiasService';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cdnImg } from '@/lib/cdnImg';
+import { directImg } from '@/lib/cdnImg';
 
 const SkeletonCards = () => (
   <div className="relative bg-card/50 border-b border-border">
@@ -114,7 +114,7 @@ const DesktopNewsCarousel = () => {
             >
               <div className="relative h-[120px] overflow-hidden news-cover-shine">
                 <img
-                  src={cdnImg(noticia.imagem_url!, 520)}
+                  src={directImg(noticia.imagem_url!, 520)}
                   alt={noticia.titulo}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   loading="lazy"

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { getNoticiasCache, prefetchNoticias, type Noticia } from '@/services/noticiasService';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cdnImg } from '@/lib/cdnImg';
+import { directImg } from '@/lib/cdnImg';
 
 const DesktopNewsSidebar = () => {
   const navigate = useNavigate();
@@ -70,7 +70,7 @@ const DesktopNewsSidebar = () => {
             >
               <div className="relative w-[90px] h-[70px] shrink-0 overflow-hidden rounded-l-lg">
                 <img
-                  src={cdnImg(noticia.imagem_url!, 200)}
+                  src={directImg(noticia.imagem_url!, 200)}
                   alt={noticia.titulo}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   loading="lazy"
