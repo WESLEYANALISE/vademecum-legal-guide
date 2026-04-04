@@ -1,35 +1,36 @@
 
 
-## Plano: Corrigir Scraper da Resenha Diária
+## Plano: Garantir Extração e Preservação de Imagens no E-book
 
-### Problema
+### Diagnóstico
 
-O `fetchPage` no scraper aceita qualquer HTML > 200 chars como válido. O Planalto retorna ~6142 chars de navegação/menu mesmo sem o conteúdo real (que é carregado via JS). O parser então não encontra nenhum ato.
+O pipeline já extrai imagens corretamente durante o OCR (Mistral com `include_image_base64: true`), faz upload ao Storage e substitui as referências no markdown. O leitor também renderiza imagens via ReactMarkdown.
 
-Além disso, não existe cron job configurado para rodar o scraper automaticamente.
+**Porém há dois riscos identificados:**
+
+1. **Gemini pode remover imagens**: O prompt do `cleanEdgePages` instrui a IA a formatar o texto mas não menciona preservar imagens (`![...](url)`). O Gemini pode interpretar como artefato e remover.
+
+2. **Imagens sem referência no markdown**: Caso o Mistral retorne uma imagem cujo `img.id` não aparece no markdown (ex: imagem embutida sem referência), ela é salva no Storage e na tabela `biblioteca_imagens` mas **não é inserida no markdown** — fica invisível no leitor.
 
 ### Solução
 
-**1. Aumentar threshold de validação do HTML**
+**1. Proteger imagens no prompt do Gemini** — Adicionar instrução explícita no prompt de limpeza:
 
-Mudar de 200 para **15.000 chars** no `fetchPage`. O HTML com conteúdo real tem 30-100K+ chars. Se o fetch direto retornar menos que isso, tentar Browserless (que renderiza JS).
+```
+PRESERVAR INTACTO (não alterar, não remover):
+- Todas as referências a imagens: ![...](url)
+- Tabelas
+```
 
-**2. Forçar Browserless como fallback mais agressivo**
-
-Quando o HTML direto for menor que 15K, não aceitar — ir direto para Browserless que renderiza o JavaScript e obtém o conteúdo completo.
-
-**3. Adicionar cron job**
-
-Configurar no `config.toml` para rodar o scraper 2x por dia (8h e 18h, horário de Brasília = 11:00 e 21:00 UTC).
+**2. Inserir imagens órfãs no markdown** — Quando uma imagem é extraída mas seu `img.id` não aparece no markdown da página, adicionar `![Imagem](url)` ao final do markdown daquela página.
 
 ### Arquivos a alterar
 
 | Arquivo | Mudança |
 |---------|---------|
-| `supabase/functions/scrape-resenha-diaria/index.ts` | Aumentar threshold de 200 → 15000 no `fetchPage` |
-| `supabase/config.toml` | Adicionar cron job para `scrape-resenha-diaria` 2x/dia |
+| `supabase/functions/processar-pdf/index.ts` | (1) No prompt de `cleanEdgePages`, adicionar regra para preservar `![...](url)`. (2) No loop de extração de imagens (linha ~462), se `img.id` não existe no markdown, append a referência ao final da página. |
 
 ### Resultado
 
-Após a correção, o scraper vai detectar que o fetch direto retorna HTML incompleto, usar Browserless para obter o conteúdo real, e parsear as leis de abril corretamente. O cron garante execução automática.
+Todas as imagens extraídas pelo OCR serão visíveis no modo dinâmico — tanto as que já tinham referência no markdown quanto as que eram apenas embutidas no PDF sem referência textual.
 
