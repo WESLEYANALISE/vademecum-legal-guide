@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { directImg } from '@/lib/cdnImg';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Library, ChevronRight, Search, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
@@ -102,6 +102,7 @@ function makeLivroKey(livro: LivroUnificado): string {
 
 const Biblioteca = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [classicos, setClassicos] = useState<LivroUnificado[]>([]);
@@ -135,6 +136,27 @@ const Biblioteca = () => {
         if (data) setFavoriteKeys(new Set(data.map(d => d.livro_key)));
       });
   }, [user]);
+
+  // Auto-open book from ?livro=ID query param
+  useEffect(() => {
+    const livroId = searchParams.get('livro');
+    if (!livroId) return;
+    // Clear param so it doesn't re-trigger
+    setSearchParams({}, { replace: true });
+
+    (async () => {
+      const { data: full } = await supabase
+        .from('biblioteca_livros')
+        .select('id,titulo,total_paginas,ultima_pagina,conteudo,estrutura_leitura')
+        .eq('id', livroId)
+        .single();
+      if (full) {
+        setEbookData(full);
+      } else {
+        toast.error('Livro não encontrado');
+      }
+    })();
+  }, [searchParams]);
 
   const toggleFavorite = useCallback(async (livro: LivroUnificado, e: React.MouseEvent) => {
     e.stopPropagation();
