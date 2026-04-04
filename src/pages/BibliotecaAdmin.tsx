@@ -23,14 +23,29 @@ interface AdminLivro {
 interface EbookInfo {
   id: string;
   status: string;
+  createdAt: string;
+}
+
+function normalizeLivroKey(titulo: string): string {
+  return titulo.toLowerCase().trim();
+}
+
+function isProcessingStatus(status?: string | null): boolean {
+  return !!status && (
+    status === 'processing' ||
+    status === 'ocr' ||
+    status === 'structuring' ||
+    status.startsWith('cleaning:')
+  );
 }
 
 function statusToPercent(status: string): number {
+  if (status === 'processing') return 5;
   if (status === 'ocr') return 10;
   if (status === 'structuring') return 30;
   if (status.startsWith('cleaning:')) {
     const n = parseInt(status.split(':')[1], 10);
-    return 40 + Math.round(n * 0.5); // cleaning:10→45, cleaning:50→65, cleaning:80→80
+    return Number.isNaN(n) ? 40 : 40 + Math.round(n * 0.5); // cleaning:10→45, cleaning:50→65, cleaning:80→80
   }
   if (status === 'ready') return 100;
   if (status === 'error') return 0;
@@ -38,6 +53,7 @@ function statusToPercent(status: string): number {
 }
 
 function statusLabel(status: string): string {
+  if (status === 'processing') return 'Preparando processamento...';
   if (status === 'ocr') return 'OCR em andamento...';
   if (status === 'structuring') return 'Estruturando capítulos...';
   if (status.startsWith('cleaning:')) return 'Limpando texto...';
@@ -54,27 +70,89 @@ export default function BibliotecaAdmin() {
   const [formatting, setFormatting] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState<string>('all');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const currentUserIdRef = useRef<string | null>(null);
+  const lastStatusRef = useRef<Record<string, { status: string; since: number }>>({});
 
-  const refreshEbooks = useCallback(async () => {
+  const refreshEbooks = useCallback(async (userIdOverride?: string) => {
+    const userId = userIdOverride ?? currentUserIdRef.current;
+
+    if (!userId) {
+      const emptyMap = new Map<string, EbookInfo>();
+      setEbookMap(emptyMap);
+      return emptyMap;
+    }
+
     const { data } = await supabase
       .from('biblioteca_livros')
-      .select('id,titulo,status');
-    if (data) {
-      const map = new Map<string, EbookInfo>();
-      data.forEach(b => map.set(b.titulo.toLowerCase().trim(), { id: b.id, status: b.status }));
-      setEbookMap(map);
+      .select('id,titulo,status,created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    const map = new Map<string, EbookInfo>();
+    data?.forEach((book) => {
+      const key = normalizeLivroKey(book.titulo ?? '');
+      if (!key || map.has(key)) return;
+      map.set(key, { id: book.id, status: book.status, createdAt: book.created_at });
+    });
+
+    setEbookMap(map);
+    return map;
+  }, []);
+
+  const autoResumeStalledJobs = useCallback(async (map: Map<string, EbookInfo>) => {
+    const now = Date.now();
+    const activeIds = new Set<string>();
+
+    for (const ebook of map.values()) {
+      activeIds.add(ebook.id);
+
+      if (!ebook.status.startsWith('cleaning:')) {
+        delete lastStatusRef.current[ebook.id];
+        continue;
+      }
+
+      const previous = lastStatusRef.current[ebook.id];
+
+      if (previous && previous.status === ebook.status && now - previous.since > 30000) {
+        try {
+          const { error } = await supabase.functions.invoke('processar-pdf', {
+            body: { action: 'resume', livro_id: ebook.id },
+          });
+
+          if (error) throw error;
+        } catch {
+          // retry on next stalled window
+        }
+
+        lastStatusRef.current[ebook.id] = { status: ebook.status, since: now };
+        continue;
+      }
+
+      if (!previous || previous.status !== ebook.status) {
+        lastStatusRef.current[ebook.id] = { status: ebook.status, since: now };
+      }
     }
+
+    Object.keys(lastStatusRef.current).forEach((id) => {
+      if (!activeIds.has(id)) delete lastStatusRef.current[id];
+    });
   }, []);
 
   useEffect(() => {
     const load = async () => {
-      const [c, l, e, f] = await Promise.all([
+      const [authResult, c, l, e, f] = await Promise.all([
+        supabase.auth.getUser(),
         supabase.from('biblioteca_classicos').select('id,livro,autor,imagem,download,link'),
         supabase.from('biblioteca_lideranca').select('id,livro,autor,imagem,download,link'),
         supabase.from('biblioteca_estudos').select('id,tema,area,capa_livro,download,link'),
         supabase.from('biblioteca_fora_da_toga').select('id,livro,autor,capa_livro,download,link'),
       ]);
+
+      const userId = authResult.data.user?.id ?? null;
+      setCurrentUserId(userId);
+      currentUserIdRef.current = userId;
 
       const all: AdminLivro[] = [];
       c.data?.forEach(r => all.push({ id: r.id, titulo: r.livro ?? '', autor: r.autor, capa: r.imagem, download: r.download, link: r.link, categoria: 'Clássicos' }));
@@ -83,27 +161,52 @@ export default function BibliotecaAdmin() {
       f.data?.forEach(r => all.push({ id: r.id, titulo: r.livro ?? '', autor: r.autor, capa: r.capa_livro, download: r.download, link: r.link, categoria: 'Fora da Toga' }));
 
       setLivros(all);
-      await refreshEbooks();
+
+      if (userId) {
+        const latestMap = await refreshEbooks(userId);
+        await autoResumeStalledJobs(latestMap);
+      }
+
       setLoading(false);
     };
     load();
   }, []);
 
+  const hasProcessing = useMemo(
+    () => Array.from(ebookMap.values()).some((ebook) => isProcessingStatus(ebook.status)),
+    [ebookMap]
+  );
+
   // Poll for progress when there are processing books
   useEffect(() => {
-    const hasProcessing = Array.from(ebookMap.values()).some(e => e.status !== 'ready' && e.status !== 'error');
+    if (!currentUserId || !hasProcessing) {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+      return;
+    }
 
-    if (hasProcessing && !pollRef.current) {
-      pollRef.current = setInterval(refreshEbooks, 3000);
-    } else if (!hasProcessing && pollRef.current) {
-      clearInterval(pollRef.current);
-      pollRef.current = null;
+    const tick = async () => {
+      const latestMap = await refreshEbooks(currentUserId);
+      await autoResumeStalledJobs(latestMap);
+    };
+
+    void tick();
+
+    if (!pollRef.current) {
+      pollRef.current = setInterval(() => {
+        void tick();
+      }, 3000);
     }
 
     return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
     };
-  }, [ebookMap, refreshEbooks]);
+  }, [autoResumeStalledJobs, currentUserId, hasProcessing, refreshEbooks]);
 
   const handleFormat = async (livro: AdminLivro) => {
     if (!livro.download) {
@@ -117,13 +220,33 @@ export default function BibliotecaAdmin() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error('Faça login primeiro'); return; }
 
-      const { error } = await supabase.functions.invoke('processar-pdf', {
+      setCurrentUserId(user.id);
+      currentUserIdRef.current = user.id;
+
+      const { data, error } = await supabase.functions.invoke('processar-pdf', {
         body: { url: livro.download, titulo: livro.titulo, autor: livro.autor || undefined, capa_url: livro.capa || undefined },
       });
 
       if (error) throw error;
+
+      const optimisticId = data?.livro_id ?? getEbookInfo(livro.titulo)?.id ?? null;
+      setEbookMap(prev => {
+        const next = new Map(prev);
+        next.set(normalizeLivroKey(livro.titulo), {
+          id: optimisticId ?? `pending-${livro.categoria}-${livro.id}`,
+          status: 'ocr',
+          createdAt: new Date().toISOString(),
+        });
+        return next;
+      });
+
+      if (optimisticId) {
+        lastStatusRef.current[optimisticId] = { status: 'ocr', since: Date.now() };
+      }
+
       toast.success(`Formatação iniciada: ${livro.titulo}`);
-      await refreshEbooks();
+      const latestMap = await refreshEbooks(user.id);
+      await autoResumeStalledJobs(latestMap);
     } catch (err: any) {
       toast.error(`Erro: ${err.message}`);
     } finally {
@@ -141,7 +264,7 @@ export default function BibliotecaAdmin() {
     return list;
   }, [livros, filterCat, search]);
 
-  const getEbookInfo = (titulo: string) => ebookMap.get(titulo.toLowerCase().trim());
+  const getEbookInfo = (titulo: string) => ebookMap.get(normalizeLivroKey(titulo));
   const cats = ['all', 'Clássicos', 'Liderança', 'Estudos', 'Fora da Toga'];
 
   return (
@@ -186,7 +309,7 @@ export default function BibliotecaAdmin() {
               const capaUrl = livro.capa ? cdnImg(livro.capa, 200) : '';
               const ebook = getEbookInfo(livro.titulo);
               const isFormatting = formatting.has(livro.id);
-              const isProcessing = ebook && ebook.status !== 'ready' && ebook.status !== 'error';
+              const isProcessing = !!ebook && isProcessingStatus(ebook.status);
               const percent = ebook ? statusToPercent(ebook.status) : 0;
 
               return (

@@ -84,6 +84,15 @@ const CATEGORIES = [
   { id: 'fora-da-toga', label: 'Fora da Toga', desc: 'Leituras complementares', img: capaForaDaToga },
 ];
 
+function isDynamicProcessingStatus(status?: string | null): boolean {
+  return !!status && (
+    status === 'processing' ||
+    status === 'ocr' ||
+    status === 'structuring' ||
+    status.startsWith('cleaning:')
+  );
+}
+
 const Biblioteca = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -192,8 +201,9 @@ const Biblioteca = () => {
       // Check if ebook exists in biblioteca_livros
       const { data } = await supabase
         .from('biblioteca_livros')
-        .select('id,status')
+          .select('id,status,created_at')
         .ilike('titulo', livro.titulo.trim())
+          .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -204,7 +214,7 @@ const Biblioteca = () => {
           .eq('id', data.id)
           .single();
         if (full) setEbookData(full);
-      } else if (data && data.status === 'processing') {
+        } else if (isDynamicProcessingStatus(data?.status)) {
         toast.info('Este livro ainda está sendo formatado...');
       } else {
         // Start formatting
