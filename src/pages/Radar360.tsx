@@ -136,64 +136,65 @@ const Radar360 = () => {
   const allRecentes = useMemo(() => {
     const items: UnifiedItem[] = [];
 
-    // From resenha (DOU)
+    // Primary source: resenha_diaria (has correct data_dou dates)
     for (const item of resenha) {
       items.push({
         id: `r-${item.id}`,
         tipo: item.tipo_ato,
         titulo: cleanResenhaTitle(item.numero_ato),
         ementa: normalizeCase(item.ementa),
-        data: item.data_publicacao,
+        data: item.data_dou || '',
         dataDisplay: item.data_publicacao,
         source: 'resenha',
       });
     }
 
-    // From leis ordinárias (skip incomplete records)
+    // From leis ordinárias — only add if NOT already present in resenha
+    const resenhaKeys = new Set(items.map(i => i.titulo.toLowerCase().replace(/\s+/g, '')));
     for (const lei of leisRecentes) {
       if (!lei.data_publicacao && !lei.ementa) continue;
+      const key = normalizeCase(lei.numero_lei).toLowerCase().replace(/\s+/g, '');
+      if (resenhaKeys.has(key)) continue;
+      // Parse date dd.mm.yyyy to yyyy-mm-dd for sorting
+      const parts = (lei.data_publicacao || '').match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+      const isoDate = parts ? `${parts[3]}-${parts[2].padStart(2,'0')}-${parts[1].padStart(2,'0')}` : '';
       items.push({
         id: `l-${lei.id}`,
         tipo: 'Lei',
         titulo: normalizeCase(lei.numero_lei),
         ementa: normalizeCase(lei.ementa),
-        data: lei.data_publicacao || '',
+        data: isoDate,
         dataDisplay: lei.data_publicacao || '',
         source: 'lei',
       });
     }
 
-    // From decretos (skip incomplete records)
+    // From decretos — only add if NOT already present
+    const allKeys = new Set(items.map(i => i.titulo.toLowerCase().replace(/\s+/g, '')));
     for (const dec of decretosRecentes) {
       if (!dec.data_publicacao && !dec.ementa) continue;
+      const key = normalizeCase(dec.numero_lei).toLowerCase().replace(/\s+/g, '');
+      if (allKeys.has(key)) continue;
+      const parts = (dec.data_publicacao || '').match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+      const isoDate = parts ? `${parts[3]}-${parts[2].padStart(2,'0')}-${parts[1].padStart(2,'0')}` : '';
       items.push({
         id: `d-${dec.id}`,
         tipo: 'Decreto',
         titulo: normalizeCase(dec.numero_lei),
         ementa: normalizeCase(dec.ementa),
-        data: dec.data_publicacao || '',
+        data: isoDate,
         dataDisplay: dec.data_publicacao || '',
         source: 'decreto',
       });
     }
 
-    // Deduplicate by titulo similarity (resenha may repeat leis/decretos)
-    const seen = new Set<string>();
-    const deduped: UnifiedItem[] = [];
-    for (const item of items) {
-      const key = item.titulo.toLowerCase().replace(/\s+/g, '');
-      if (seen.has(key)) continue;
-      seen.add(key);
-      deduped.push(item);
-    }
+    // Filter items without valid 2026 dates (avoid showing historical dates)
+    const filtered = items.filter(i => i.data && i.data.startsWith('2026'));
 
-    // Filter out items without a date
-    const filtered = deduped.filter(i => i.dataDisplay && i.dataDisplay !== '');
-
-    // Group by date
+    // Group by ISO date
     const map = new Map<string, UnifiedItem[]>();
     for (const item of filtered) {
-      const key = item.dataDisplay;
+      const key = item.data;
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(item);
     }
