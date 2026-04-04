@@ -399,7 +399,7 @@ const Biblioteca = () => {
               >
                 <div className="w-20 flex-shrink-0 relative overflow-hidden">
                   {areaImg ? (
-                    <img src={areaImg} alt={section.label} className="w-full h-full object-cover" loading="lazy" />
+                    <img src={areaImg} alt={section.label} width={80} height={100} className="w-full h-full object-cover" decoding="async" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/10" />
                   )}
