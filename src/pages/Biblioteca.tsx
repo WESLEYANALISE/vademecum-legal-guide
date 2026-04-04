@@ -111,7 +111,41 @@ const Biblioteca = () => {
   const [readerTitle, setReaderTitle] = useState('');
   const [ebookData, setEbookData] = useState<any>(null);
 
+  // Preload cover images in batches
+  const preloadCovers = (livros: LivroUnificado[]) => {
+    const urls = livros.map(l => l.capa).filter(Boolean) as string[];
+    let i = 0;
+    const batch = () => {
+      const slice = urls.slice(i, i + 10);
+      if (slice.length === 0) return;
+      slice.forEach(u => { const img = new Image(); img.src = directImg(u, 300); });
+      i += 10;
+      setTimeout(batch, 100);
+    };
+    batch();
+  };
+
   useEffect(() => {
+    const CACHE_KEY = 'vacatio_biblioteca_cache';
+    const TTL = 60 * 60 * 1000; // 1 hour
+
+    // 1) Restore from localStorage instantly
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (cached.classicos) setClassicos(cached.classicos);
+        if (cached.lideranca) setLideranca(cached.lideranca);
+        if (cached.estudos) setEstudos(cached.estudos);
+        if (cached.foraDaToga) setForaDaToga(cached.foraDaToga);
+        // Preload covers from cache
+        preloadCovers([...cached.classicos || [], ...cached.lideranca || [], ...cached.estudos || [], ...cached.foraDaToga || []]);
+        // If cache is fresh, skip network fetch
+        if (Date.now() - (cached.timestamp || 0) < TTL) return;
+      }
+    } catch { /* ignore corrupt cache */ }
+
+    // 2) Fetch from Supabase (background update or first load)
     const load = async () => {
       const [c, l, e, f] = await Promise.all([
         supabase.from('biblioteca_classicos').select('id,livro,autor,imagem,sobre,download,link').order('id'),
@@ -120,23 +154,40 @@ const Biblioteca = () => {
         supabase.from('biblioteca_fora_da_toga').select('id,livro,autor,capa_livro,sobre,download,link').order('area').order('id'),
       ]);
 
-      if (c.data) setClassicos(c.data.map(r => ({
+      const newClassicos = c.data?.map(r => ({
         id: r.id, titulo: r.livro ?? '', autor: r.autor, sinopse: r.sobre,
         capa: r.imagem, link: r.link, download: r.download, categoria: 'Clássicos',
-      })));
-      if (l.data) setLideranca(l.data.map(r => ({
+      })) || [];
+      const newLideranca = l.data?.map(r => ({
         id: r.id, titulo: r.livro ?? '', autor: r.autor, sinopse: r.sobre,
         capa: r.imagem, link: r.link, download: r.download, categoria: 'Liderança',
-      })));
-      if (e.data) setEstudos(e.data.map(r => ({
+      })) || [];
+      const newEstudos = e.data?.map(r => ({
         id: r.id, titulo: r.tema ?? '', autor: null, sinopse: r.sobre,
         capa: r.capa_livro, link: r.link, download: r.download, categoria: 'Estudos', area: r.area,
-      })));
-      if (f.data) setForaDaToga(f.data.map(r => ({
+      })) || [];
+      const newForaDaToga = f.data?.map(r => ({
         id: r.id, titulo: r.livro ?? '', autor: r.autor, sinopse: r.sobre,
         capa: r.capa_livro, link: r.link, download: r.download, categoria: 'Fora da Toga',
-      })));
+      })) || [];
+
+      setClassicos(newClassicos);
+      setLideranca(newLideranca);
+      setEstudos(newEstudos);
+      setForaDaToga(newForaDaToga);
       setLoading(false);
+
+      // Save to localStorage
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          classicos: newClassicos, lideranca: newLideranca,
+          estudos: newEstudos, foraDaToga: newForaDaToga,
+          timestamp: Date.now(),
+        }));
+      } catch { /* quota exceeded — ignore */ }
+
+      // Preload covers
+      preloadCovers([...newClassicos, ...newLideranca, ...newEstudos, ...newForaDaToga]);
     };
     load();
   }, []);
