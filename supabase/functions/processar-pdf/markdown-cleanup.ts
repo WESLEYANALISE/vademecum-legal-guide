@@ -160,7 +160,33 @@ export function normalizeOcrMarkdown(markdown: string): string {
     cleanedLines.push(trimmed);
   }
 
-  return collapseBlankLines(cleanedLines).join("\n").trim();
+  // Post-process: ensure markdown tables have separator rows
+  const finalLines = collapseBlankLines(cleanedLines);
+  const withSeparators: string[] = [];
+
+  for (let i = 0; i < finalLines.length; i++) {
+    const line = finalLines[i];
+    const nextLine = finalLines[i + 1] ?? "";
+
+    withSeparators.push(line);
+
+    // If this line is a table row and next line is also a table row (but not a separator),
+    // inject a separator after the first table row (header)
+    if (TABLE_LINE_RE.test(line.trim()) && TABLE_LINE_RE.test(nextLine.trim())) {
+      const isSeparator = /^\|[\s\-:]+\|$/.test(nextLine.trim());
+      // Only inject if no separator exists yet and the previous line wasn't already a table row
+      const prevLine = withSeparators[withSeparators.length - 2]?.trim() ?? "";
+      const prevIsTable = TABLE_LINE_RE.test(prevLine);
+      if (!isSeparator && !prevIsTable) {
+        // Count columns from the header
+        const cols = line.trim().split("|").filter(Boolean).length;
+        const sep = "|" + Array(cols).fill(" --- ").join("|") + "|";
+        withSeparators.push(sep);
+      }
+    }
+  }
+
+  return withSeparators.join("\n").trim();
 }
 
 export function normalizeMarkdownPages(pages: MarkdownPage[]): MarkdownPage[] {
