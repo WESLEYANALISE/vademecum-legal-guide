@@ -55,6 +55,35 @@ interface DisplayPage {
 
 const FONT_SIZES = [14, 16, 18, 20, 22];
 
+/** Ensure markdown tables have separator rows so ReactMarkdown renders them as <table> */
+function fixMarkdownTables(md: string): string {
+  if (!md || !md.includes('|')) return md;
+  const lines = md.split('\n');
+  const result: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    result.push(line);
+
+    // Check if this is a table header row (starts and ends with |)
+    if (/^\|.+\|$/.test(trimmed)) {
+      const nextLine = (lines[i + 1] ?? '').trim();
+      // If next line is also a table row but NOT a separator, inject one
+      if (/^\|.+\|$/.test(nextLine) && !/^\|[\s\-:]+\|$/.test(nextLine)) {
+        // Check previous line isn't already a table row (only add after first/header row)
+        const prevTrimmed = (result[result.length - 2] ?? '').trim();
+        if (!/^\|.+\|$/.test(prevTrimmed)) {
+          const cols = trimmed.split('|').filter(Boolean).length;
+          result.push('|' + Array(cols).fill(' --- ').join('|') + '|');
+        }
+      }
+    }
+  }
+
+  return result.join('\n');
+}
+
 export default function LeitorEbook({ livro, onBack, onUpdateBookmark }: LeitorEbookProps) {
   const [currentPage, setCurrentPage] = useState(0); // will be set after displayPages are built
   const [fontSize, setFontSize] = useState(2);
