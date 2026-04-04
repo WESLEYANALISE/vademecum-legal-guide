@@ -21,7 +21,7 @@ function extractDriveFileId(url: string): string | null {
 const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProps) => {
   if (!livro && !open) return null;
 
-  const capaUrl = livro?.capa ? cdnImg(livro.capa, 400) : '';
+  const capaUrl = livro?.capa ? directImg(livro.capa, 400) : '';
   const hasFliphtml5 = !!livro?.link;
   const hasDrivePreview = !!livro?.download && !!extractDriveFileId(livro.download);
 

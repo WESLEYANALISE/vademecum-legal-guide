@@ -114,7 +114,7 @@ const DesktopNewsCarousel = () => {
             >
               <div className="relative h-[120px] overflow-hidden news-cover-shine">
                 <img
-                  src={cdnImg(noticia.imagem_url!, 520)}
+                  src={directImg(noticia.imagem_url!, 520)}
                   alt={noticia.titulo}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   loading="lazy"
