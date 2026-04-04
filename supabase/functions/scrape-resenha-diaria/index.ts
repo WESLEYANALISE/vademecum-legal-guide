@@ -39,7 +39,7 @@ function normalizeDateToISO(dateStr: string): string {
 }
 
 async function fetchPage(url: string): Promise<string | null> {
-  const MIN_CHARS = 15000;
+  const MIN_CHARS = 10000;
 
   // Strategy 1: Direct fetch with retries
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -84,20 +84,27 @@ async function fetchPage(url: string): Promise<string | null> {
   // Strategy 3: Browserless v2 API
   const key = Deno.env.get("BROWSERLESS_API_KEY");
   if (key) {
-    for (const baseUrl of [
+    const endpoints = [
       `https://production-sfo.browserless.io/content?token=${key}`,
       `https://chrome.browserless.io/content?token=${key}`,
-    ]) {
+    ];
+    for (const baseUrl of endpoints) {
       try {
         console.log(`Trying Browserless: ${baseUrl.split('?')[0]}`);
         const resp = await fetch(baseUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, gotoOptions: { waitUntil: "networkidle2", timeout: 20000 } }),
+          body: JSON.stringify({
+            url,
+            gotoOptions: { waitUntil: "domcontentloaded", timeout: 30000 },
+            waitForTimeout: 8000,
+          }),
         });
         if (resp.ok) {
           const t = await resp.text();
+          console.log(`Browserless response: ${t.length} chars`);
           if (t.length > MIN_CHARS) return t;
+          else console.log(`Browserless too short: ${t.length}`);
         } else {
           console.log(`Browserless ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
         }
@@ -105,14 +112,14 @@ async function fetchPage(url: string): Promise<string | null> {
     }
   }
 
-  // Strategy 4: Google cache
+  // Strategy 4: Archive.org as last resort
   try {
-    const cacheUrl = `https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}`;
-    const resp = await fetch(cacheUrl, {
+    const archiveUrl = `https://web.archive.org/web/2026/${url}`;
+    const resp = await fetch(archiveUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
     });
-    if (resp.ok) { const t = await resp.text(); if (t.length > MIN_CHARS) { console.log(`Google cache OK: ${t.length} chars`); return t; } }
-  } catch (e) { console.log(`Google cache failed: ${e}`); }
+    if (resp.ok) { const t = await resp.text(); if (t.length > MIN_CHARS) { console.log(`Archive OK: ${t.length} chars`); return t; } }
+  } catch (e) { console.log(`Archive failed: ${e}`); }
 
   return null;
 }
