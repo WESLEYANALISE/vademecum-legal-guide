@@ -69,6 +69,7 @@ const CategoriaLegislacao = () => {
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [openArtigo, setOpenArtigo] = useState<ArtigoLei | null>(null);
   const [openFromNovidades, setOpenFromNovidades] = useState(false);
+  const [subcat, setSubcat] = useState('todas');
   const [openModInfo, setOpenModInfo] = useState<import('@/components/vademecum/ArtigoBottomSheet').ModificationInfo | null>(null);
   const [activeTab, setActiveTab] = useState<'art' | 'cap'>('art');
   const [overlayPanel, setOverlayPanel] = useState<'fav' | 'playlist' | 'novidades' | 'anotacoes' | 'radar' | null>(null);
