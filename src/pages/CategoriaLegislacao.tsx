@@ -297,14 +297,20 @@ const CategoriaLegislacao = () => {
   }, [decretos, searchDecretos]);
 
   const filteredLeis = useMemo(() => {
-    if (!searchQuery) return leis;
+    let result = leis;
+    // Apply subcategory filter for lei-especial
+    if (tipo === 'lei-especial' && subcat !== 'todas') {
+      const subcatObj = LEI_ESPECIAL_SUBCATEGORIAS.find(s => s.id === subcat);
+      if (subcatObj) result = result.filter(lei => subcatObj.ids.has(lei.id));
+    }
+    if (!searchQuery) return result;
     const q = searchQuery.toLowerCase();
-    return leis.filter(lei =>
+    return result.filter(lei =>
       lei.nome.toLowerCase().includes(q) ||
       lei.sigla.toLowerCase().includes(q) ||
       lei.descricao.toLowerCase().includes(q)
     );
-  }, [leis, searchQuery]);
+  }, [leis, searchQuery, tipo, subcat]);
 
   useEffect(() => {
     if (!selectedLeiId || !selectedTabelaNome) return;
