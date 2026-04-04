@@ -505,6 +505,9 @@ async function detectarReferencias(
           updated++;
           results.push({ ato: item.numero_ato, chars: texto.length, explicacao: !!updateData.explicacao });
 
+          // Detect references to existing codes and create alteração entries
+          await detectarReferencias(item.ementa, texto, item.numero_ato, supabase);
+
           // Pre-generate per-article explanations and cache in artigo_ai_cache
           if (geminiKey) {
             await gerarExplicacoesArtigos(item.id, texto, item.ementa, geminiKey, supabase);
