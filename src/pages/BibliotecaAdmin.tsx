@@ -306,7 +306,7 @@ export default function BibliotecaAdmin() {
         ) : (
           <div className="space-y-2">
             {filtered.map((livro) => {
-              const capaUrl = livro.capa ? cdnImg(livro.capa, 200) : '';
+              const capaUrl = livro.capa ? directImg(livro.capa, 200) : '';
               const ebook = getEbookInfo(livro.titulo);
               const isFormatting = formatting.has(livro.id);
               const isProcessing = !!ebook && isProcessingStatus(ebook.status);

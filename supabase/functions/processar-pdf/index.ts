@@ -608,11 +608,12 @@ async function structureWithGemini(
   const prompt = `Você é um organizador de livros digitais. Recebeu o conteúdo OCR de um PDF com ${totalPages} páginas.
 
 TAREFA:
-1. Identifique o SUMÁRIO/ÍNDICE do livro (geralmente nas primeiras páginas)
-2. Use o sumário como referência principal para identificar os capítulos E subcapítulos/seções
-3. Confirme onde cada capítulo/seção realmente começa no conteúdo
-4. Organize TODAS as ${totalPages} páginas em capítulos, sem pular nenhuma
-5. Identifique páginas DESCARTÁVEIS e a página onde o conteúdo principal começa
+1. Identifique o SUMÁRIO/ÍNDICE do livro (geralmente nas primeiras 20-25 páginas)
+2. Use o sumário como referência PRINCIPAL para identificar os capítulos E subcapítulos/seções
+3. Se o sumário listar múltiplos capítulos, você DEVE criar múltiplos capítulos — NUNCA reduza a 1 só
+4. Confirme onde cada capítulo/seção realmente começa no conteúdo
+5. Organize TODAS as ${totalPages} páginas em capítulos, sem pular nenhuma
+6. Identifique páginas DESCARTÁVEIS e a página onde o conteúdo principal começa
 
 REGRAS IMPORTANTES:
 - TODAS as páginas de 1 a ${totalPages} devem estar cobertas (sem buracos nem sobreposições)
@@ -623,6 +624,7 @@ REGRAS IMPORTANTES:
 - Use TODOS os níveis de divisão encontrados no sumário
 - NÃO reescreva o conteúdo, apenas organize
 - Se não encontrar sumário, divida por títulos/headings visíveis no texto
+- Para livros com mais de 15 páginas, é MUITO IMPROVÁVEL ter apenas 1 capítulo. Procure melhor!
 
 PÁGINAS DESCARTÁVEIS (skip_pages):
 Marque como descartáveis páginas que contêm APENAS:
