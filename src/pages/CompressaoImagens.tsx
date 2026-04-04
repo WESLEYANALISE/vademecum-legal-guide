@@ -26,6 +26,9 @@ interface CompressionResult {
   newPath?: string;
 }
 
+const LS_FILES_KEY = 'compressao-img-files';
+const LS_RESULTS_KEY = 'compressao-img-results';
+
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
@@ -34,17 +37,53 @@ function formatBytes(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
+function loadCachedFiles(): { files: StorageFile[]; totalSize: number } | null {
+  try {
+    const raw = localStorage.getItem(LS_FILES_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+function loadCachedResults(): Map<string, CompressionResult> {
+  try {
+    const raw = localStorage.getItem(LS_RESULTS_KEY);
+    if (!raw) return new Map();
+    const arr: [string, CompressionResult][] = JSON.parse(raw);
+    return new Map(arr);
+  } catch { return new Map(); }
+}
+
+function saveCachedResults(results: Map<string, CompressionResult>) {
+  localStorage.setItem(LS_RESULTS_KEY, JSON.stringify(Array.from(results.entries())));
+}
+
 export default function CompressaoImagens() {
   const navigate = useNavigate();
-  const [files, setFiles] = useState<StorageFile[]>([]);
-  const [totalSize, setTotalSize] = useState(0);
-  const [loading, setLoading] = useState(true);
+
+  // Load cached data on mount
+  const cachedFiles = useRef(loadCachedFiles());
+  const cachedResults = useRef(loadCachedResults());
+
+  const [files, setFiles] = useState<StorageFile[]>(cachedFiles.current?.files || []);
+  const [totalSize, setTotalSize] = useState(cachedFiles.current?.totalSize || 0);
+  const [loading, setLoading] = useState(!cachedFiles.current);
   const [search, setSearch] = useState('');
   const [filterBucket, setFilterBucket] = useState('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'done'>('all');
   const [compressing, setCompressing] = useState<Set<string>>(new Set());
-  const [results, setResults] = useState<Map<string, CompressionResult>>(new Map());
+  const [results, setResults] = useState<Map<string, CompressionResult>>(cachedResults.current);
   const [batchRunning, setBatchRunning] = useState(false);
   const batchCancelRef = useRef(false);
+
+  // If no cache, fetch on mount
+  useEffect(() => {
+    if (!cachedFiles.current) {
+      loadFiles();
+    } else {
+      setLoading(false);
+    }
+  }, []);
 
   const loadFiles = async () => {
     setLoading(true);
@@ -53,16 +92,17 @@ export default function CompressaoImagens() {
         body: { action: 'list' },
       });
       if (error) throw error;
-      setFiles(data.files || []);
-      setTotalSize(data.totalSize || 0);
+      const f = data.files || [];
+      const ts = data.totalSize || 0;
+      setFiles(f);
+      setTotalSize(ts);
+      localStorage.setItem(LS_FILES_KEY, JSON.stringify({ files: f, totalSize: ts }));
     } catch (err: any) {
       toast.error('Erro ao carregar imagens: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => { loadFiles(); }, []);
 
   const compressFile = useCallback(async (file: StorageFile): Promise<boolean> => {
     const key = `${file.bucket}/${file.path}`;
@@ -75,7 +115,11 @@ export default function CompressaoImagens() {
       if (error) throw error;
       if (data.error) throw new Error(data.error);
 
-      setResults(prev => new Map(prev).set(key, data));
+      setResults(prev => {
+        const next = new Map(prev).set(key, data);
+        saveCachedResults(next);
+        return next;
+      });
       toast.success(`${file.name}: -${data.pctSaved}% (${formatBytes(data.saved)} economizados)`);
       return true;
     } catch (err: any) {
@@ -93,8 +137,13 @@ export default function CompressaoImagens() {
       const q = search.toLowerCase();
       list = list.filter(f => f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q));
     }
+    if (filterStatus === 'pending') {
+      list = list.filter(f => !results.has(`${f.bucket}/${f.path}`));
+    } else if (filterStatus === 'done') {
+      list = list.filter(f => results.has(`${f.bucket}/${f.path}`));
+    }
     return list;
-  }, [files, filterBucket, search]);
+  }, [files, filterBucket, search, filterStatus, results]);
 
   const compressBatch = useCallback(async () => {
     batchCancelRef.current = false;
@@ -131,6 +180,7 @@ export default function CompressaoImagens() {
   }, [results]);
 
   const totalCompressed = results.size;
+  const pendingCount = files.filter(f => !results.has(`${f.bucket}/${f.path}`)).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -180,6 +230,23 @@ export default function CompressaoImagens() {
           </Button>
         </div>
 
+        {/* Status filter */}
+        <div className="flex gap-2">
+          {([
+            { key: 'all' as const, label: 'Todas' },
+            { key: 'pending' as const, label: `Pendentes (${pendingCount})` },
+            { key: 'done' as const, label: `Feitas (${totalCompressed})` },
+          ]).map(s => (
+            <button
+              key={s.key}
+              onClick={() => setFilterStatus(s.key)}
+              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${filterStatus === s.key ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+
         {/* Bucket filter */}
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
           {buckets.map(b => (
@@ -196,26 +263,28 @@ export default function CompressaoImagens() {
         {/* Batch compress */}
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">{filtered.length} imagens</p>
-          <Button
-            size="sm"
-            onClick={compressBatch}
-            disabled={batchRunning || filtered.length === 0}
-            className="text-xs"
-          >
-            {batchRunning ? (
-              <><Loader2 className="w-3 h-3 animate-spin mr-1" /> Comprimindo...</>
-            ) : (
-              <><Zap className="w-3 h-3 mr-1" /> Comprimir Todas ({filtered.filter(f => !results.has(`${f.bucket}/${f.path}`)).length})</>
-            )}
-          </Button>
+          {batchRunning ? (
+            <Button size="sm" variant="destructive" className="text-xs" onClick={cancelBatch}>
+              Cancelar
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={compressBatch}
+              disabled={filtered.length === 0}
+              className="text-xs"
+            >
+              <Zap className="w-3 h-3 mr-1" /> Comprimir Todas ({filtered.filter(f => !results.has(`${f.bucket}/${f.path}`)).length})
+            </Button>
+          )}
         </div>
 
         {/* Batch progress */}
         {batchRunning && (
           <div className="space-y-1">
-            <Progress value={(totalCompressed / filtered.length) * 100} className="h-2" />
+            <Progress value={(totalCompressed / Math.max(files.length, 1)) * 100} className="h-2" />
             <p className="text-[10px] text-muted-foreground text-center">
-              {totalCompressed} de {filtered.length} processadas
+              {totalCompressed} de {files.length} processadas
             </p>
           </div>
         )}
@@ -235,7 +304,6 @@ export default function CompressaoImagens() {
               return (
                 <div key={key} className="rounded-xl bg-card border border-border overflow-hidden">
                   <div className="flex items-stretch">
-                    {/* Thumbnail */}
                     <div className="w-14 h-14 flex-shrink-0 relative overflow-hidden bg-muted">
                       <img
                         src={file.publicUrl}
@@ -255,7 +323,6 @@ export default function CompressaoImagens() {
                           <span className="text-[10px] text-muted-foreground">{file.type.split('/')[1]?.toUpperCase()}</span>
                         </div>
 
-                        {/* Result info */}
                         {result && (
                           <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                             <TrendingDown className="w-3 h-3 text-green-500" />
