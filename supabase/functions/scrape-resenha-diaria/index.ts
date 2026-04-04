@@ -39,7 +39,7 @@ function normalizeDateToISO(dateStr: string): string {
 }
 
 async function fetchPage(url: string): Promise<string | null> {
-  const MIN_CHARS = 15000;
+  const MIN_CHARS = 10000;
 
   // Strategy 1: Direct fetch with retries
   for (let attempt = 0; attempt < 2; attempt++) {
