@@ -8,6 +8,7 @@ const HEADING_RE = /^#{1,6}\s+/;
 const FULL_LINE_BOLD_RE = /^\*\*(.*?)\*\*$/;
 const LOOSE_NUMERIC_MARKER_RE = /^\s*(\d{1,4})\.\s*$/;
 const PAGE_ARTIFACT_RE = /^\s*(?:[—–-]\s*)?\d{1,4}\.?(?:\s*[—–-])?\s*$/;
+const TABLE_LINE_RE = /^\|.+\|$/;
 
 function stripMarkdown(line: string): string {
   return line
