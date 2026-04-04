@@ -134,14 +134,18 @@ const Biblioteca = () => {
       const raw = localStorage.getItem(CACHE_KEY);
       if (raw) {
         const cached = JSON.parse(raw);
-        if (cached.classicos) setClassicos(cached.classicos);
-        if (cached.lideranca) setLideranca(cached.lideranca);
-        if (cached.estudos) setEstudos(cached.estudos);
-        if (cached.foraDaToga) setForaDaToga(cached.foraDaToga);
-        // Preload covers from cache
-        preloadCovers([...cached.classicos || [], ...cached.lideranca || [], ...cached.estudos || [], ...cached.foraDaToga || []]);
-        // If cache is fresh, skip network fetch
-        if (Date.now() - (cached.timestamp || 0) < TTL) return;
+        // Invalidate cache if it has .png references (broken by compression)
+        const hasBrokenRefs = JSON.stringify(cached).includes('.png');
+        if (hasBrokenRefs) {
+          localStorage.removeItem(CACHE_KEY);
+        } else {
+          if (cached.classicos) setClassicos(cached.classicos);
+          if (cached.lideranca) setLideranca(cached.lideranca);
+          if (cached.estudos) setEstudos(cached.estudos);
+          if (cached.foraDaToga) setForaDaToga(cached.foraDaToga);
+          preloadCovers([...cached.classicos || [], ...cached.lideranca || [], ...cached.estudos || [], ...cached.foraDaToga || []]);
+          if (Date.now() - (cached.timestamp || 0) < TTL) return;
+        }
       }
     } catch { /* ignore corrupt cache */ }
 
