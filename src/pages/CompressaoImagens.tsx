@@ -290,9 +290,9 @@ export default function CompressaoImagens() {
         {/* Batch progress */}
         {batchRunning && (
           <div className="space-y-1">
-            <Progress value={(totalCompressed / Math.max(files.length, 1)) * 100} className="h-2" />
+            <Progress value={(batchProgress.done / Math.max(batchProgress.total, 1)) * 100} className="h-2" />
             <p className="text-[10px] text-muted-foreground text-center">
-              {totalCompressed} de {files.length} processadas
+              Comprimindo {batchProgress.done} de {batchProgress.total} (5 simultâneas)
             </p>
           </div>
         )}
