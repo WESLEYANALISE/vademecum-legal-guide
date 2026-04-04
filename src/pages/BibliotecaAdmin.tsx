@@ -342,7 +342,7 @@ export default function BibliotecaAdmin() {
                             </Badge>
                             <Button
                               size="sm" variant="ghost" className="text-xs h-7 w-7 p-0"
-                              onClick={() => navigate('/estudar', { state: { openBiblioteca: true, previewLivroId: ebook.id } })}
+                              onClick={() => navigate(`/biblioteca?livro=${ebook.id}`)}
                               title="Ver livro"
                             >
                               <Eye className="w-3.5 h-3.5" />
