@@ -102,6 +102,7 @@ function makeLivroKey(livro: LivroUnificado): string {
 
 const Biblioteca = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [classicos, setClassicos] = useState<LivroUnificado[]>([]);
