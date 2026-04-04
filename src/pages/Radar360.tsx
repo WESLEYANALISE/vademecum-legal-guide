@@ -537,7 +537,8 @@ const Radar360 = () => {
                   );
                 })}
               </div>
-            ))}
+              );
+            })}
           </TabsContent>
 
           {/* ── Tab: Novidades ── */}
