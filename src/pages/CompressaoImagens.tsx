@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Image, Loader2, CheckCircle, Zap, Search, HardDrive, TrendingDown, AlertCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
