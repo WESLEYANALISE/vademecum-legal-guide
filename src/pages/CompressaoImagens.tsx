@@ -151,10 +151,17 @@ export default function CompressaoImagens() {
     setBatchRunning(true);
     
     const pending = filtered.filter(f => !results.has(`${f.bucket}/${f.path}`));
-    
-    for (const file of pending) {
+    setBatchProgress({ done: 0, total: pending.length });
+
+    const CHUNK_SIZE = 5;
+    let processed = 0;
+
+    for (let i = 0; i < pending.length; i += CHUNK_SIZE) {
       if (batchCancelRef.current) break;
-      await compressFile(file);
+      const chunk = pending.slice(i, i + CHUNK_SIZE);
+      await Promise.all(chunk.map(file => compressFile(file)));
+      processed += chunk.length;
+      setBatchProgress({ done: processed, total: pending.length });
     }
     
     setBatchRunning(false);
