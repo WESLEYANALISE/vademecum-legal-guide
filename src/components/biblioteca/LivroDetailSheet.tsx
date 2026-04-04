@@ -129,7 +129,7 @@ const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProp
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 bg-black/50 z-10 flex items-center justify-center"
+                  className="absolute inset-0 bg-black/40 backdrop-blur-md z-10 flex items-center justify-center"
                   onClick={() => setModePickerOpen(false)}
                 >
                   <motion.div
@@ -137,43 +137,49 @@ const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProp
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.85 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-                    className="mx-4 w-full max-w-sm"
+                    className="mx-4 w-full max-w-sm flex flex-col items-center"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <p className="text-center text-white/80 text-sm font-medium mb-3">Como deseja ler?</p>
-                    <div className="grid grid-cols-3 gap-3">
+                    <p className="text-center text-white text-base font-semibold mb-4">Como deseja ler?</p>
+                    <div className="grid grid-cols-3 gap-3 w-full">
                       {hasFliphtml5 && (
                         <button
                           onClick={() => handleReadMode('fliphtml5')}
-                          className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-card border border-border hover:border-primary/40 transition-all"
+                          className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-gradient-to-br from-blue-500/90 to-blue-700/90 border border-blue-400/30 hover:scale-105 transition-all shadow-lg"
                         >
-                          <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
-                            <BookOpen className="w-5 h-5 text-primary" />
+                          <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <BookOpen className="w-5 h-5 text-white" />
                           </div>
-                          <span className="text-xs font-semibold text-foreground">Paginação</span>
+                          <span className="text-xs font-bold text-white">Paginação</span>
                         </button>
                       )}
                       {hasDrivePreview && (
                         <button
                           onClick={() => handleReadMode('vertical')}
-                          className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-card border border-border hover:border-primary/40 transition-all"
+                          className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-gradient-to-br from-emerald-500/90 to-emerald-700/90 border border-emerald-400/30 hover:scale-105 transition-all shadow-lg"
                         >
-                          <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-primary" />
+                          <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <FileText className="w-5 h-5 text-white" />
                           </div>
-                          <span className="text-xs font-semibold text-foreground">Vertical</span>
+                          <span className="text-xs font-bold text-white">Vertical</span>
                         </button>
                       )}
                       <button
                         onClick={() => handleReadMode('dinamico')}
-                        className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-card border border-border hover:border-primary/40 transition-all"
+                        className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-gradient-to-br from-violet-500/90 to-violet-700/90 border border-violet-400/30 hover:scale-105 transition-all shadow-lg"
                       >
-                        <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
-                          <Smartphone className="w-5 h-5 text-primary" />
+                        <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                          <Smartphone className="w-5 h-5 text-white" />
                         </div>
-                        <span className="text-xs font-semibold text-foreground">Dinâmico</span>
+                        <span className="text-xs font-bold text-white">Dinâmico</span>
                       </button>
                     </div>
+                    <button
+                      onClick={() => setModePickerOpen(false)}
+                      className="mt-5 w-10 h-10 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center hover:bg-white/25 transition-colors"
+                    >
+                      <X className="w-5 h-5 text-white" />
+                    </button>
                   </motion.div>
                 </motion.div>
               </>
