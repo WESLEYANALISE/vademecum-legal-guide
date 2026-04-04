@@ -486,11 +486,16 @@ const Radar360 = () => {
               </div>
             )}
 
-            {!loadingResenha && !loadingLeisDec && allRecentes.map(([dataPub, atos]) => (
-              <div key={dataPub} className="space-y-2">
+            {!loadingResenha && !loadingLeisDec && allRecentes.map(([isoDate, atos]) => {
+              // Format ISO date to display: "2026-04-02" → "2 de abril de 2026"
+              const MESES_DISPLAY = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+              const [y, m, d] = isoDate.split('-').map(Number);
+              const dateDisplay = `${d} de ${MESES_DISPLAY[m - 1]} de ${y}`;
+              return (
+              <div key={isoDate} className="space-y-2">
                 <div className="flex items-center gap-2 px-1">
                   <Calendar className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-xs font-display text-primary">{dataPub}</span>
+                  <span className="text-xs font-display text-primary">{dateDisplay}</span>
                   <span className="text-[10px] text-muted-foreground">
                     ({atos.length} {atos.length === 1 ? 'ato' : 'atos'})
                   </span>
