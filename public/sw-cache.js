@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vacatio-img-v1';
+const CACHE_NAME = 'vacatio-img-v2';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => {
@@ -11,11 +11,10 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   const url = e.request.url;
-  // Only cache Supabase Storage image requests
-  if (
-    !url.includes('supabase.co/storage') &&
-    !url.includes('supabase.co/object')
-  ) return;
+  // Cache Supabase Storage images AND wsrv.nl proxied images
+  const isSupabaseStorage = url.includes('supabase.co/storage') || url.includes('supabase.co/object');
+  const isProxy = url.includes('wsrv.nl/');
+  if (!isSupabaseStorage && !isProxy) return;
 
   e.respondWith(
     caches.open(CACHE_NAME).then((cache) =>
