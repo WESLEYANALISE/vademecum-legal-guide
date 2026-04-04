@@ -888,6 +888,7 @@ async function resumeCleaning({
     const firstEdge = allPages.filter((_, i) => i < EDGE_SIZE);
     const lastEdge = allPages.filter((_, i) => i >= totalPagesAll - EDGE_SIZE && i >= EDGE_SIZE);
     const middlePages = allPages.filter((_, i) => i >= EDGE_SIZE && i < totalPagesAll - EDGE_SIZE);
+    const pagesProcessed = firstEdge.length + middlePages.length + lastEdge.length;
 
     console.log(`Cleaning: ${firstEdge.length} first + ${lastEdge.length} last pages with AI, ${middlePages.length} middle pages normalized only`);
 
@@ -908,17 +909,19 @@ async function resumeCleaning({
 
     // 3) Clean last edge pages with AI
     await supabase.from("biblioteca_livros").update({ status: "cleaning:80" }).eq("id", livroId);
+    let cleanedLastCount = 0;
     if (lastEdge.length > 0) {
       const cleanedLast = await cleanEdgePages(geminiApiKey, lastEdge.map(p => ({ source_page: p.source_page, markdown: p.markdown })));
+      cleanedLastCount = cleanedLast.length;
       for (const cp of cleanedLast) {
         const entry = lastEdge.find(p => p.source_page === cp.source_page);
         if (entry) estrutura.chapters[entry.ci].pages![entry.pi].markdown = cp.markdown;
       }
     }
 
-    console.log(`Resume complete: ${pagesAlreadyClean} already clean, ${pagesProcessed - pagesAlreadyClean} newly cleaned`);
+    console.log(`Resume complete: first=${cleanedFirst.length}, middle=${middlePages.length}, last=${cleanedLastCount}, total=${pagesProcessed}`);
 
-    await supabase
+    const { error: finalizeError } = await supabase
       .from("biblioteca_livros")
       .update({
         estrutura_leitura: estrutura,
@@ -926,6 +929,12 @@ async function resumeCleaning({
         status: "ready",
       })
       .eq("id", livroId);
+
+    if (finalizeError) {
+      throw finalizeError;
+    }
+
+    console.log(`Resume finalized successfully for book ${livroId}`);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err);
     console.error("Resume cleaning error:", errorMessage);
