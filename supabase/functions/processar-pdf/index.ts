@@ -811,11 +811,13 @@ TAREFA: Identifique e REMOVA conteúdo irrelevante como:
 - Agradecimentos, dedicatórias (a menos que sejam substanciais)
 - Referências bibliográficas genéricas nas últimas páginas
 
-MANTER intacto:
+MANTER intacto (NÃO alterar, NÃO remover):
 - Sumário / índice (formatar cada entrada em sua linha)
 - Prefácio, introdução, apresentação (são conteúdo real)
 - Todo o conteúdo principal do livro
 - Notas de rodapé relevantes ao conteúdo
+- TODAS as referências a imagens: ![...](url) — preservar exatamente como estão
+- Tabelas em formato markdown (linhas com |)
 
 Para páginas que devem ser REMOVIDAS: retorne com markdown vazio "".
 Para páginas que devem ser MANTIDAS: formate com ## para títulos, ### subtítulos, **negrito** para termos importantes.
