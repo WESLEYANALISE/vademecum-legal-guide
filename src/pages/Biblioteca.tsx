@@ -1,15 +1,17 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { directImg } from '@/lib/cdnImg';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Library, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Library, ChevronRight, Search, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
 import LivroCard, { type LivroUnificado } from '@/components/biblioteca/LivroCard';
 import LivroDetailSheet, { type ReadMode } from '@/components/biblioteca/LivroDetailSheet';
 import LeitorWebView from '@/components/biblioteca/LeitorWebView';
 import LeitorEbook from '@/components/estudar/LeitorEbook';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
 import capaEstudos from '@/assets/biblioteca/capa-estudos.jpg';
@@ -76,6 +78,7 @@ const AREA_IMAGES: Record<string, string> = {
 };
 
 type View = 'menu' | 'category' | 'area-detail';
+type FilterTab = 'todos' | 'favoritos';
 
 const CATEGORIES = [
   { id: 'estudos', label: 'Estudos', desc: 'Materiais organizados por área do Direito', img: capaEstudos },
@@ -93,8 +96,13 @@ function isDynamicProcessingStatus(status?: string | null): boolean {
   );
 }
 
+function makeLivroKey(livro: LivroUnificado): string {
+  return `${livro.categoria}-${livro.id}`;
+}
+
 const Biblioteca = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [classicos, setClassicos] = useState<LivroUnificado[]>([]);
   const [lideranca, setLideranca] = useState<LivroUnificado[]>([]);
@@ -110,6 +118,43 @@ const Biblioteca = () => {
   const [readerUrl, setReaderUrl] = useState<string | null>(null);
   const [readerTitle, setReaderTitle] = useState('');
   const [ebookData, setEbookData] = useState<any>(null);
+
+  // Search & filter
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterTab, setFilterTab] = useState<FilterTab>('todos');
+  const [favoriteKeys, setFavoriteKeys] = useState<Set<string>>(new Set());
+
+  // Load favorites
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('biblioteca_favoritos')
+      .select('livro_key')
+      .eq('user_id', user.id)
+      .then(({ data }) => {
+        if (data) setFavoriteKeys(new Set(data.map(d => d.livro_key)));
+      });
+  }, [user]);
+
+  const toggleFavorite = useCallback(async (livro: LivroUnificado, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) { toast.error('Faça login para favoritar'); return; }
+    const key = makeLivroKey(livro);
+    const isFav = favoriteKeys.has(key);
+
+    // Optimistic update
+    setFavoriteKeys(prev => {
+      const next = new Set(prev);
+      if (isFav) next.delete(key); else next.add(key);
+      return next;
+    });
+
+    if (isFav) {
+      await supabase.from('biblioteca_favoritos').delete().eq('user_id', user.id).eq('livro_key', key);
+    } else {
+      await supabase.from('biblioteca_favoritos').insert({ user_id: user.id, livro_key: key, categoria: livro.categoria });
+    }
+  }, [user, favoriteKeys]);
 
   // Preload cover images in batches
   const preloadCovers = (livros: LivroUnificado[]) => {
@@ -127,14 +172,12 @@ const Biblioteca = () => {
 
   useEffect(() => {
     const CACHE_KEY = 'vacatio_biblioteca_cache';
-    const TTL = 60 * 60 * 1000; // 1 hour
+    const TTL = 60 * 60 * 1000;
 
-    // 1) Restore from localStorage instantly
     try {
       const raw = localStorage.getItem(CACHE_KEY);
       if (raw) {
         const cached = JSON.parse(raw);
-        // Invalidate cache if it has .png references (broken by compression)
         const hasBrokenRefs = JSON.stringify(cached).includes('.png');
         if (hasBrokenRefs) {
           localStorage.removeItem(CACHE_KEY);
@@ -147,9 +190,8 @@ const Biblioteca = () => {
           if (Date.now() - (cached.timestamp || 0) < TTL) return;
         }
       }
-    } catch { /* ignore corrupt cache */ }
+    } catch { /* ignore */ }
 
-    // 2) Fetch from Supabase (background update or first load)
     const load = async () => {
       const [c, l, e, f] = await Promise.all([
         supabase.from('biblioteca_classicos').select('id,livro,autor,imagem,sobre,download,link').order('id'),
@@ -181,16 +223,14 @@ const Biblioteca = () => {
       setForaDaToga(newForaDaToga);
       setLoading(false);
 
-      // Save to localStorage
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({
           classicos: newClassicos, lideranca: newLideranca,
           estudos: newEstudos, foraDaToga: newForaDaToga,
           timestamp: Date.now(),
         }));
-      } catch { /* quota exceeded — ignore */ }
+      } catch { /* quota exceeded */ }
 
-      // Preload covers
       preloadCovers([...newClassicos, ...newLideranca, ...newEstudos, ...newForaDaToga]);
     };
     load();
@@ -217,17 +257,30 @@ const Biblioteca = () => {
     return Array.from(map.entries()).map(([label, items]) => ({ label, items }));
   }, [activeCategory, estudos, classicos, lideranca, foraDaToga]);
 
+  // Filtered areas (for search in category view)
+  const filteredAreas = useMemo(() => {
+    if (!searchQuery.trim()) return areasByCategory;
+    const q = searchQuery.toLowerCase();
+    return areasByCategory.filter(a => a.label.toLowerCase().includes(q));
+  }, [areasByCategory, searchQuery]);
+
   const handleSelectCategory = (catId: string) => {
     setActiveCategory(catId);
+    setSearchQuery('');
+    setFilterTab('todos');
     setView('category');
   };
 
   const handleSelectArea = (area: string) => {
     setActiveArea(area);
+    setSearchQuery('');
+    setFilterTab('todos');
     setView('area-detail');
   };
 
   const handleBack = () => {
+    setSearchQuery('');
+    setFilterTab('todos');
     if (view === 'area-detail') { setView('category'); setActiveArea(''); }
     else if (view === 'category') { setView('menu'); setActiveCategory(''); }
     else navigate(-1);
@@ -253,12 +306,11 @@ const Biblioteca = () => {
       setReaderTitle(livro.titulo);
       setReaderUrl(previewUrl);
     } else if (mode === 'dinamico') {
-      // Check if ebook exists in biblioteca_livros
       const { data } = await supabase
         .from('biblioteca_livros')
-          .select('id,status,created_at')
+        .select('id,status,created_at')
         .ilike('titulo', livro.titulo.trim())
-          .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -269,10 +321,9 @@ const Biblioteca = () => {
           .eq('id', data.id)
           .single();
         if (full) setEbookData(full);
-        } else if (isDynamicProcessingStatus(data?.status)) {
+      } else if (isDynamicProcessingStatus(data?.status)) {
         toast.info('Este livro ainda está sendo formatado...');
       } else {
-        // Start formatting
         toast.info('Iniciando formatação do e-book...');
         try {
           await supabase.functions.invoke('processar-pdf', {
@@ -293,6 +344,39 @@ const Biblioteca = () => {
 
   const catMeta = CATEGORIES.find(c => c.id === activeCategory);
   const areaLivros = areasByCategory.find(a => a.label === activeArea)?.items || [];
+
+  // Filtered livros for area-detail view
+  const filteredAreaLivros = useMemo(() => {
+    let items = areaLivros;
+    if (filterTab === 'favoritos') {
+      items = items.filter(l => favoriteKeys.has(makeLivroKey(l)));
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      items = items.filter(l =>
+        l.titulo.toLowerCase().includes(q) ||
+        (l.autor && l.autor.toLowerCase().includes(q))
+      );
+    }
+    return items;
+  }, [areaLivros, filterTab, searchQuery, favoriteKeys]);
+
+  // Filtered livros for single-area categories (classicos, lideranca, fora-da-toga)
+  const filteredFlatLivros = useMemo(() => {
+    if (areasByCategory.length > 1) return [];
+    let items = areasByCategory[0]?.items || [];
+    if (filterTab === 'favoritos') {
+      items = items.filter(l => favoriteKeys.has(makeLivroKey(l)));
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      items = items.filter(l =>
+        l.titulo.toLowerCase().includes(q) ||
+        (l.autor && l.autor.toLowerCase().includes(q))
+      );
+    }
+    return items;
+  }, [areasByCategory, filterTab, searchQuery, favoriteKeys]);
 
   const slideVariants = {
     enter: { x: '100%', opacity: 0 },
@@ -320,34 +404,119 @@ const Biblioteca = () => {
     </div>
   );
 
+  // Search bar component
+  const renderSearchBar = (placeholder: string) => (
+    <div className="relative">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      <Input
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder={placeholder}
+        className="pl-9 h-10 bg-muted border-none text-sm rounded-xl"
+      />
+    </div>
+  );
+
+  // Filter tabs (Todos / Favoritos)
+  const renderFilterTabs = () => (
+    <div className="flex gap-2">
+      <button
+        onClick={() => setFilterTab('todos')}
+        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
+          filterTab === 'todos'
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-muted text-muted-foreground'
+        }`}
+      >
+        Todos
+      </button>
+      <button
+        onClick={() => setFilterTab('favoritos')}
+        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all ${
+          filterTab === 'favoritos'
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-muted text-muted-foreground'
+        }`}
+      >
+        <Star className="w-3.5 h-3.5" />
+        Favoritos
+      </button>
+    </div>
+  );
+
+  // Livro row with order number + favorite star
+  const renderLivroRow = (livro: LivroUnificado, index: number) => {
+    const capaUrl = livro.capa ? directImg(livro.capa, 300) : '';
+    const key = makeLivroKey(livro);
+    const isFav = favoriteKeys.has(key);
+
+    return (
+      <button
+        key={key}
+        onClick={() => handleSelect(livro)}
+        className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden relative"
+      >
+        <div className="w-20 flex-shrink-0 relative overflow-hidden">
+          {capaUrl ? (
+            <img src={capaUrl} alt={livro.titulo} width={80} height={100} className="w-full h-full object-cover" decoding="async" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center p-1">
+              <span className="text-[9px] text-muted-foreground text-center line-clamp-3">{livro.titulo}</span>
+            </div>
+          )}
+          {/* Order number badge */}
+          <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md backdrop-blur-sm">
+            {index + 1}
+          </span>
+          {/* Favorite star */}
+          <button
+            onClick={(e) => toggleFavorite(livro, e)}
+            className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm"
+          >
+            <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-primary text-primary' : 'text-white/70'}`} />
+          </button>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none" />
+        </div>
+        <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm line-clamp-2">{livro.titulo}</p>
+            {livro.autor && <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{livro.autor}</p>}
+            {livro.sinopse && !livro.autor && <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{livro.sinopse}</p>}
+          </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+        </div>
+      </button>
+    );
+  };
+
   const renderMenu = () => (
     <motion.div key="menu" initial={false} animate={{ opacity: 1 }} className="space-y-3">
       {CATEGORIES.map((cat) => {
-          const livros = getLivros(cat.id);
-          const count = livros.length;
-          return (
-            <button
-              key={cat.id}
-              onClick={() => handleSelectCategory(cat.id)}
-              className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden relative"
-            >
-              <div className="w-20 flex-shrink-0 relative overflow-hidden">
-                <img src={cat.img} alt={cat.label} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+        const livros = getLivros(cat.id);
+        const count = livros.length;
+        return (
+          <button
+            key={cat.id}
+            onClick={() => handleSelectCategory(cat.id)}
+            className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden relative"
+          >
+            <div className="w-20 flex-shrink-0 relative overflow-hidden">
+              <img src={cat.img} alt={cat.label} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+            </div>
+            <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{cat.label}</p>
+                <p className="text-xs text-muted-foreground">{cat.desc}</p>
               </div>
-              <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{cat.label}</p>
-                  <p className="text-xs text-muted-foreground">{cat.desc}</p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-xs text-muted-foreground">{count > 0 ? count : '...'}</span>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs text-muted-foreground">{count > 0 ? count : '...'}</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
-            </button>
-          );
-        })}
+            </div>
+          </button>
+        );
+      })}
     </motion.div>
   );
 
@@ -358,76 +527,59 @@ const Biblioteca = () => {
       initial="enter"
       animate="center"
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="space-y-6"
+      className="space-y-4"
     >
       {areasByCategory.length <= 1 ? (
-        <div className="space-y-3">
-          {areasByCategory[0]?.items.map((livro) => {
-            const capaUrl = livro.capa ? directImg(livro.capa, 300) : '';
-            return (
-              <button
-                key={`${livro.categoria}-${livro.id}`}
-                onClick={() => handleSelect(livro)}
-                className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden relative"
-              >
-                <div className="w-20 flex-shrink-0 relative overflow-hidden">
-                  {capaUrl ? (
-                    <img src={capaUrl} alt={livro.titulo} width={80} height={100} className="w-full h-full object-cover" decoding="async" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center p-1">
-                      <span className="text-[9px] text-muted-foreground text-center line-clamp-3">{livro.titulo}</span>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
-                </div>
-                <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm line-clamp-2">{livro.titulo}</p>
-                    {livro.autor && <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{livro.autor}</p>}
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        <>
+          {renderSearchBar('Buscar livro...')}
+          {renderFilterTabs()}
+          <div className="space-y-3">
+            {filteredFlatLivros.map((livro, i) => renderLivroRow(livro, i))}
+            {filteredFlatLivros.length === 0 && (
+              <p className="text-center text-muted-foreground text-sm py-8">
+                {filterTab === 'favoritos' ? 'Nenhum favorito ainda' : 'Nenhum resultado encontrado'}
+              </p>
+            )}
+          </div>
+        </>
       ) : (
-        <div className="space-y-3">
-          {areasByCategory.map((section) => {
-            const areaImg = AREA_IMAGES[section.label];
-            return (
-              <button
-                key={section.label}
-                onClick={() => handleSelectArea(section.label)}
-                className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden relative"
-              >
-                <div className="w-20 flex-shrink-0 relative overflow-hidden">
-                  {areaImg ? (
-                    <img src={areaImg} alt={section.label} width={80} height={100} className="w-full h-full object-cover" decoding="async" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/10" />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
-                </div>
-                <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{section.label}</p>
-                    <p className="text-xs text-muted-foreground">{section.items.length} materiais</p>
+        <>
+          {renderSearchBar('Buscar área do direito...')}
+          <div className="space-y-3">
+            {filteredAreas.map((section) => {
+              const areaImg = AREA_IMAGES[section.label];
+              return (
+                <button
+                  key={section.label}
+                  onClick={() => handleSelectArea(section.label)}
+                  className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden relative"
+                >
+                  <div className="w-20 flex-shrink-0 relative overflow-hidden">
+                    {areaImg ? (
+                      <img src={areaImg} alt={section.label} width={80} height={100} className="w-full h-full object-cover" decoding="async" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/10" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                  <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{section.label}</p>
+                      <p className="text-xs text-muted-foreground">{section.items.length} materiais</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                  </div>
+                </button>
+              );
+            })}
+            {filteredAreas.length === 0 && (
+              <p className="text-center text-muted-foreground text-sm py-8">Nenhuma área encontrada</p>
+            )}
+          </div>
+        </>
       )}
     </motion.div>
   );
-
-  const getCapaUrl = (livro: LivroUnificado) => {
-    if (livro.capa) return directImg(livro.capa, 300);
-    return '';
-  };
 
   const renderAreaDetail = () => (
     <motion.div
@@ -436,36 +588,18 @@ const Biblioteca = () => {
       initial="enter"
       animate="center"
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="space-y-3"
+      className="space-y-4"
     >
-      {areaLivros.map((livro) => {
-        const capaUrl = getCapaUrl(livro);
-        return (
-          <button
-            key={`${livro.categoria}-${livro.id}`}
-            onClick={() => handleSelect(livro)}
-            className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden relative"
-          >
-            <div className="w-20 flex-shrink-0 relative overflow-hidden">
-              {capaUrl ? (
-                <img src={capaUrl} alt={livro.titulo} width={80} height={100} className="w-full h-full object-cover" decoding="async" />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center p-1">
-                  <span className="text-[9px] text-muted-foreground text-center line-clamp-3">{livro.titulo}</span>
-                </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
-            </div>
-            <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm line-clamp-2">{livro.titulo}</p>
-                {livro.sinopse && <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{livro.sinopse}</p>}
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-            </div>
-          </button>
-        );
-      })}
+      {renderSearchBar('Buscar livro...')}
+      {renderFilterTabs()}
+      <div className="space-y-3">
+        {filteredAreaLivros.map((livro, i) => renderLivroRow(livro, i))}
+        {filteredAreaLivros.length === 0 && (
+          <p className="text-center text-muted-foreground text-sm py-8">
+            {filterTab === 'favoritos' ? 'Nenhum favorito ainda' : 'Nenhum resultado encontrado'}
+          </p>
+        )}
+      </div>
     </motion.div>
   );
 
