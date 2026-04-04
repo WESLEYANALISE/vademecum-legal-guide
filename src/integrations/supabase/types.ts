@@ -721,6 +721,48 @@ export type Database = {
         }
         Relationships: []
       }
+      CES_CODIGO_ETICA_SERVIDOR: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
       CF88_CONSTITUICAO_FEDERAL: {
         Row: {
           capitulo: string | null
@@ -2377,6 +2419,48 @@ export type Database = {
         }
         Relationships: []
       }
+      LACE_ANTICORRUPCAO: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
       LACP_ACAO_CIVIL_PUBLICA: {
         Row: {
           capitulo: string | null
@@ -2412,6 +2496,174 @@ export type Database = {
           numero?: string
           ordem?: number
           ordem_numero?: number
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LAI_ACESSO_INFORMACAO: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LALIM_ALIMENTOS: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LALP_ALIENACAO_PARENTAL: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LAP_ACAO_POPULAR: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
           paragrafos?: string[] | null
           rotulo?: string | null
           texto?: string
@@ -2461,6 +2713,48 @@ export type Database = {
         }
         Relationships: []
       }
+      LBIO_BIOSSEGURANCA: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
       LBPS_BENEFICIOS_PREVIDENCIA: {
         Row: {
           capitulo: string | null
@@ -2496,6 +2790,300 @@ export type Database = {
           numero?: string
           ordem?: number
           ordem_numero?: number
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LCA_CRIMES_AMBIENTAIS: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LCADE_ANTITRUSTE: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LCH_CRIMES_HEDIONDOS: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LCI_CRIMES_INFORMATICOS: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LCON_CONCESSOES: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LCP_CONTRAVENCOES_PENAIS: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LCSF_CRIMES_SISTEMA_FINANCEIRO: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
           paragrafos?: string[] | null
           rotulo?: string | null
           texto?: string
@@ -2587,6 +3175,90 @@ export type Database = {
         }
         Relationships: []
       }
+      LDA_DIREITOS_AUTORAIS: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LDB_DIRETRIZES_EDUCACAO: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
       legislacao_alteracoes: {
         Row: {
           artigo_numero: string | null
@@ -2650,6 +3322,48 @@ export type Database = {
           ordem?: number
           texto_completo?: string | null
           url?: string | null
+        }
+        Relationships: []
+      }
+      LELE_ELEICOES: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
         }
         Relationships: []
       }
@@ -2737,6 +3451,48 @@ export type Database = {
         }
         Relationships: []
       }
+      LFL_FICHA_LIMPA: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
       LGPD_PROTECAO_DADOS: {
         Row: {
           capitulo: string | null
@@ -2772,6 +3528,48 @@ export type Database = {
           numero?: string
           ordem?: number
           ordem_numero?: number
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LHD_HABEAS_DATA: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
           paragrafos?: string[] | null
           rotulo?: string | null
           texto?: string
@@ -2863,6 +3661,90 @@ export type Database = {
         }
         Relationships: []
       }
+      LINDB_INTRODUCAO_NORMAS: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LINE_INELEGIBILIDADES: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
       LIT_INTERCEPTACAO_TELEFONICA: {
         Row: {
           capitulo: string | null
@@ -2940,6 +3822,174 @@ export type Database = {
           numero?: string
           ordem?: number
           ordem_numero?: number
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LLAV_LAVAGEM_DINHEIRO: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LLE_LIBERDADE_ECONOMICA: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LMI_MANDADO_INJUNCAO: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LMLS_MARCO_LEGAL_STARTUPS: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
           paragrafos?: string[] | null
           rotulo?: string | null
           texto?: string
@@ -3031,6 +4081,48 @@ export type Database = {
         }
         Relationships: []
       }
+      LOAS_ASSISTENCIA_SOCIAL: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
       LOC_ORGANIZACAO_CRIMINOSA: {
         Row: {
           capitulo: string | null
@@ -3115,6 +4207,132 @@ export type Database = {
         }
         Relationships: []
       }
+      LOMP_ORGANICA_MP: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LOTCU_ORGANICA_TCU: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LPAF_PROCESSO_ADMINISTRATIVO: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
       LPC_PREVIDENCIA_COMPLEMENTAR: {
         Row: {
           capitulo: string | null
@@ -3157,6 +4375,300 @@ export type Database = {
         }
         Relationships: []
       }
+      LPI_PROPRIEDADE_INDUSTRIAL: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LPP_PARTIDOS_POLITICOS: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LPPP_PARCERIAS_PUBLICO_PRIVADAS: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LPSU_PARCELAMENTO_SOLO: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LPT_PROTECAO_TESTEMUNHAS: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LRAC_RACISMO: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LRF_RESPONSABILIDADE_FISCAL: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
       LRP_REGISTROS_PUBLICOS: {
         Row: {
           capitulo: string | null
@@ -3192,6 +4704,174 @@ export type Database = {
           numero?: string
           ordem?: number
           ordem_numero?: number
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LRT_REFORMA_TRIBUTARIA: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LSA_SOCIEDADES_ACOES: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LSUS_SISTEMA_UNICO_SAUDE: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      LTORT_TORTURA: {
+        Row: {
+          capitulo: string | null
+          caput: string
+          id: string
+          incisos: string[] | null
+          numero: string
+          ordem: number | null
+          ordem_numero: number | null
+          paragrafos: string[] | null
+          rotulo: string | null
+          texto: string
+          titulo: string | null
+        }
+        Insert: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero: string
+          ordem?: number | null
+          ordem_numero?: number | null
+          paragrafos?: string[] | null
+          rotulo?: string | null
+          texto?: string
+          titulo?: string | null
+        }
+        Update: {
+          capitulo?: string | null
+          caput?: string
+          id?: string
+          incisos?: string[] | null
+          numero?: string
+          ordem?: number | null
+          ordem_numero?: number | null
           paragrafos?: string[] | null
           rotulo?: string | null
           texto?: string
