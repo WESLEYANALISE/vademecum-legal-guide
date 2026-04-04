@@ -590,8 +590,8 @@ const Biblioteca = () => {
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className="space-y-4"
     >
-      {renderSearchBar('Buscar livro...')}
       {renderFilterTabs()}
+      {renderSearchBar('Buscar livro...')}
       <div className="space-y-3">
         {filteredAreaLivros.map((livro, i) => renderLivroRow(livro, i))}
         {filteredAreaLivros.length === 0 && (
