@@ -84,19 +84,25 @@ async function fetchPage(url: string): Promise<string | null> {
   // Strategy 3: Browserless v2 API
   const key = Deno.env.get("BROWSERLESS_API_KEY");
   if (key) {
-    for (const baseUrl of [
+    const endpoints = [
       `https://production-sfo.browserless.io/content?token=${key}`,
       `https://chrome.browserless.io/content?token=${key}`,
-    ]) {
+    ];
+    for (const baseUrl of endpoints) {
       try {
         console.log(`Trying Browserless: ${baseUrl.split('?')[0]}`);
         const resp = await fetch(baseUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, gotoOptions: { waitUntil: "networkidle2", timeout: 20000 } }),
+          body: JSON.stringify({
+            url,
+            gotoOptions: { waitUntil: "domcontentloaded", timeout: 30000 },
+            waitForSelector: { selector: "a[href*='planalto.gov.br']", timeout: 15000 },
+          }),
         });
         if (resp.ok) {
           const t = await resp.text();
+          console.log(`Browserless response: ${t.length} chars`);
           if (t.length > MIN_CHARS) return t;
         } else {
           console.log(`Browserless ${resp.status}: ${(await resp.text()).slice(0, 200)}`);

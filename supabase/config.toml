@@ -1,1 +1,18 @@
 project_id = "akaeinqkhdwzopfsckgg"
+
+# ── Cron Jobs ──
+# Scraper resenha diária: 8h e 18h Brasília (11:00 e 21:00 UTC)
+[functions.scrape-resenha-diaria]
+schedule = "0 11,21 * * *"
+
+# Popular texto completo + explicações: 8:30 e 18:30 Brasília
+[functions.popular-texto-resenha]
+schedule = "30 11,21 * * *"
+
+# Scraper de notícias: a cada 30 min (já existe)
+[functions.scrape-noticias]
+schedule = "*/30 * * * *"
+
+# Monitorar alterações em legislação: 1x por dia às 6h Brasília (9:00 UTC)
+[functions.monitorar-legislacao]
+schedule = "0 9 * * *"
