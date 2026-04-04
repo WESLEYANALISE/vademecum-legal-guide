@@ -1,41 +1,74 @@
 
 
-## Plano: Cache Universal de Imagens — Todas as Capas e Imagens do App
+## Plano: Adicionar 40 Leis Faltantes ao Catálogo
 
-### Situação Atual
+### Abordagem
 
-O Service Worker (`sw-cache.js`) só cacheia URLs de `supabase.co/storage` e `wsrv.nl`. Há 3 problemas restantes:
+Todas as 40 leis serão encaixadas nas categorias existentes — sem criar categorias novas. A grande maioria entra em **lei-especial**, com 1-2 em **previdenciario**.
 
-1. **`LivroDetailSheet.tsx`** ainda usa `cdnImg()` (proxy desnecessário) em vez de `directImg()`
-2. **`DesktopNewsSidebar.tsx`** e **`DesktopNewsCarousel.tsx`** usam `cdnImg()` — passam pelo proxy wsrv.nl mesmo para URLs Supabase
-3. **Imagens locais** (áreas de Direito, capas de categorias) — são assets estáticos do Vite, já cacheados pelo navegador, mas o SW não os guarda no Cache API para acesso offline/instantâneo
-4. **Fotos de deputados** (`autor_foto` no Radar) — URLs externas sem cache
+### Distribuição das 40 leis por categoria
 
-### O que muda
+**lei-especial** (~38 leis):
+- LINDB (DL 4.657/1942)
+- Crimes Hediondos (8.072/1990)
+- Tortura (9.455/1997)
+- Crimes Ambientais (9.605/1998)
+- Racismo (7.716/1989)
+- Lavagem de Dinheiro (9.613/1998)
+- Processo Administrativo Federal (9.784/1999)
+- LRF (LC 101/2000)
+- LAI (12.527/2011)
+- Ação Popular (4.717/1965)
+- Contravenções Penais (DL 3.688/1941)
+- LDB (9.394/1996)
+- Lei Orgânica do MP (8.625/1993)
+- Lei das S.A. (6.404/1976)
+- Propriedade Industrial (9.279/1996)
+- Direitos Autorais (9.610/1998)
+- Anticorrupção Empresarial (12.846/2013)
+- Concessões (8.987/1995)
+- PPPs (11.079/2004)
+- Habeas Data (9.507/1997)
+- Mandado de Injunção (13.300/2016)
+- Partidos Políticos (9.096/1995)
+- Lei das Eleições (9.504/1997)
+- Ficha Limpa (LC 135/2010)
+- Crimes contra Sistema Financeiro (7.492/1986)
+- Proteção de Testemunhas (9.807/1999)
+- Parcelamento do Solo (6.766/1979)
+- Alienação Parental (12.318/2010)
+- Alimentos (5.478/1968)
+- CADE/Antitruste (12.529/2011)
+- Lei do SUS (8.080/1990)
+- Biossegurança (11.105/2005)
+- Crimes Informáticos (12.737/2012)
+- Inelegibilidades (LC 64/1990)
+- Lei Orgânica do TCU (8.443/1992)
+- Liberdade Econômica (13.874/2019)
+- Código de Ética do Servidor (Decreto 1.171/1994)
+- Marco Legal das Startups (LC 182/2021)
+- Reforma Tributária (LC 214/2025)
+
+**previdenciario** (1 lei):
+- LOAS — Assistência Social (8.742/1993)
+
+### O que será feito
+
+1. Adicionar as 40 entradas no array `LEIS_CATALOG` em `src/data/leisCatalog.ts`, cada uma com id, nome, sigla, descricao, tipo, tabela_nome, iconColor, url_planalto e tags de busca.
+
+2. Criar uma **migration** no Supabase criando as 40 tabelas vazias (mesmo schema das existentes: id, numero/rotulo, texto, ordem_numero, titulo, capitulo) para que o app não quebre ao tentar buscar artigos.
+
+3. O sublabel da categoria "Leis Especiais" no `CategoriasGrid.tsx` será atualizado de "Penais, Civis..." para "Penais, Civis, Admin..." para refletir a variedade.
+
+### Arquivos a alterar
 
 | Arquivo | Mudança |
 |---------|---------|
-| `public/sw-cache.js` | Expandir para cachear TODAS as imagens (qualquer request com content-type image/* ou extensão .jpg/.png/.webp/.svg) |
-| `src/components/biblioteca/LivroDetailSheet.tsx` | Trocar `cdnImg` por `directImg` |
-| `src/components/vademecum/DesktopNewsSidebar.tsx` | Trocar `cdnImg` por `directImg` |
-| `src/components/vademecum/DesktopNewsCarousel.tsx` | Trocar `cdnImg` por `directImg` |
+| `src/data/leisCatalog.ts` | +40 entradas no LEIS_CATALOG |
+| `src/components/vademecum/CategoriasGrid.tsx` | Atualizar sublabel de "Leis Especiais" |
+| `supabase/migrations/XXXX_criar_tabelas_leis_faltantes.sql` | CREATE TABLE para as 40 novas leis |
 
-### Service Worker v3 — Cache universal de imagens
+### Observação
 
-Em vez de filtrar por domínio, o SW passa a cachear qualquer requisição de imagem:
-
-```text
-Estratégia: Cache-First para QUALQUER URL que:
-  - Contenha extensão .jpg/.jpeg/.png/.webp/.svg/.gif/.avif
-  - OU seja de supabase.co/storage
-  - OU seja de wsrv.nl
-  
-Exceções: NÃO cachear requests do próprio app (HTML, JS, CSS)
-```
-
-Isso cobre automaticamente: capas de livros, áreas de Direito, fotos de deputados, notícias, brasão, logo — tudo.
-
-### Substituição cdnImg → directImg
-
-`cdnImg` e `directImg` fazem exatamente a mesma coisa no código atual. A diferença é semântica, mas o importante é que para URLs do Supabase, ambas retornam a URL direta sem proxy. Os 3 arquivos que ainda usam `cdnImg` serão atualizados para `directImg` por consistência.
+As tabelas serão criadas vazias. Para popular os artigos, será necessário rodar o pipeline de extração do Planalto (edge function `scrape-legislacao`) para cada lei — isso pode ser feito depois, lei por lei.
 
