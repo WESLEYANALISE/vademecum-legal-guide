@@ -359,7 +359,7 @@ const Biblioteca = () => {
       {areasByCategory.length <= 1 ? (
         <div className="space-y-3">
           {areasByCategory[0]?.items.map((livro) => {
-            const capaUrl = livro.capa ? cdnImg(livro.capa, 300) : '';
+            const capaUrl = livro.capa ? directImg(livro.capa, 300) : '';
             return (
               <button
                 key={`${livro.categoria}-${livro.id}`}
@@ -368,7 +368,7 @@ const Biblioteca = () => {
               >
                 <div className="w-20 flex-shrink-0 relative overflow-hidden">
                   {capaUrl ? (
-                    <img src={capaUrl} alt={livro.titulo} className="w-full h-full object-cover" loading="lazy" />
+                    <img src={capaUrl} alt={livro.titulo} width={80} height={100} className="w-full h-full object-cover" decoding="async" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center p-1">
                       <span className="text-[9px] text-muted-foreground text-center line-clamp-3">{livro.titulo}</span>
