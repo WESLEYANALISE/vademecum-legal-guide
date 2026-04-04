@@ -129,55 +129,52 @@ const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProp
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 bg-black/40 z-10"
+                  className="absolute inset-0 bg-black/50 z-10 flex items-center justify-center"
                   onClick={() => setModePickerOpen(false)}
-                />
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: 40 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, y: 40 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-                  className="absolute bottom-6 left-4 right-4 z-20 bg-card border border-border rounded-2xl p-5 shadow-2xl max-w-md mx-auto"
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-foreground">Como deseja ler?</h3>
-                    <button
-                      onClick={() => setModePickerOpen(false)}
-                      className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"
-                    >
-                      <X className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                  </div>
-                  <div className="space-y-2">
-                    {hasFliphtml5 && (
-                      <Button
-                        variant="outline"
-                        className="w-full gap-2 h-11 justify-start text-sm"
-                        onClick={() => handleReadMode('fliphtml5')}
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.85 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                    className="mx-4 w-full max-w-sm"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <p className="text-center text-white/80 text-sm font-medium mb-3">Como deseja ler?</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      {hasFliphtml5 && (
+                        <button
+                          onClick={() => handleReadMode('fliphtml5')}
+                          className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-card border border-border hover:border-primary/40 transition-all"
+                        >
+                          <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <BookOpen className="w-5 h-5 text-primary" />
+                          </div>
+                          <span className="text-xs font-semibold text-foreground">Paginação</span>
+                        </button>
+                      )}
+                      {hasDrivePreview && (
+                        <button
+                          onClick={() => handleReadMode('vertical')}
+                          className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-card border border-border hover:border-primary/40 transition-all"
+                        >
+                          <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <FileText className="w-5 h-5 text-primary" />
+                          </div>
+                          <span className="text-xs font-semibold text-foreground">Vertical</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleReadMode('dinamico')}
+                        className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-card border border-border hover:border-primary/40 transition-all"
                       >
-                        <BookOpen className="w-4 h-4 text-primary" />
-                        Paginação
-                      </Button>
-                    )}
-                    {hasDrivePreview && (
-                      <Button
-                        variant="outline"
-                        className="w-full gap-2 h-11 justify-start text-sm"
-                        onClick={() => handleReadMode('vertical')}
-                      >
-                        <FileText className="w-4 h-4 text-primary" />
-                        Vertical
-                      </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      className="w-full gap-2 h-11 justify-start text-sm"
-                      onClick={() => handleReadMode('dinamico')}
-                    >
-                      <Smartphone className="w-4 h-4 text-primary" />
-                      Modo dinâmico
-                    </Button>
-                  </div>
+                        <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
+                          <Smartphone className="w-5 h-5 text-primary" />
+                        </div>
+                        <span className="text-xs font-semibold text-foreground">Dinâmico</span>
+                      </button>
+                    </div>
+                  </motion.div>
                 </motion.div>
               </>
             )}
