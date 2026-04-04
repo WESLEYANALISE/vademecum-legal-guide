@@ -156,6 +156,7 @@ function AnimatedRoutes() {
           <Route path="/newsletter" element={<ProtectedRoute><PageTransition><Newsletter /></PageTransition></ProtectedRoute>} />
           <Route path="/biblioteca" element={<ProtectedRoute><Biblioteca /></ProtectedRoute>} />
           <Route path="/biblioteca-admin" element={<ProtectedRoute><PageTransition><BibliotecaAdmin /></PageTransition></ProtectedRoute>} />
+          <Route path="/compressao-imagens" element={<ProtectedRoute><PageTransition><CompressaoImagens /></PageTransition></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
