@@ -111,6 +111,26 @@ const Estudar = () => {
   if (view === 'desempenho') {
     return <DesempenhoView onBack={handleBack} />;
   }
+  if (view === 'questoes-dashboard') {
+    return (
+      <DesktopPageLayout activeId="estudar" title="Questões" subtitle="Pratique por disciplina" mobileHeader={mobileHeader}>
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 lg:max-w-none lg:px-0 lg:py-0">
+          <QuestoesDashboard
+            onSelectLei={(lei) => {
+              const found = LEIS.find(l => l.tabela === lei.tabela);
+              if (found) {
+                setSelectedLei(found);
+                loadArtigos(found.tabela);
+                setView('select-artigo');
+              }
+            }}
+            onNavigateDesempenho={() => setView('desempenho')}
+            onBack={handleBack}
+          />
+        </div>
+      </DesktopPageLayout>
+    );
+  }
 
   const topLaws = lawStats.slice(0, 3);
 
