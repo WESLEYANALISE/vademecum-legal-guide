@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, RefreshCw, CheckCircle2, XCircle, AlertTriangle, Clock, Play, Loader2, Activity, Key, Zap, MinusCircle, ShieldCheck, Eye, Check, X, Kanban } from 'lucide-react';
+import { ArrowLeft, RefreshCw, CheckCircle2, XCircle, AlertTriangle, Clock, Play, Loader2, Activity, Key, Zap, MinusCircle, ShieldCheck, Eye, Check, X, Kanban, Users, Wifi } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -260,6 +260,23 @@ const AdminMonitor = () => {
       </div>
 
       <div className="max-w-4xl mx-auto p-4 space-y-5">
+        {/* Usuários Online - link */}
+        <Card
+          className="cursor-pointer hover:border-primary/50 transition-colors"
+          onClick={() => navigate('/admin-monitor-usuarios')}
+        >
+          <CardContent className="flex items-center gap-4 py-4">
+            <div className="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center">
+              <Users className="w-5 h-5 text-teal-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-foreground">Usuários Online</h3>
+              <p className="text-[11px] text-muted-foreground">Monitoramento em tempo real de sessões ativas</p>
+            </div>
+            <Wifi className="w-4 h-4 text-teal-400 animate-pulse" />
+          </CardContent>
+        </Card>
+
         {/* Alterações Legislativas */}
         <Card>
           <CardHeader className="pb-3">
