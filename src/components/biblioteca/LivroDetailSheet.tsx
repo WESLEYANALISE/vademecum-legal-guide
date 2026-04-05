@@ -20,7 +20,7 @@ function extractDriveFileId(url: string): string | null {
   return match?.[1] ?? null;
 }
 
-const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProps) => {
+const LivroDetailSheet = ({ livro, open, onClose, onRead, categoryId }: LivroDetailSheetProps) => {
   const [modePickerOpen, setModePickerOpen] = useState(false);
 
   if (!livro && !open) return null;
