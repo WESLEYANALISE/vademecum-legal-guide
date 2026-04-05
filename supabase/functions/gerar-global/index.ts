@@ -60,7 +60,7 @@ function buildPrompt(modo: string, artigo: { numero: string; caput: string; text
 async function callGemini(apiKey: string, prompt: string, system: string): Promise<string | null> {
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -233,7 +233,7 @@ Deno.serve(async (req) => {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
             body: JSON.stringify({ action: "tick" }),
           }).catch((e) => console.error("[gerar-global] self-invoke error:", e.message));
-        }, 1500);
+        }, 5000);
 
         return json({ ok: true, generated: `${tabela}/${artigo.numero}/${modo}` });
       }
