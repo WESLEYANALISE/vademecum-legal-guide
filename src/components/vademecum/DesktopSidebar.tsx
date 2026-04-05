@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Scale, BookOpen, FileText, Newspaper, Landmark, Shield, ScrollText, Gavel, Settings, PanelLeftClose, Radar, RefreshCw, Rss, Bell, Building2, Lightbulb, Mic, BookA, BellRing, MessageCircle, Palette, Info, LogOut, Gamepad2, ClipboardList, ShieldCheck, Brain, Activity, BookMarked, HeartPulse, ChevronDown, Lock, ImageIcon } from 'lucide-react';
+import { Scale, BookOpen, FileText, Newspaper, Landmark, Shield, ScrollText, Gavel, Settings, PanelLeftClose, Radar, RefreshCw, Bell, Info, LogOut, BookMarked, HeartPulse, Lock } from 'lucide-react';
 import SuporteSheet from './SuporteSheet';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import { useNavigate } from 'react-router-dom';
@@ -30,23 +30,6 @@ const CONTEUDO_ITEMS = [
 ];
 
 
-const ADMIN_FUNCTIONS = [
-  { id: 'admin-monitor', label: 'Monitoramento', icon: Activity, route: '/admin-monitor' },
-  { id: 'geracao-admin', label: 'Geração Admin', icon: ShieldCheck, route: '/geracao-admin' },
-  { id: 'simulado-admin', label: 'Simulado Admin', icon: ClipboardList, route: '/simulado-admin' },
-  { id: 'biblioteca-admin', label: 'Biblioteca Admin', icon: BookOpen, route: '/biblioteca-admin' },
-  { id: 'gamificacao', label: 'Gamificação', icon: Gamepad2, route: '/gamificacao' },
-  { id: 'mapa-mental', label: 'Mapa Mental', icon: Brain, route: '/mapa-mental' },
-  { id: 'dicionario', label: 'Dicionário Jurídico', icon: BookA },
-  { id: 'assistente-whatsapp', label: 'Assistente WhatsApp', icon: MessageCircle },
-  { id: 'notificacao-push', label: 'Notificação Push', icon: BellRing },
-  { id: 'narracao', label: 'Narração de Artigos', icon: Mic, route: '/narracao' },
-  { id: 'explicacao-lei', label: 'Gerar Explicações (IA)', icon: Lightbulb, route: '/explicacao-lei' },
-  { id: 'camara-deputados', label: 'Câmara dos Deputados', icon: Building2, route: '/radar/deputados' },
-  { id: 'boletins', label: 'Boletins', icon: Rss },
-  { id: 'paleta-cores', label: 'Paleta de Cores', icon: Palette, route: '/configuracoes' },
-  { id: 'gerador-post', label: 'Gerador de Post', icon: ImageIcon, route: '/gerador-post' },
-];
 
 const CONFIG_ITEMS = [
   { id: 'perfil', label: 'Perfil', icon: Settings, route: '/perfil' },
@@ -59,7 +42,6 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
   const { signOut, user } = useAuth();
   const isAdmin = user?.email === 'wn7corporation@gmail.com';
   const [collapsed, setCollapsed] = useState(false);
-  const [adminOpen, setAdminOpen] = useState(false);
   const [suporteOpen, setSuporteOpen] = useState(false);
 
   const handleItemClick = async (item: { id: string; route?: string }) => {
