@@ -40,6 +40,7 @@ const TABELAS = [
 ];
 
 const MODOS = ["explicacao", "exemplo", "termos", "sugerir_perguntas"];
+const MAX_RETRIES = 3;
 
 function buildPrompt(modo: string, artigo: { numero: string; caput: string; texto: string }, tabela: string) {
   const ctx = `Lei/Código: ${tabela.replace(/_/g, " ")}\n${artigo.numero}\n${artigo.caput || artigo.texto}`;
@@ -58,39 +59,33 @@ function buildPrompt(modo: string, artigo: { numero: string; caput: string; text
 }
 
 async function callGemini(apiKey: string, prompt: string, system: string): Promise<{ text: string | null; rateLimited: boolean }> {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            system_instruction: { parts: [{ text: system }] },
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
-          }),
-          signal: AbortSignal.timeout(30000),
-        }
-      );
-      if (res.status === 429) {
-        const wait = (attempt + 1) * 10000;
-        console.warn(`Gemini 429 — attempt ${attempt + 1}/3, waiting ${wait / 1000}s`);
-        await new Promise(r => setTimeout(r, wait));
-        continue;
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: system }] },
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+        }),
+        signal: AbortSignal.timeout(30000),
       }
-      if (!res.ok) {
-        console.error(`Gemini HTTP ${res.status}`);
-        return { text: null, rateLimited: false };
-      }
-      const json = await res.json();
-      return { text: json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null, rateLimited: false };
-    } catch (e: any) {
-      console.error(`Gemini error: ${e.message}`);
+    );
+    if (res.status === 429) {
+      return { text: null, rateLimited: true };
+    }
+    if (!res.ok) {
+      console.error(`Gemini HTTP ${res.status}`);
       return { text: null, rateLimited: false };
     }
+    const json = await res.json();
+    return { text: json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null, rateLimited: false };
+  } catch (e: any) {
+    console.error(`Gemini error: ${e.message}`);
+    return { text: null, rateLimited: false };
   }
-  return { text: null, rateLimited: true };
 }
 
 Deno.serve(async (req) => {
@@ -104,6 +99,7 @@ Deno.serve(async (req) => {
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const json = (data: any, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+  // GET — return current state
   if (req.method === "GET") {
     const { data } = await supabase.from("geracao_global").select("*").limit(1).single();
     return json(data);
@@ -112,11 +108,13 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const action = body.action;
 
+  // STOP — pause the queue
   if (action === "stop") {
     await supabase.from("geracao_global").update({ status: "paused", updated_at: new Date().toISOString() }).neq("status", "idle");
     return json({ ok: true, status: "paused" });
   }
 
+  // START — count pending and set running
   if (action === "start") {
     console.log("[gerar-global] START — counting...");
     let totalArticles = 0;
@@ -138,28 +136,43 @@ Deno.serve(async (req) => {
       current_modo: null,
       started_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      cooldown_until: null,
+      retry_count: 0,
+      last_error: null,
+      cursor_tabela_idx: 0,
+      cursor_modo_idx: 0,
     }).not("id", "is", null);
 
-    console.log(`[gerar-global] Pending: ${totalPending}. Use tick to process.`);
+    console.log(`[gerar-global] Pending: ${totalPending}`);
     return json({ ok: true, status: "running", totalPending });
   }
 
+  // TICK — process one item (called by cron every minute)
   if (action === "tick") {
     const { data: state } = await supabase.from("geracao_global").select("*").limit(1).single();
-    if (state?.status !== "running") {
+    if (!state || state.status !== "running") {
       return json({ ok: true, stopped: true });
     }
 
-    // Find next uncached item
-    const lastTabela = state.current_tabela || TABELAS[0];
-    const lastModo = state.current_modo || MODOS[0];
-    const tabelaIdx = Math.max(0, TABELAS.indexOf(lastTabela));
+    // Respect cooldown
+    if (state.cooldown_until && new Date(state.cooldown_until) > new Date()) {
+      console.log(`[tick] In cooldown until ${state.cooldown_until}`);
+      return json({ ok: true, cooldown: true, cooldown_until: state.cooldown_until });
+    }
 
-    for (let ti = tabelaIdx; ti < TABELAS.length; ti++) {
+    // Deterministic cursor: start from saved position
+    let tIdx = state.cursor_tabela_idx || 0;
+    let mIdx = state.cursor_modo_idx || 0;
+
+    // Iterate from cursor position through all tabelas/modos
+    for (let ti = tIdx; ti < TABELAS.length; ti++) {
       const tabela = TABELAS[ti];
-      for (const modo of MODOS) {
-        if (ti === tabelaIdx && MODOS.indexOf(modo) < MODOS.indexOf(lastModo)) continue;
+      const startModo = (ti === tIdx) ? mIdx : 0;
 
+      for (let mi = startModo; mi < MODOS.length; mi++) {
+        const modo = MODOS[mi];
+
+        // Get all cached article numbers for this tabela+modo
         const { data: cached } = await supabase
           .from("artigo_ai_cache")
           .select("artigo_numero")
@@ -167,17 +180,23 @@ Deno.serve(async (req) => {
           .eq("modo", modo);
         const cachedSet = new Set((cached || []).map((c: any) => c.artigo_numero));
 
+        // Get ALL articles (no limit)
         const { data: artigos } = await supabase
           .from(tabela as any)
           .select("numero, caput, texto")
-          .order("ordem_numero", { ascending: true })
-          .limit(200);
-        const artigo = (artigos || []).find((a: any) => !cachedSet.has(a.numero));
-        if (!artigo) continue;
+          .order("ordem_numero", { ascending: true });
 
+        const artigo = (artigos || []).find((a: any) => !cachedSet.has(a.numero));
+        if (!artigo) continue; // all done for this tabela+modo, move on
+
+        // Found an uncached article — process it
         console.log(`[tick] ${tabela} → ${artigo.numero} [${modo}]`);
         await supabase.from("geracao_global").update({
-          current_tabela: tabela, current_artigo: artigo.numero, current_modo: modo,
+          current_tabela: tabela,
+          current_artigo: artigo.numero,
+          current_modo: modo,
+          cursor_tabela_idx: ti,
+          cursor_modo_idx: mi,
           updated_at: new Date().toISOString(),
         }).not("id", "is", null);
 
@@ -185,24 +204,72 @@ Deno.serve(async (req) => {
         const { text: result, rateLimited } = await callGemini(GEMINI_KEY, prompt, system);
 
         if (result) {
+          // Success
           await supabase.from("artigo_ai_cache").upsert(
             { tabela_nome: tabela, artigo_numero: artigo.numero, modo, conteudo: result },
             { onConflict: "tabela_nome,artigo_numero,modo" }
           );
-          await supabase.rpc("increment_geracao_processadas");
+          await supabase.from("geracao_global").update({
+            total_processadas: (state.total_processadas || 0) + 1,
+            retry_count: 0,
+            last_error: null,
+            last_success_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }).not("id", "is", null);
           console.log(`[tick] ✓ ${tabela} ${artigo.numero} [${modo}]`);
           return json({ ok: true, done: false, item: `${tabela}/${artigo.numero}/${modo}` });
+
         } else if (rateLimited) {
-          console.log(`[tick] ⏳ Rate limited`);
-          return json({ ok: true, done: false, rateLimited: true });
+          const retries = (state.retry_count || 0) + 1;
+          if (retries >= MAX_RETRIES) {
+            // Skip this item after too many retries
+            console.log(`[tick] ✗ Skipping ${tabela} ${artigo.numero} [${modo}] after ${retries} retries`);
+            await supabase.from("geracao_global").update({
+              total_erros: (state.total_erros || 0) + 1,
+              retry_count: 0,
+              last_error: `429 rate limited ${retries}x — skipped`,
+              // Set cooldown of 3 minutes before trying next item
+              cooldown_until: new Date(Date.now() + 3 * 60 * 1000).toISOString(),
+              updated_at: new Date().toISOString(),
+            }).not("id", "is", null);
+            // Mark this specific item in cache as error so we skip it
+            await supabase.from("artigo_ai_cache").upsert(
+              { tabela_nome: tabela, artigo_numero: artigo.numero, modo, conteudo: "__ERROR_SKIPPED__" },
+              { onConflict: "tabela_nome,artigo_numero,modo" }
+            );
+            return json({ ok: true, done: false, skipped: true });
+          } else {
+            // Cooldown 2 minutes and retry same item next time
+            const cooldownMinutes = 2;
+            console.log(`[tick] ⏳ Rate limited (attempt ${retries}/${MAX_RETRIES}), cooldown ${cooldownMinutes}min`);
+            await supabase.from("geracao_global").update({
+              retry_count: retries,
+              last_error: `429 rate limited (attempt ${retries}/${MAX_RETRIES})`,
+              cooldown_until: new Date(Date.now() + cooldownMinutes * 60 * 1000).toISOString(),
+              updated_at: new Date().toISOString(),
+            }).not("id", "is", null);
+            return json({ ok: true, done: false, rateLimited: true, cooldown_until: new Date(Date.now() + cooldownMinutes * 60 * 1000).toISOString() });
+          }
+
         } else {
-          await supabase.rpc("increment_geracao_erros");
-          console.log(`[tick] ✗ error`);
+          // Other error — skip item
+          console.log(`[tick] ✗ Error on ${tabela} ${artigo.numero} [${modo}]`);
+          await supabase.from("geracao_global").update({
+            total_erros: (state.total_erros || 0) + 1,
+            last_error: `Generation failed for ${artigo.numero} [${modo}]`,
+            updated_at: new Date().toISOString(),
+          }).not("id", "is", null);
+          // Skip by marking as error
+          await supabase.from("artigo_ai_cache").upsert(
+            { tabela_nome: tabela, artigo_numero: artigo.numero, modo, conteudo: "__ERROR_SKIPPED__" },
+            { onConflict: "tabela_nome,artigo_numero,modo" }
+          );
           return json({ ok: true, done: false, error: true });
         }
       }
     }
 
+    // No more pending items
     await supabase.from("geracao_global").update({ status: "done", updated_at: new Date().toISOString() }).not("id", "is", null);
     return json({ ok: true, done: true });
   }
