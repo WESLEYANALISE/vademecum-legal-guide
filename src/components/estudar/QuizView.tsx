@@ -98,6 +98,25 @@ const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   ordenar_itens: { label: 'Ordenar Itens', color: 'text-cyan-400' },
 };
 
+// --- Countdown "Praticar!" component ---
+function CountdownGo({ onDone }: { onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 800);
+    return () => clearTimeout(t);
+  }, [onDone]);
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+      <motion.div
+        initial={{ scale: 0.3, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+      >
+        <span className="text-4xl font-bold text-primary">Praticar! 🚀</span>
+      </motion.div>
+    </div>
+  );
+}
+
 // --- Main Component ---
 const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
   const { user } = useAuth();
