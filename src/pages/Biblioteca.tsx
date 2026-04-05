@@ -542,6 +542,7 @@ const Biblioteca = () => {
             label={cat.label}
             desc={cat.desc}
             count={livros.length}
+            gradient={cat.gradient}
             onClick={() => handleSelectCategory(cat.id)}
           />
         );
@@ -575,11 +576,12 @@ const Biblioteca = () => {
         <>
           {renderSearchBar('Buscar área do direito...')}
           <div className="space-y-3">
-            {filteredAreas.map((section) => (
+            {filteredAreas.map((section, idx) => (
               <AreaIconCard
                 key={section.label}
                 label={section.label}
                 count={section.items.length}
+                index={idx}
                 onClick={() => handleSelectArea(section.label)}
               />
             ))}
