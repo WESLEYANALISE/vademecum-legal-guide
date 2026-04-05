@@ -447,7 +447,7 @@ const Index = () => {
                 <motion.div className="py-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, type: 'spring', stiffness: 260, damping: 24 }}>
                   <AtalhosCarousel onSelect={handleAtalhoSelect} onPersonalizarOpen={setPersonalizarOpen} />
                 </motion.div>
-                <motion.div className="py-4 flex gap-3 px-4 lg:hidden" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 24 }}>
+                <motion.div className="py-4 flex gap-3 lg:hidden" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 24 }}>
                   {/* Radar de Leis 360° — flex-[3] */}
                   <div
                     className="relative flex items-center h-12 cursor-pointer flex-[3] rounded-full bg-primary shadow-md shadow-primary/25 overflow-hidden"
