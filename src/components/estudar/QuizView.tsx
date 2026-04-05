@@ -98,11 +98,32 @@ const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   ordenar_itens: { label: 'Ordenar Itens', color: 'text-cyan-400' },
 };
 
+// --- Countdown "Praticar!" component ---
+function CountdownGo({ onDone }: { onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 800);
+    return () => clearTimeout(t);
+  }, [onDone]);
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+      <motion.div
+        initial={{ scale: 0.3, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+      >
+        <span className="text-4xl font-bold text-primary">Praticar! 🚀</span>
+      </motion.div>
+    </div>
+  );
+}
+
 // --- Main Component ---
 const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
   const { user } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answered, setAnswered] = useState(false);
@@ -124,6 +145,7 @@ const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      setGenerating(false);
       setError('');
       try {
         // Check cache first
@@ -140,10 +162,12 @@ const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
           if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.tipo) {
             setQuestions(parsed);
             setLoading(false);
+            setCountdown(3);
             return;
           }
         }
 
+        setGenerating(true);
         const res = await supabase.functions.invoke('gerar-estudo', {
           body: { tabela_nome: tabelaNome, artigo_numero: artigoNumero, mode: 'questoes' },
         });
@@ -151,6 +175,7 @@ const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
         const data = res.data?.data;
         if (!Array.isArray(data) || data.length === 0) throw new Error('Sem questões geradas');
         setQuestions(data);
+        setCountdown(3);
       } catch (e: any) {
         setError(e.message || 'Erro ao gerar questões');
       } finally {
@@ -159,6 +184,13 @@ const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
     };
     load();
   }, [tabelaNome, artigoNumero]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (countdown === null || countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown(prev => (prev !== null ? prev - 1 : null)), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   const q = questions[currentIdx];
   const progress = questions.length > 0 ? ((currentIdx + (answered ? 1 : 0)) / questions.length) * 100 : 0;
@@ -239,7 +271,7 @@ const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Gerando questões com IA...</p>
+        <p className="text-sm text-muted-foreground">{generating ? 'Gerando questões com IA...' : 'Carregando questões...'}</p>
         <p className="text-xs text-muted-foreground/60">Art. {artigoNumero} — {leiNome}</p>
       </div>
     );
@@ -252,6 +284,33 @@ const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
         <p className="text-sm text-destructive text-center">{error}</p>
         <button onClick={onBack} className="text-sm text-primary underline">Voltar</button>
       </div>
+    );
+  }
+
+  // --- Countdown ---
+  if (countdown !== null && countdown > 0) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6">
+        <p className="text-sm text-muted-foreground">Art. {artigoNumero} — {leiNome}</p>
+        <motion.div
+          key={countdown}
+          initial={{ scale: 0.3, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 2, opacity: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center"
+        >
+          <span className="text-5xl font-bold text-primary-foreground">{countdown}</span>
+        </motion.div>
+        <p className="text-lg font-bold text-foreground">Prepare-se!</p>
+      </div>
+    );
+  }
+
+  if (countdown === 0 && questions.length > 0 && !finished && currentIdx === 0 && !answered && results.length === 0) {
+    // Brief "Praticar!" flash then auto-dismiss
+    return (
+      <CountdownGo onDone={() => setCountdown(null)} />
     );
   }
 
