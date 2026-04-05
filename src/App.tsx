@@ -10,6 +10,8 @@ import { usePresenceTracker } from "@/hooks/usePresenceTracker";
 import { ThemeProvider } from "@/hooks/useTheme";
 import brasaoImg from "@/assets/brasao-republica.png";
 import { Loader2 } from "lucide-react";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 // Eagerly loaded (critical path)
 import Index from "./pages/Index.tsx";
