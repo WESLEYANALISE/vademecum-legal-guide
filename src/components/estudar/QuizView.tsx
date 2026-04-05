@@ -103,6 +103,8 @@ const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
   const { user } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answered, setAnswered] = useState(false);
