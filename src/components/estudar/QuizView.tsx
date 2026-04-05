@@ -252,7 +252,7 @@ const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Gerando questões com IA...</p>
+        <p className="text-sm text-muted-foreground">{generating ? 'Gerando questões com IA...' : 'Carregando questões...'}</p>
         <p className="text-xs text-muted-foreground/60">Art. {artigoNumero} — {leiNome}</p>
       </div>
     );
@@ -265,6 +265,33 @@ const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
         <p className="text-sm text-destructive text-center">{error}</p>
         <button onClick={onBack} className="text-sm text-primary underline">Voltar</button>
       </div>
+    );
+  }
+
+  // --- Countdown ---
+  if (countdown !== null && countdown > 0) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6">
+        <p className="text-sm text-muted-foreground">Art. {artigoNumero} — {leiNome}</p>
+        <motion.div
+          key={countdown}
+          initial={{ scale: 0.3, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 2, opacity: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center"
+        >
+          <span className="text-5xl font-bold text-primary-foreground">{countdown}</span>
+        </motion.div>
+        <p className="text-lg font-bold text-foreground">Prepare-se!</p>
+      </div>
+    );
+  }
+
+  if (countdown === 0 && questions.length > 0 && !finished && currentIdx === 0 && !answered && results.length === 0) {
+    // Brief "Praticar!" flash then auto-dismiss
+    return (
+      <CountdownGo onDone={() => setCountdown(null)} />
     );
   }
 
