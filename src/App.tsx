@@ -185,6 +185,8 @@ const App = () => (
         <ThemeProvider>
           <TooltipProvider>
             <Sonner />
+            <Analytics />
+            <SpeedInsights />
             <AnimatedRoutes />
           </TooltipProvider>
         </ThemeProvider>
