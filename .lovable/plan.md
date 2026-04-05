@@ -1,75 +1,47 @@
 
 
-## Plano: Otimização para Deploy na Vercel
+## Plano: Adicionar Card "Acesso Desktop" ao lado do Radar de Leis 360°
 
 ### Visão Geral
 
-Configurar o projeto Vite/React SPA para funcionar perfeitamente na Vercel, com deep linking, analytics, speed insights e headers de cache otimizados.
+Transformar a barra do "Radar de Leis 360°" em uma linha com dois cards lado a lado: o Radar (maior, ~60% da largura) e um novo card "Acesso Desktop" (~40%). O card Desktop mostra vantagens da versão desktop e só aparece em mobile/tablet (< 1024px).
 
 ### O que será feito
 
-**1. Arquivo `vercel.json` (SPA Rewrites + Headers de Cache)**
+**1. Reestruturar o layout do Radar de Leis 360°**
 
-Criar o arquivo na raiz do projeto com:
-- Rewrite de todas as rotas para `index.html` (essencial para SPA com React Router)
-- Headers de cache para assets estáticos (JS, CSS, imagens, fontes) com `max-age` de 1 ano (imutáveis pois Vite gera hashes nos nomes)
-- Header `X-Content-Type-Options: nosniff` para segurança
+Ambos os locais onde o Radar aparece (mobile e desktop layout) serão ajustados para exibir dois cards lado a lado com `flex` e `gap`.
 
-**2. Instalar `@vercel/analytics`**
+**2. Criar o card "Acesso Desktop"**
 
-Pacote oficial para rastrear visitantes, pageviews e origens de tráfego no dashboard da Vercel. Gratuito em todos os planos.
+Card com ícone de monitor, título "Versão Desktop", breve descrição das vantagens (tela ampla, multitarefas, atalhos). Estilo similar ao Radar mas com gradiente diferenciado (ex: azul/índigo). Ao clicar, pode abrir um sheet ou redirecionar para a URL publicada.
 
-- Instalar o pacote
-- Adicionar `<Analytics />` no `App.tsx`
+**3. Visibilidade apenas mobile/tablet**
 
-**3. Instalar `@vercel/speed-insights`**
+Toda a linha com os dois cards só aparece em telas < 1024px. No desktop, o Radar já aparece na barra superior, então o card Desktop não é necessário.
 
-Pacote que coleta métricas de Core Web Vitals (LCP, FID, CLS, TTFB) dos usuários reais e exibe no dashboard.
+### Layout Visual
 
-- Instalar o pacote
-- Adicionar `<SpeedInsights />` no `App.tsx`
+```text
+┌──────────────────────┐ ┌───────────────┐
+│ 🔴 Radar de Leis 360°│ │ 🖥 Desktop    │
+│      (flex-[3])      │ │  (flex-[2])   │
+└──────────────────────┘ └───────────────┘
+```
 
 ### Detalhes Técnicos
 
-**`vercel.json`** (novo arquivo na raiz):
-```json
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/assets/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
-    },
-    {
-      "source": "/sw-cache.js",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-cache" }
-      ]
-    }
-  ]
-}
-```
+**Mobile (dentro do `activeTab === 'legislacao'`)** — linha ~450-488:
+- Trocar `flex justify-center` por `flex gap-3`
+- Radar: de `w-[280px]` para `flex-[3]` (maior)
+- Novo card Desktop: `flex-[2]`, gradiente azul, ícone `Monitor`, texto "Versão Desktop" com subtítulo curto
 
-**`App.tsx`** — adicionar no componente `App`:
-```tsx
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/react';
-
-// Dentro do JSX do App:
-<Analytics />
-<SpeedInsights />
-```
+**Desktop layout (linha ~255-290)**:
+- Manter apenas o Radar (o card Desktop não aparece em desktop)
 
 ### Arquivos
 
 | Arquivo | Ação |
 |---------|------|
-| `vercel.json` | Criar — rewrites SPA + headers de cache |
-| `src/App.tsx` | Adicionar componentes Analytics e SpeedInsights |
-| `package.json` | Instalar `@vercel/analytics` e `@vercel/speed-insights` |
+| `src/pages/Index.tsx` | Adicionar card Desktop ao lado do Radar na seção mobile; ajustar proporções |
 
