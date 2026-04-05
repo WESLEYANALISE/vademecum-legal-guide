@@ -7,6 +7,7 @@ import QuizView from '@/components/estudar/QuizView';
 import FlashcardView from '@/components/estudar/FlashcardView';
 import DesempenhoView from '@/components/estudar/DesempenhoView';
 import MindMapView from '@/components/estudar/MindMapView';
+import QuestoesDashboard from '@/components/estudar/QuestoesDashboard';
 
 import { Input } from '@/components/ui/input';
 import { useStudyStats } from '@/hooks/useStudyStats';
