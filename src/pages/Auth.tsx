@@ -80,9 +80,9 @@ function InfiniteCarousel() {
         {items.map((f, i) => (
           <div
             key={`${f.label}-${i}`}
-            className="flex-shrink-0 w-[160px] rounded-2xl overflow-hidden border border-primary/20 shadow-lg shine-effect"
+            className="flex-shrink-0 w-[200px] rounded-2xl overflow-hidden border border-primary/20 shadow-lg shine-effect"
           >
-            <div className="relative h-[200px]">
+            <div className="relative h-[260px]">
               <img
                 src={f.img}
                 alt={f.label}
