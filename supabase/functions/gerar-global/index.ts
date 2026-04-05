@@ -95,16 +95,19 @@ async function callGemini(apiKey: string, prompt: string, system: string): Promi
   return { text: null, rateLimited: true };
 }
 
-function selfInvoke(delayMs: number) {
+async function selfInvoke(delayMs: number) {
+  if (delayMs > 0) await new Promise(r => setTimeout(r, delayMs));
   const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/gerar-global`;
-  // Use setTimeout to schedule the fetch, ensuring the current response can be sent
-  setTimeout(() => {
-    fetch(url, {
+  try {
+    await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
       body: JSON.stringify({ action: "tick" }),
-    }).catch((e) => console.error("[gerar-global] self-invoke error:", e.message));
-  }, delayMs);
+    });
+    console.log(`[gerar-global] self-invoke sent after ${delayMs}ms`);
+  } catch (e: any) {
+    console.error("[gerar-global] self-invoke error:", e.message);
+  }
 }
 
 Deno.serve(async (req) => {
