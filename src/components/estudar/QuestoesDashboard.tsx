@@ -15,22 +15,16 @@ interface Categoria {
 }
 
 const CATEGORIAS: Categoria[] = [
-  { id: 'constitucional', label: 'Constitucional', icon: Landmark, gradient: 'from-emerald-600 to-emerald-800', tabelas: ['CF88_CONSTITUICAO_FEDERAL'] },
-  { id: 'penal', label: 'Penal', icon: Gavel, gradient: 'from-rose-600 to-rose-800', tabelas: ['CP_CODIGO_PENAL', 'CPP_CODIGO_PROCESSO_PENAL', 'CPM_CODIGO_PENAL_MILITAR', 'CPPM_CODIGO_PROCESSO_PENAL_MILITAR', 'LEP_EXECUCAO_PENAL', 'LCH_CRIMES_HEDIONDOS', 'LTORT_TORTURA', 'LOC_ORGANIZACAO_CRIMINOSA', 'LAA_ABUSO_AUTORIDADE', 'LIT_INTERCEPTACAO_TELEFONICA', 'LD_LEI_DROGAS', 'LLAV_LAVAGEM_DINHEIRO', 'LCI_CRIMES_INFORMATICOS', 'LCSF_CRIMES_SISTEMA_FINANCEIRO', 'LCP_CONTRAVENCOES_PENAIS', 'LRAC_RACISMO', 'LAT_ANTITERRORISMO', 'LPT_PROTECAO_TESTEMUNHAS', 'LMP_MARIA_PENHA'] },
-  { id: 'civil', label: 'Civil', icon: Scale, gradient: 'from-amber-500 to-amber-700', tabelas: ['CC_CODIGO_CIVIL', 'CPC_CODIGO_PROCESSO_CIVIL', 'LINDB_INTRODUCAO_NORMAS', 'LI_INQUILINATO', 'LRP_REGISTROS_PUBLICOS', 'LALP_ALIENACAO_PARENTAL', 'LALIM_ALIMENTOS', 'LA_ARBITRAGEM', 'LMS_MANDADO_SEGURANCA', 'LACP_ACAO_CIVIL_PUBLICA', 'LJE_JUIZADOS_ESPECIAIS', 'LHD_HABEAS_DATA', 'LMI_MANDADO_INJUNCAO', 'LAP_ACAO_POPULAR'] },
-  { id: 'trabalhista', label: 'Trabalhista', icon: Briefcase, gradient: 'from-purple-600 to-purple-800', tabelas: ['CLT_CONSOLIDACAO_LEIS_TRABALHO'] },
-  { id: 'tributario', label: 'Tributário', icon: Building2, gradient: 'from-teal-600 to-teal-800', tabelas: ['CTN_CODIGO_TRIBUTARIO_NACIONAL', 'LRF_RESPONSABILIDADE_FISCAL', 'LRT_REFORMA_TRIBUTARIA'] },
-  { id: 'administrativo', label: 'Administrativo', icon: Shield, gradient: 'from-blue-600 to-blue-800', tabelas: ['L8112_SERVIDORES_FEDERAIS', 'LIA_IMPROBIDADE_ADMINISTRATIVA', 'NLL_LICITACOES', 'LPAF_PROCESSO_ADMINISTRATIVO', 'LAI_ACESSO_INFORMACAO', 'CES_CODIGO_ETICA_SERVIDOR', 'LACE_ANTICORRUPCAO', 'LCON_CONCESSOES', 'LPPP_PARCERIAS_PUBLICO_PRIVADAS', 'LOTCU_ORGANICA_TCU', 'LLE_LIBERDADE_ECONOMICA', 'LOMAN_LEI_ORGANICA_MAGISTRATURA', 'LOMP_ORGANICA_MP'] },
-  { id: 'consumidor', label: 'Consumidor', icon: Users, gradient: 'from-orange-500 to-orange-700', tabelas: ['CDC_CODIGO_DEFESA_CONSUMIDOR'] },
-  { id: 'ambiental', label: 'Ambiental', icon: TreePine, gradient: 'from-green-600 to-green-800', tabelas: ['CFLOR_CODIGO_FLORESTAL', 'LCA_CRIMES_AMBIENTAIS', 'CAGUA_CODIGO_AGUAS', 'CMIN_CODIGO_MINAS', 'LBIO_BIOSSEGURANCA'] },
-  { id: 'eleitoral', label: 'Eleitoral', icon: Vote, gradient: 'from-indigo-600 to-indigo-800', tabelas: ['CE_CODIGO_ELEITORAL', 'LPP_PARTIDOS_POLITICOS', 'LELE_ELEICOES', 'LFL_FICHA_LIMPA', 'LINE_INELEGIBILIDADES'] },
-  { id: 'previdenciario', label: 'Previdenciário', icon: HeartPulse, gradient: 'from-cyan-600 to-cyan-800', tabelas: ['LBPS_BENEFICIOS_PREVIDENCIA', 'LCSS_CUSTEIO_SEGURIDADE', 'LPC_PREVIDENCIA_COMPLEMENTAR', 'LOAS_ASSISTENCIA_SOCIAL'] },
+  { id: 'constituicao', label: 'Constituição', icon: Landmark, gradient: 'from-emerald-600 to-emerald-800', tabelas: ['CF88_CONSTITUICAO_FEDERAL'] },
+  { id: 'codigos', label: 'Códigos', icon: Gavel, gradient: 'from-rose-600 to-rose-800', tabelas: ['CP_CODIGO_PENAL', 'CC_CODIGO_CIVIL', 'CPC_CODIGO_PROCESSO_CIVIL', 'CPP_CODIGO_PROCESSO_PENAL', 'CPM_CODIGO_PENAL_MILITAR', 'CPPM_CODIGO_PROCESSO_PENAL_MILITAR', 'CTN_CODIGO_TRIBUTARIO_NACIONAL', 'CDC_CODIGO_DEFESA_CONSUMIDOR', 'CLT_CONSOLIDACAO_LEIS_TRABALHO', 'CTB_CODIGO_TRANSITO_BRASILEIRO', 'CE_CODIGO_ELEITORAL', 'CFLOR_CODIGO_FLORESTAL', 'CAGUA_CODIGO_AGUAS', 'CMIN_CODIGO_MINAS', 'CBA_CODIGO_BRASILEIRO_AERONAUTICA', 'CTEL_CODIGO_TELECOMUNICACOES', 'CCOM_CODIGO_COMERCIAL', 'CES_CODIGO_ETICA_SERVIDOR'] },
   { id: 'estatutos', label: 'Estatutos', icon: ScrollText, gradient: 'from-fuchsia-600 to-fuchsia-800', tabelas: ['ECA_ESTATUTO_CRIANCA_ADOLESCENTE', 'EI_ESTATUTO_IDOSO', 'EPD_ESTATUTO_PESSOA_DEFICIENCIA', 'EIR_ESTATUTO_IGUALDADE_RACIAL', 'EC_ESTATUTO_CIDADE', 'ED_ESTATUTO_DESARMAMENTO', 'EOAB_ESTATUTO_OAB', 'ET_ESTATUTO_TORCEDOR', 'EJ_ESTATUTO_JUVENTUDE', 'EM_ESTATUTO_MILITARES', 'EIND_ESTATUTO_INDIO', 'ETERRA_ESTATUTO_TERRA', 'EMIG_ESTATUTO_MIGRACAO', 'EREF_ESTATUTO_REFUGIADO', 'EMET_ESTATUTO_METROPOLE', 'EMUS_ESTATUTO_MUSEUS', 'EME_ESTATUTO_MICROEMPRESA', 'EPC_ESTATUTO_PESSOA_CANCER'] },
-  { id: 'digital', label: 'Digital e Dados', icon: Shield, gradient: 'from-sky-600 to-sky-800', tabelas: ['LGPD_PROTECAO_DADOS', 'MCI_MARCO_CIVIL_INTERNET', 'CTEL_CODIGO_TELECOMUNICACOES', 'LMLS_MARCO_LEGAL_STARTUPS'] },
-  { id: 'empresarial', label: 'Empresarial', icon: Building2, gradient: 'from-yellow-600 to-yellow-800', tabelas: ['CCOM_CODIGO_COMERCIAL', 'LF_FALENCIAS', 'LSA_SOCIEDADES_ACOES', 'LPI_PROPRIEDADE_INDUSTRIAL', 'LDA_DIREITOS_AUTORAIS', 'LCADE_ANTITRUSTE'] },
-  { id: 'transito', label: 'Trânsito', icon: Shield, gradient: 'from-sky-500 to-sky-700', tabelas: ['CTB_CODIGO_TRANSITO_BRASILEIRO'] },
-  { id: 'militar', label: 'Militar', icon: Shield, gradient: 'from-slate-600 to-slate-800', tabelas: ['CBA_CODIGO_BRASILEIRO_AERONAUTICA', 'EM_ESTATUTO_MILITARES'] },
-  { id: 'outros', label: 'Outros', icon: ScrollText, gradient: 'from-gray-500 to-gray-700', tabelas: ['LSUS_SISTEMA_UNICO_SAUDE', 'LDB_DIRETRIZES_EDUCACAO', 'LPSU_PARCELAMENTO_SOLO', 'ETERRA_ESTATUTO_TERRA'] },
+  { id: 'leis_especiais', label: 'Leis Especiais', icon: Scale, gradient: 'from-amber-500 to-amber-700', tabelas: ['LINDB_INTRODUCAO_NORMAS', 'LI_INQUILINATO', 'LRP_REGISTROS_PUBLICOS', 'LALP_ALIENACAO_PARENTAL', 'LALIM_ALIMENTOS', 'LA_ARBITRAGEM', 'LMS_MANDADO_SEGURANCA', 'LACP_ACAO_CIVIL_PUBLICA', 'LJE_JUIZADOS_ESPECIAIS', 'LHD_HABEAS_DATA', 'LMI_MANDADO_INJUNCAO', 'LAP_ACAO_POPULAR', 'LEP_EXECUCAO_PENAL', 'LCH_CRIMES_HEDIONDOS', 'LTORT_TORTURA', 'LOC_ORGANIZACAO_CRIMINOSA', 'LAA_ABUSO_AUTORIDADE', 'LIT_INTERCEPTACAO_TELEFONICA', 'LD_LEI_DROGAS', 'LLAV_LAVAGEM_DINHEIRO', 'LCI_CRIMES_INFORMATICOS', 'LCSF_CRIMES_SISTEMA_FINANCEIRO', 'LCP_CONTRAVENCOES_PENAIS', 'LRAC_RACISMO', 'LAT_ANTITERRORISMO', 'LPT_PROTECAO_TESTEMUNHAS', 'LMP_MARIA_PENHA', 'LCA_CRIMES_AMBIENTAIS', 'LBIO_BIOSSEGURANCA', 'LPP_PARTIDOS_POLITICOS', 'LELE_ELEICOES', 'LFL_FICHA_LIMPA', 'LINE_INELEGIBILIDADES'] },
+  { id: 'administrativo', label: 'Administrativo', icon: Shield, gradient: 'from-blue-600 to-blue-800', tabelas: ['L8112_SERVIDORES_FEDERAIS', 'LIA_IMPROBIDADE_ADMINISTRATIVA', 'NLL_LICITACOES', 'LPAF_PROCESSO_ADMINISTRATIVO', 'LAI_ACESSO_INFORMACAO', 'LACE_ANTICORRUPCAO', 'LCON_CONCESSOES', 'LPPP_PARCERIAS_PUBLICO_PRIVADAS', 'LOTCU_ORGANICA_TCU', 'LLE_LIBERDADE_ECONOMICA', 'LOMAN_LEI_ORGANICA_MAGISTRATURA', 'LOMP_ORGANICA_MP'] },
+  { id: 'previdenciario', label: 'Previdenciário', icon: HeartPulse, gradient: 'from-cyan-600 to-cyan-800', tabelas: ['LBPS_BENEFICIOS_PREVIDENCIA', 'LCSS_CUSTEIO_SEGURIDADE', 'LPC_PREVIDENCIA_COMPLEMENTAR', 'LOAS_ASSISTENCIA_SOCIAL'] },
+  { id: 'tributario', label: 'Tributário', icon: Building2, gradient: 'from-teal-600 to-teal-800', tabelas: ['LRF_RESPONSABILIDADE_FISCAL', 'LRT_REFORMA_TRIBUTARIA'] },
+  { id: 'digital', label: 'Digital e Dados', icon: Shield, gradient: 'from-sky-600 to-sky-800', tabelas: ['LGPD_PROTECAO_DADOS', 'MCI_MARCO_CIVIL_INTERNET', 'LMLS_MARCO_LEGAL_STARTUPS'] },
+  { id: 'empresarial', label: 'Empresarial', icon: Briefcase, gradient: 'from-yellow-600 to-yellow-800', tabelas: ['LF_FALENCIAS', 'LSA_SOCIEDADES_ACOES', 'LPI_PROPRIEDADE_INDUSTRIAL', 'LDA_DIREITOS_AUTORAIS', 'LCADE_ANTITRUSTE'] },
+  { id: 'outros', label: 'Outros', icon: Users, gradient: 'from-gray-500 to-gray-700', tabelas: ['LSUS_SISTEMA_UNICO_SAUDE', 'LDB_DIRETRIZES_EDUCACAO', 'LPSU_PARCELAMENTO_SOLO'] },
 ];
 
 interface Props {
@@ -172,10 +166,10 @@ export default function QuestoesDashboard({ onSelectLei, onNavigateDesempenho, o
         <button onClick={handleBack} className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm transition-colors">
           <ArrowLeft className="w-4 h-4" /> Voltar
         </button>
-        <h2 className="font-display text-lg font-bold text-foreground">Escolha a disciplina</h2>
+        <h2 className="font-display text-lg font-bold text-foreground">Escolha a categoria</h2>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Buscar disciplina..." value={searchCat} onChange={e => setSearchCat(e.target.value)} className="pl-9" />
+          <Input placeholder="Buscar categoria..." value={searchCat} onChange={e => setSearchCat(e.target.value)} className="pl-9" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           {filteredCats.map((cat, i) => {
