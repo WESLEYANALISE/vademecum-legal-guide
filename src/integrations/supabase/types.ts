@@ -2218,6 +2218,51 @@ export type Database = {
         }
         Relationships: []
       }
+      geracao_global: {
+        Row: {
+          created_at: string | null
+          current_artigo: string | null
+          current_modo: string | null
+          current_tabela: string | null
+          id: string
+          modos: string[]
+          started_at: string | null
+          status: string
+          total_erros: number
+          total_pendentes: number
+          total_processadas: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_artigo?: string | null
+          current_modo?: string | null
+          current_tabela?: string | null
+          id?: string
+          modos?: string[]
+          started_at?: string | null
+          status?: string
+          total_erros?: number
+          total_pendentes?: number
+          total_processadas?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_artigo?: string | null
+          current_modo?: string | null
+          current_tabela?: string | null
+          id?: string
+          modos?: string[]
+          started_at?: string | null
+          status?: string
+          total_erros?: number
+          total_pendentes?: number
+          total_processadas?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       instagram_posts: {
         Row: {
           created_at: string
@@ -6100,6 +6145,8 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      increment_geracao_erros: { Args: never; Returns: undefined }
+      increment_geracao_processadas: { Args: never; Returns: undefined }
     }
     Enums: {
       tipo_legislacao:
