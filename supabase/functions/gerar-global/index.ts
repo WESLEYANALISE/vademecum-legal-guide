@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
     console.log(`[gerar-global] Total pending: ${totalPending}. Starting tick chain...`);
 
     // Fire first tick after 2s
-    selfInvoke(2000);
+    await selfInvoke(2000);
 
     return json({ ok: true, status: "running", totalPending });
   }
