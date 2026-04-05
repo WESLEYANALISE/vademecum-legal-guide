@@ -16,3 +16,7 @@ schedule = "*/30 * * * *"
 # Monitorar alterações em legislação: 1x por dia às 6h Brasília (9:00 UTC)
 [functions.monitorar-legislacao]
 schedule = "0 9 * * *"
+
+# Geração Global: a cada minuto, processa 1 item se status = running
+[functions.gerar-global]
+schedule = "* * * * *"
