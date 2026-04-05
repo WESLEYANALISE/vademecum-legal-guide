@@ -448,9 +448,9 @@ const Index = () => {
                   <AtalhosCarousel onSelect={handleAtalhoSelect} onPersonalizarOpen={setPersonalizarOpen} />
                 </motion.div>
                 <motion.div className="py-4 flex gap-3 lg:hidden" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 24 }}>
-                  {/* Radar de Leis 360° — flex-[3] */}
+                  {/* Radar de Leis */}
                   <div
-                    className="relative flex items-center h-12 cursor-pointer flex-[3] rounded-full bg-primary shadow-md shadow-primary/25 overflow-hidden"
+                    className="relative flex items-center h-12 cursor-pointer flex-1 rounded-full bg-primary shadow-md shadow-primary/25 overflow-hidden"
                     onClick={() => { navigate('/radar-360'); localStorage.setItem(RADAR_SEEN_KEY, String(Date.now())); setRadarBadge(0); }}
                   >
                     <div className="absolute inset-0 pointer-events-none z-10">
@@ -473,7 +473,7 @@ const Index = () => {
                     </div>
                     <div className="flex-1 flex items-center justify-between pl-2 pr-3 relative z-10">
                       <span className="text-primary-foreground text-[13px] font-display font-semibold tracking-wide italic">
-                        Radar de Leis 360°
+                        Radar de Leis
                       </span>
                       <motion.div
                         animate={{ x: [0, 5, 0] }}
@@ -484,22 +484,29 @@ const Index = () => {
                     </div>
                   </div>
 
-                  {/* Versão Desktop — flex-[2] */}
+                  {/* Desktop */}
                   <div
-                    className="relative flex items-center h-12 cursor-pointer flex-[2] rounded-full overflow-hidden shadow-md bg-primary border-2 border-primary"
+                    className="relative flex items-center h-12 cursor-pointer flex-1 rounded-full overflow-hidden shadow-md shadow-blue-500/25"
+                    style={{ background: 'linear-gradient(135deg, hsl(220 70% 50%), hsl(230 65% 42%))' }}
                     onClick={() => window.open('https://vademecum-legal-guide.lovable.app', '_blank')}
                   >
                     <div className="absolute inset-0 pointer-events-none z-10">
                       <div
-                        className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/15 to-transparent skew-x-[-20deg]"
+                        className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/25 to-transparent skew-x-[-20deg]"
                         style={{ animation: 'shinePratique 3.5s ease-in-out infinite 0.5s' }}
                       />
                     </div>
-                    <div className="w-11 h-11 rounded-full shrink-0 flex items-center justify-center z-10 bg-primary-foreground">
-                      <Monitor className="w-5 h-5 text-primary" />
+                    <div className="w-11 h-11 rounded-full shrink-0 flex items-center justify-center z-10 bg-white/20 border-2 border-white/30">
+                      <Monitor className="w-5 h-5 text-white" />
                     </div>
-                    <div className="flex-1 flex items-center justify-center pr-3 relative z-10">
-                      <span className="text-primary-foreground text-[13px] font-display font-bold tracking-wide">Desktop</span>
+                    <div className="flex-1 flex items-center justify-between pl-2 pr-3 relative z-10">
+                      <span className="text-white text-[13px] font-display font-bold tracking-wide">Desktop</span>
+                      <motion.div
+                        animate={{ x: [0, 5, 0] }}
+                        transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut', delay: 0.3 }}
+                      >
+                        <ArrowRight className="w-4 h-4 text-white" strokeWidth={2.5} />
+                      </motion.div>
                     </div>
                   </div>
                 </motion.div>
