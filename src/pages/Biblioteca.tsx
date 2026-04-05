@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { directImg } from '@/lib/cdnImg';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Library, ChevronRight, Search, Star } from 'lucide-react';
+import { ArrowLeft, Library, ChevronRight, Search, Star, BookOpen, Crown, Coffee, GraduationCap, Landmark, TreePine, Users, ShoppingCart, Scale, Dribbble, Briefcase, Building2, Banknote, Globe, Globe2, Siren, HeartPulse, Gavel, Hammer, FileText, ScrollText, UserCheck, FlaskConical, Vote, Languages, Pen, Award, Brain, Receipt } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,77 +14,46 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
-import capaEstudos from '@/assets/biblioteca/capa-estudos.jpg';
-import capaClassicos from '@/assets/biblioteca/capa-classicos.jpg';
-import capaLideranca from '@/assets/biblioteca/capa-lideranca.jpg';
-import capaForaDaToga from '@/assets/biblioteca/capa-fora-da-toga.jpg';
+import type { LucideIcon } from 'lucide-react';
 
-import areaAdministrativo from '@/assets/biblioteca/areas/direito-administrativo.jpg';
-import areaAmbiental from '@/assets/biblioteca/areas/direito-ambiental.jpg';
-import areaCivil from '@/assets/biblioteca/areas/direito-civil.jpg';
-import areaConcorrencial from '@/assets/biblioteca/areas/direito-concorrencial.jpg';
-import areaConstitucional from '@/assets/biblioteca/areas/direito-constitucional.jpg';
-import areaDesportivo from '@/assets/biblioteca/areas/direito-desportivo.jpg';
-import areaTrabalho from '@/assets/biblioteca/areas/direito-do-trabalho.jpg';
-import areaEmpresarial from '@/assets/biblioteca/areas/direito-empresarial.jpg';
-import areaFinanceiro from '@/assets/biblioteca/areas/direito-financeiro.jpg';
-import areaIntPrivado from '@/assets/biblioteca/areas/direito-internacional-privado.jpg';
-import areaIntPublico from '@/assets/biblioteca/areas/direito-internacional-publico.jpg';
-import areaPenal from '@/assets/biblioteca/areas/direito-penal.jpg';
-import areaPrevidenciario from '@/assets/biblioteca/areas/direito-previdenciario.jpg';
-import areaProcCivil from '@/assets/biblioteca/areas/direito-processual-civil.jpg';
-import areaProcTrabalho from '@/assets/biblioteca/areas/direito-processual-do-trabalho.jpg';
-import areaProcPenal from '@/assets/biblioteca/areas/direito-processual-penal.jpg';
-import areaTributario from '@/assets/biblioteca/areas/direito-tributario.jpg';
-import areaUrbanistico from '@/assets/biblioteca/areas/direito-urbanistico.jpg';
-import areaDireitosHumanos from '@/assets/biblioteca/areas/direitos-humanos.jpg';
-import areaFormacao from '@/assets/biblioteca/areas/formacao-complementar.jpg';
-import areaLeiPenal from '@/assets/biblioteca/areas/lei-penal-especial.jpg';
-import areaPesquisa from '@/assets/biblioteca/areas/pesquisa-cientifica.jpg';
-import areaPoliticas from '@/assets/biblioteca/areas/politicas-publicas.jpg';
-import areaPortugues from '@/assets/biblioteca/areas/portugues.jpg';
-import areaPratica from '@/assets/biblioteca/areas/pratica-profissional.jpg';
-import areaOab from '@/assets/biblioteca/areas/revisao-oab.jpg';
-import areaTeoria from '@/assets/biblioteca/areas/teoria-filosofia-direito.jpg';
-
-const AREA_IMAGES: Record<string, string> = {
-  'Direito Administrativo': areaAdministrativo,
-  'Direito Ambiental': areaAmbiental,
-  'Direito Civil': areaCivil,
-  'Direito Concorrencial': areaConcorrencial,
-  'Direito Constitucional': areaConstitucional,
-  'Direito Desportivo': areaDesportivo,
-  'Direito Do Trabalho': areaTrabalho,
-  'Direito Empresarial': areaEmpresarial,
-  'Direito Financeiro': areaFinanceiro,
-  'Direito Internacional Privado': areaIntPrivado,
-  'Direito Internacional Público': areaIntPublico,
-  'Direito Penal': areaPenal,
-  'Direito Previndenciario': areaPrevidenciario,
-  'Direito Processual Civil': areaProcCivil,
-  'Direito Processual Do Trabalho': areaProcTrabalho,
-  'Direito Processual Penal': areaProcPenal,
-  'Direito Tributario': areaTributario,
-  'Direito Urbanistico': areaUrbanistico,
-  'Direitos Humanos': areaDireitosHumanos,
-  'Formação Complementar': areaFormacao,
-  'Lei Penal Especial': areaLeiPenal,
-  'Pesquisa Científica': areaPesquisa,
-  'Politicas Publicas': areaPoliticas,
-  'Portugues': areaPortugues,
-  'Pratica Profissional': areaPratica,
-  'Revisão Oab': areaOab,
-  'Teoria E Filosofia Do Direito': areaTeoria,
+const AREA_ICONS: Record<string, LucideIcon> = {
+  'Direito Administrativo': Landmark,
+  'Direito Ambiental': TreePine,
+  'Direito Civil': Users,
+  'Direito Concorrencial': ShoppingCart,
+  'Direito Constitucional': Scale,
+  'Direito Desportivo': Dribbble,
+  'Direito Do Trabalho': Briefcase,
+  'Direito Empresarial': Building2,
+  'Direito Financeiro': Banknote,
+  'Direito Internacional Privado': Globe,
+  'Direito Internacional Público': Globe2,
+  'Direito Penal': Siren,
+  'Direito Previndenciario': HeartPulse,
+  'Direito Processual Civil': Gavel,
+  'Direito Processual Do Trabalho': Hammer,
+  'Direito Processual Penal': FileText,
+  'Direito Tributario': Receipt,
+  'Direito Urbanistico': Building2,
+  'Direitos Humanos': UserCheck,
+  'Formação Complementar': GraduationCap,
+  'Lei Penal Especial': ScrollText,
+  'Pesquisa Científica': FlaskConical,
+  'Politicas Publicas': Vote,
+  'Portugues': Languages,
+  'Pratica Profissional': Pen,
+  'Revisão Oab': Award,
+  'Teoria E Filosofia Do Direito': Brain,
 };
 
 type View = 'menu' | 'category' | 'area-detail';
 type FilterTab = 'todos' | 'favoritos';
 
-const CATEGORIES = [
-  { id: 'estudos', label: 'Estudos', desc: 'Materiais organizados por área do Direito', img: capaEstudos },
-  { id: 'classicos', label: 'Clássicos', desc: 'Obras fundamentais do Direito', img: capaClassicos },
-  { id: 'lideranca', label: 'Liderança', desc: 'Desenvolvimento pessoal e profissional', img: capaLideranca },
-  { id: 'fora-da-toga', label: 'Fora da Toga', desc: 'Leituras complementares', img: capaForaDaToga },
+const CATEGORIES: { id: string; label: string; desc: string; icon: LucideIcon }[] = [
+  { id: 'estudos', label: 'Estudos', icon: GraduationCap, desc: 'Materiais organizados por área do Direito' },
+  { id: 'classicos', label: 'Clássicos', icon: BookOpen, desc: 'Obras fundamentais do Direito' },
+  { id: 'lideranca', label: 'Liderança', icon: Crown, desc: 'Desenvolvimento pessoal e profissional' },
+  { id: 'fora-da-toga', label: 'Fora da Toga', icon: Coffee, desc: 'Leituras complementares' },
 ];
 
 function isDynamicProcessingStatus(status?: string | null): boolean {
@@ -99,6 +68,50 @@ function isDynamicProcessingStatus(status?: string | null): boolean {
 function makeLivroKey(livro: LivroUnificado): string {
   return `${livro.categoria}-${livro.id}`;
 }
+
+const CategoryIconCard = ({ icon: Icon, label, desc, count, onClick }: { icon: LucideIcon; label: string; desc: string; count: number; onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-emerald-500/40 transition-all group text-left overflow-hidden relative"
+  >
+    <div className="w-20 flex-shrink-0 relative overflow-hidden bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center">
+      <Icon className="w-8 h-8 text-white/90" strokeWidth={1.5} />
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+    </div>
+    <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{label}</p>
+        <p className="text-xs text-muted-foreground">{desc}</p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="text-xs text-muted-foreground">{count > 0 ? count : '...'}</span>
+        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors shrink-0" />
+      </div>
+    </div>
+  </button>
+);
+
+const AreaIconCard = ({ label, count, onClick }: { label: string; count: number; onClick: () => void }) => {
+  const Icon = AREA_ICONS[label] || BookOpen;
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-emerald-500/40 transition-all group text-left overflow-hidden relative"
+    >
+      <div className="w-20 flex-shrink-0 relative overflow-hidden bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
+        <Icon className="w-7 h-7 text-white/90" strokeWidth={1.5} />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+      </div>
+      <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{label}</p>
+          <p className="text-xs text-muted-foreground">{count} materiais</p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors shrink-0" />
+      </div>
+    </button>
+  );
+};
 
 const Biblioteca = () => {
   const navigate = useNavigate();
@@ -120,12 +133,10 @@ const Biblioteca = () => {
   const [readerTitle, setReaderTitle] = useState('');
   const [ebookData, setEbookData] = useState<any>(null);
 
-  // Search & filter
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTab, setFilterTab] = useState<FilterTab>('todos');
   const [favoriteKeys, setFavoriteKeys] = useState<Set<string>>(new Set());
 
-  // Load favorites
   useEffect(() => {
     if (!user) return;
     supabase
@@ -137,11 +148,9 @@ const Biblioteca = () => {
       });
   }, [user]);
 
-  // Auto-open book from ?livro=ID query param
   useEffect(() => {
     const livroId = searchParams.get('livro');
     if (!livroId) return;
-    // Clear param so it doesn't re-trigger
     setSearchParams({}, { replace: true });
 
     (async () => {
@@ -164,7 +173,6 @@ const Biblioteca = () => {
     const key = makeLivroKey(livro);
     const isFav = favoriteKeys.has(key);
 
-    // Optimistic update
     setFavoriteKeys(prev => {
       const next = new Set(prev);
       if (isFav) next.delete(key); else next.add(key);
@@ -178,7 +186,6 @@ const Biblioteca = () => {
     }
   }, [user, favoriteKeys]);
 
-  // Preload cover images in batches
   const preloadCovers = (livros: LivroUnificado[]) => {
     const urls = livros.map(l => l.capa).filter(Boolean) as string[];
     let i = 0;
@@ -279,7 +286,6 @@ const Biblioteca = () => {
     return Array.from(map.entries()).map(([label, items]) => ({ label, items }));
   }, [activeCategory, estudos, classicos, lideranca, foraDaToga]);
 
-  // Filtered areas (for search in category view)
   const filteredAreas = useMemo(() => {
     if (!searchQuery.trim()) return areasByCategory;
     const q = searchQuery.toLowerCase();
@@ -367,7 +373,6 @@ const Biblioteca = () => {
   const catMeta = CATEGORIES.find(c => c.id === activeCategory);
   const areaLivros = areasByCategory.find(a => a.label === activeArea)?.items || [];
 
-  // Filtered livros for area-detail view
   const filteredAreaLivros = useMemo(() => {
     let items = areaLivros;
     if (filterTab === 'favoritos') {
@@ -383,7 +388,6 @@ const Biblioteca = () => {
     return items;
   }, [areaLivros, filterTab, searchQuery, favoriteKeys]);
 
-  // Filtered livros for single-area categories (classicos, lideranca, fora-da-toga)
   const filteredFlatLivros = useMemo(() => {
     if (areasByCategory.length > 1) return [];
     let items = areasByCategory[0]?.items || [];
@@ -426,7 +430,6 @@ const Biblioteca = () => {
     </div>
   );
 
-  // Search bar component
   const renderSearchBar = (placeholder: string) => (
     <div className="relative">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -439,7 +442,6 @@ const Biblioteca = () => {
     </div>
   );
 
-  // Filter tabs (Todos / Favoritos)
   const renderFilterTabs = () => (
     <div className="flex gap-2">
       <button
@@ -466,7 +468,6 @@ const Biblioteca = () => {
     </div>
   );
 
-  // Livro row with order number + favorite star
   const renderLivroRow = (livro: LivroUnificado, index: number) => {
     const capaUrl = livro.capa ? directImg(livro.capa, 300) : '';
     const key = makeLivroKey(livro);
@@ -486,11 +487,9 @@ const Biblioteca = () => {
               <span className="text-[9px] text-muted-foreground text-center line-clamp-3">{livro.titulo}</span>
             </div>
           )}
-          {/* Order number badge */}
           <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md backdrop-blur-sm">
             {index + 1}
           </span>
-          {/* Favorite star */}
           <button
             onClick={(e) => toggleFavorite(livro, e)}
             className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm"
@@ -515,28 +514,15 @@ const Biblioteca = () => {
     <motion.div key="menu" initial={false} animate={{ opacity: 1 }} className="space-y-3">
       {CATEGORIES.map((cat) => {
         const livros = getLivros(cat.id);
-        const count = livros.length;
         return (
-          <button
+          <CategoryIconCard
             key={cat.id}
+            icon={cat.icon}
+            label={cat.label}
+            desc={cat.desc}
+            count={livros.length}
             onClick={() => handleSelectCategory(cat.id)}
-            className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden relative"
-          >
-            <div className="w-20 flex-shrink-0 relative overflow-hidden">
-              <img src={cat.img} alt={cat.label} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
-            </div>
-            <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{cat.label}</p>
-                <p className="text-xs text-muted-foreground">{cat.desc}</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs text-muted-foreground">{count > 0 ? count : '...'}</span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              </div>
-            </div>
-          </button>
+          />
         );
       })}
     </motion.div>
@@ -568,32 +554,14 @@ const Biblioteca = () => {
         <>
           {renderSearchBar('Buscar área do direito...')}
           <div className="space-y-3">
-            {filteredAreas.map((section) => {
-              const areaImg = AREA_IMAGES[section.label];
-              return (
-                <button
-                  key={section.label}
-                  onClick={() => handleSelectArea(section.label)}
-                  className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-primary/30 transition-all group text-left overflow-hidden relative"
-                >
-                  <div className="w-20 flex-shrink-0 relative overflow-hidden">
-                    {areaImg ? (
-                      <img src={areaImg} alt={section.label} width={80} height={100} className="w-full h-full object-cover" decoding="async" />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/10" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
-                  </div>
-                  <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{section.label}</p>
-                      <p className="text-xs text-muted-foreground">{section.items.length} materiais</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                  </div>
-                </button>
-              );
-            })}
+            {filteredAreas.map((section) => (
+              <AreaIconCard
+                key={section.label}
+                label={section.label}
+                count={section.items.length}
+                onClick={() => handleSelectArea(section.label)}
+              />
+            ))}
             {filteredAreas.length === 0 && (
               <p className="text-center text-muted-foreground text-sm py-8">Nenhuma área encontrada</p>
             )}
