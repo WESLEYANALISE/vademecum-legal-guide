@@ -486,7 +486,7 @@ const Index = () => {
 
                   {/* Versão Desktop — flex-[2] */}
                   <div
-                    className="relative flex items-center h-12 cursor-pointer flex-[2] rounded-full overflow-hidden shadow-md bg-card border border-border"
+                    className="relative flex items-center h-12 cursor-pointer flex-[2] rounded-full overflow-hidden shadow-md bg-primary border-2 border-primary"
                     onClick={() => window.open('https://vademecum-legal-guide.lovable.app', '_blank')}
                   >
                     <div className="absolute inset-0 pointer-events-none z-10">
@@ -495,12 +495,11 @@ const Index = () => {
                         style={{ animation: 'shinePratique 3.5s ease-in-out infinite 0.5s' }}
                       />
                     </div>
-                    <div className="w-11 h-11 rounded-full shrink-0 flex items-center justify-center z-10" style={{ background: 'linear-gradient(135deg, hsl(220 70% 50%), hsl(250 60% 45%))' }}>
-                      <Monitor className="w-5 h-5 text-white" />
+                    <div className="w-11 h-11 rounded-full shrink-0 flex items-center justify-center z-10 bg-primary-foreground">
+                      <Monitor className="w-5 h-5 text-primary" />
                     </div>
-                    <div className="flex-1 flex flex-col pl-2 pr-3 relative z-10">
-                      <span className="text-foreground text-[11px] font-display font-bold tracking-wide">Desktop</span>
-                      <span className="text-muted-foreground text-[8px] font-body -mt-0.5">Tela ampla</span>
+                    <div className="flex-1 flex items-center justify-center pr-3 relative z-10">
+                      <span className="text-primary-foreground text-[13px] font-display font-bold tracking-wide">Desktop</span>
                     </div>
                   </div>
                 </motion.div>
