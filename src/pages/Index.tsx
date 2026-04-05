@@ -486,21 +486,22 @@ const Index = () => {
 
                   {/* Versão Desktop — flex-[2] */}
                   <div
-                    className="relative flex flex-col items-center justify-center h-12 cursor-pointer flex-[2] rounded-full overflow-hidden shadow-md"
-                    style={{ background: 'linear-gradient(135deg, hsl(220 70% 50%), hsl(250 60% 45%))' }}
+                    className="relative flex items-center h-12 cursor-pointer flex-[2] rounded-full overflow-hidden shadow-md bg-card border border-border"
                     onClick={() => window.open('https://vademecum-legal-guide.lovable.app', '_blank')}
                   >
                     <div className="absolute inset-0 pointer-events-none z-10">
                       <div
-                        className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/25 to-transparent skew-x-[-20deg]"
+                        className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/15 to-transparent skew-x-[-20deg]"
                         style={{ animation: 'shinePratique 3.5s ease-in-out infinite 0.5s' }}
                       />
                     </div>
-                    <div className="flex items-center gap-1.5 relative z-10">
-                      <Monitor className="w-4 h-4 text-white" />
-                      <span className="text-white text-[11px] font-display font-bold tracking-wide">Desktop</span>
+                    <div className="w-11 h-11 rounded-full shrink-0 flex items-center justify-center z-10" style={{ background: 'linear-gradient(135deg, hsl(220 70% 50%), hsl(250 60% 45%))' }}>
+                      <Monitor className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-white/70 text-[8px] font-body relative z-10 -mt-0.5">Tela ampla</span>
+                    <div className="flex-1 flex flex-col pl-2 pr-3 relative z-10">
+                      <span className="text-foreground text-[11px] font-display font-bold tracking-wide">Desktop</span>
+                      <span className="text-muted-foreground text-[8px] font-body -mt-0.5">Tela ampla</span>
+                    </div>
                   </div>
                 </motion.div>
                 <motion.div className="pb-4 pt-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16, type: 'spring', stiffness: 260, damping: 24 }}>
