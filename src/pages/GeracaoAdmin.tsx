@@ -39,8 +39,6 @@ interface LeiDetail {
 const GeracaoGlobalCard = () => {
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  const [ticking, setTicking] = useState(false);
-  const tickingRef = useRef(false);
 
   const { data: globalState, refetch } = useQuery({
     queryKey: ['geracao-global'],
@@ -51,65 +49,31 @@ const GeracaoGlobalCard = () => {
       });
       return res.json();
     },
-    refetchInterval: 3000,
+    refetchInterval: 5000,
   });
 
-  const isRunning = globalState?.status === 'running';
-  const isDone = globalState?.status === 'done';
-  const isPaused = globalState?.status === 'paused';
+  const status = globalState?.status || 'idle';
+  const isRunning = status === 'running';
+  const isDone = status === 'done';
+  const isPaused = status === 'paused';
   const total = globalState?.total_pendentes || 0;
   const processed = globalState?.total_processadas || 0;
   const errors = globalState?.total_erros || 0;
   const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
 
-  // Auto-tick loop: when running, continuously call tick
-  useEffect(() => {
-    if (!isRunning) {
-      tickingRef.current = false;
-      setTicking(false);
-      return;
-    }
-    if (tickingRef.current) return; // already ticking
-    tickingRef.current = true;
-    setTicking(true);
+  const cooldownUntil = globalState?.cooldown_until ? new Date(globalState.cooldown_until) : null;
+  const inCooldown = cooldownUntil && cooldownUntil > new Date();
+  const lastError = globalState?.last_error;
 
-    const runTicks = async () => {
-      while (tickingRef.current) {
-        try {
-          const res = await fetch(`https://${projectId}.supabase.co/functions/v1/gerar-global`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${anonKey}` },
-            body: JSON.stringify({ action: 'tick' }),
-          });
-          const data = await res.json();
-          refetch();
-
-          if (data.stopped || data.done) {
-            tickingRef.current = false;
-            setTicking(false);
-            break;
-          }
-
-          if (data.rateLimited) {
-            // Wait 2 minutes on rate limit
-            await new Promise(r => setTimeout(r, 120000));
-          } else {
-            // Normal pace: 8s between ticks
-            await new Promise(r => setTimeout(r, 8000));
-          }
-        } catch {
-          await new Promise(r => setTimeout(r, 10000));
-        }
-      }
-    };
-
-    runTicks();
-
-    return () => {
-      tickingRef.current = false;
-      setTicking(false);
-    };
-  }, [isRunning, projectId, anonKey, refetch]);
+  const statusLabel = isDone
+    ? '✅ Concluído!'
+    : isPaused
+    ? '⏸ Pausado'
+    : isRunning && inCooldown
+    ? `⏳ Cooldown até ${cooldownUntil!.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+    : isRunning
+    ? '🔄 Processando (cron a cada 1 min)...'
+    : 'Pronto para iniciar';
 
   const handleStart = async () => {
     toast.info('Iniciando geração global...');
@@ -122,7 +86,6 @@ const GeracaoGlobalCard = () => {
   };
 
   const handleStop = async () => {
-    tickingRef.current = false;
     await fetch(`https://${projectId}.supabase.co/functions/v1/gerar-global`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${anonKey}` },
@@ -140,9 +103,7 @@ const GeracaoGlobalCard = () => {
         </div>
         <div className="flex-1">
           <p className="font-display text-sm font-bold text-foreground">Geração Global</p>
-          <p className="text-[11px] font-body text-muted-foreground">
-            {isRunning && ticking ? 'Processando...' : isRunning ? 'Aguardando tick...' : isDone ? 'Concluído!' : isPaused ? 'Pausado' : 'Pronto para iniciar'}
-          </p>
+          <p className="text-[11px] font-body text-muted-foreground">{statusLabel}</p>
         </div>
         {isRunning ? (
           <button onClick={handleStop} className="px-3 py-2 rounded-lg bg-destructive/10 text-destructive text-xs font-semibold flex items-center gap-1.5 hover:bg-destructive/20 transition-colors">
@@ -164,11 +125,18 @@ const GeracaoGlobalCard = () => {
           </div>
           {isRunning && globalState?.current_tabela && (
             <div className="flex items-center gap-2 text-[11px] font-body text-muted-foreground bg-secondary/50 rounded-lg px-3 py-2">
-              <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />
+              {inCooldown ? (
+                <RefreshCw className="w-3 h-3 text-amber-500 shrink-0" />
+              ) : (
+                <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />
+              )}
               <span className="truncate">
                 {globalState.current_tabela?.replace(/_/g, ' ')} → {globalState.current_artigo} [{globalState.current_modo}]
               </span>
             </div>
+          )}
+          {lastError && (
+            <p className="text-[10px] font-body text-destructive/70 truncate">Último erro: {lastError}</p>
           )}
         </>
       )}
