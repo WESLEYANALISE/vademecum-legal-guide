@@ -54,6 +54,7 @@ import Biblioteca from "./pages/Biblioteca.tsx";
 const BibliotecaAdmin = lazy(() => import("./pages/BibliotecaAdmin.tsx"));
 const CompressaoImagens = lazy(() => import("./pages/CompressaoImagens.tsx"));
 const AdminFuncoes = lazy(() => import("./pages/AdminFuncoes.tsx"));
+const AdminMonitorUsuarios = lazy(() => import("./pages/AdminMonitorUsuarios.tsx"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -159,6 +160,7 @@ function AnimatedRoutes() {
           <Route path="/biblioteca-admin" element={<ProtectedRoute><PageTransition><BibliotecaAdmin /></PageTransition></ProtectedRoute>} />
           <Route path="/compressao-imagens" element={<ProtectedRoute><PageTransition><CompressaoImagens /></PageTransition></ProtectedRoute>} />
           <Route path="/admin-funcoes" element={<ProtectedRoute><PageTransition><AdminFuncoes /></PageTransition></ProtectedRoute>} />
+          <Route path="/admin-monitor-usuarios" element={<ProtectedRoute><PageTransition><AdminMonitorUsuarios /></PageTransition></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

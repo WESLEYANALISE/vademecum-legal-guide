@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Activity, ShieldCheck, ClipboardList, BookOpen, Gamepad2, Brain, BookA, MessageCircle, BellRing, Mic, Lightbulb, Building2, Rss, Palette } from 'lucide-react';
+import { ArrowLeft, Activity, ShieldCheck, ClipboardList, BookOpen, Gamepad2, Brain, BookA, MessageCircle, BellRing, Mic, Lightbulb, Building2, Rss, Palette, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const ADMIN_FUNCTIONS = [
@@ -17,6 +17,7 @@ const ADMIN_FUNCTIONS = [
   { id: 'camara-deputados', label: 'Câmara dos Deputados', icon: Building2, desc: 'Radar legislativo', color: 'from-sky-500/20 to-sky-600/10', iconColor: 'text-sky-400' },
   { id: 'boletins', label: 'Boletins', icon: Rss, desc: 'Newsletters e boletins', color: 'from-rose-500/20 to-rose-600/10', iconColor: 'text-rose-400' },
   { id: 'paleta-cores', label: 'Paleta de Cores', icon: Palette, desc: 'Configurações visuais', color: 'from-violet-500/20 to-violet-600/10', iconColor: 'text-violet-400' },
+  { id: 'monitor-usuarios', label: 'Usuários Online', icon: Users, desc: 'Monitoramento em tempo real', color: 'from-teal-500/20 to-teal-600/10', iconColor: 'text-teal-400' },
 ];
 
 const ROUTES: Record<string, string> = {
@@ -30,6 +31,7 @@ const ROUTES: Record<string, string> = {
   'explicacao-lei': '/explicacao-lei',
   'camara-deputados': '/radar/deputados',
   'paleta-cores': '/configuracoes',
+  'monitor-usuarios': '/admin-monitor-usuarios',
 };
 
 const AdminFuncoes = () => {
