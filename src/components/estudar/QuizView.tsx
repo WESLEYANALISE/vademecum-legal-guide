@@ -146,27 +146,30 @@ const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
     const load = async () => {
       setLoading(true);
       setGenerating(false);
+      setCountdown(null);
+      setCurrentIdx(0);
+      setAnswered(false);
+      setResults([]);
+      setFinished(false);
       setError('');
       try {
-        // Check cache first
+        // Check cache in study_questions (where gerar-estudo actually saves)
         const { data: cached } = await supabase
-          .from('artigo_ai_cache')
-          .select('conteudo')
+          .from('study_questions')
+          .select('questions')
           .eq('tabela_nome', tabelaNome)
           .eq('artigo_numero', artigoNumero)
-          .eq('modo', 'questoes')
+          .limit(1)
           .maybeSingle();
 
-        if (cached?.conteudo) {
-          const parsed = JSON.parse(cached.conteudo);
-          if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.tipo) {
-            setQuestions(parsed);
-            setLoading(false);
-            setCountdown(3);
-            return;
-          }
+        if (cached?.questions && Array.isArray(cached.questions) && cached.questions.length > 0) {
+          setQuestions(cached.questions as unknown as Question[]);
+          setLoading(false);
+          setCountdown(3);
+          return;
         }
 
+        // No cache — generate with AI
         setGenerating(true);
         const res = await supabase.functions.invoke('gerar-estudo', {
           body: { tabela_nome: tabelaNome, artigo_numero: artigoNumero, mode: 'questoes' },
