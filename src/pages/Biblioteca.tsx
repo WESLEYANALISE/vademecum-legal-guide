@@ -85,7 +85,7 @@ function makeLivroKey(livro: LivroUnificado): string {
 const CategoryIconCard = ({ icon: Icon, label, desc, count, gradient, onClick }: { icon: LucideIcon; label: string; desc: string; count: number; gradient: string; onClick: () => void }) => (
   <button
     onClick={onClick}
-    className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-white/20 transition-all group text-left overflow-hidden relative"
+    className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-white/20 transition-all group text-left overflow-hidden relative h-[72px]"
   >
     <div className={`w-20 flex-shrink-0 relative overflow-hidden bg-gradient-to-br ${gradient} flex items-center justify-center`}>
       <Icon className="w-8 h-8 text-white/90" strokeWidth={1.5} />
