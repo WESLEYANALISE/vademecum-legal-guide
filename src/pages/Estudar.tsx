@@ -16,7 +16,7 @@ import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
 
 import { LEIS_COMPACTAS as LEIS } from '@/data/leisCatalog';
 
-type View = 'menu' | 'select-lei' | 'select-artigo' | 'questoes' | 'flashcards' | 'mapa_mental' | 'desempenho';
+type View = 'menu' | 'select-lei' | 'select-artigo' | 'questoes' | 'flashcards' | 'mapa_mental' | 'desempenho' | 'questoes-dashboard';
 
 const Estudar = () => {
   const navigate = useNavigate();
@@ -57,6 +57,11 @@ const Estudar = () => {
   };
 
   const handleSelectMode = (mode: 'questoes' | 'flashcards' | 'mapa_mental') => {
+    if (mode === 'questoes') {
+      setSelectedMode(mode);
+      setView('questoes-dashboard');
+      return;
+    }
     setSelectedMode(mode);
     setView('select-lei');
   };
