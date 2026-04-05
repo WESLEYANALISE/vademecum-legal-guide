@@ -126,6 +126,7 @@ const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      setGenerating(false);
       setError('');
       try {
         // Check cache first
@@ -142,10 +143,12 @@ const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
           if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.tipo) {
             setQuestions(parsed);
             setLoading(false);
+            setCountdown(3);
             return;
           }
         }
 
+        setGenerating(true);
         const res = await supabase.functions.invoke('gerar-estudo', {
           body: { tabela_nome: tabelaNome, artigo_numero: artigoNumero, mode: 'questoes' },
         });
@@ -153,6 +156,7 @@ const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
         const data = res.data?.data;
         if (!Array.isArray(data) || data.length === 0) throw new Error('Sem questões geradas');
         setQuestions(data);
+        setCountdown(3);
       } catch (e: any) {
         setError(e.message || 'Erro ao gerar questões');
       } finally {
