@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { getPresenceState } from '@/hooks/usePresenceTracker';
 import { ArrowLeft, Wifi, Clock, CalendarDays, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
@@ -58,32 +59,28 @@ const AdminMonitorUsuarios = () => {
   const [last5min, setLast5min] = useState<ActivityRow[]>([]);
   const [today, setToday] = useState<ActivityRow[]>([]);
 
-  // Presence listener
+  // Poll presence state from the shared tracker channel
   useEffect(() => {
-    const channel = supabase.channel('online-users-monitor');
-
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const users: PresenceUser[] = [];
-        Object.values(state).forEach((presences: any[]) => {
-          presences.forEach((p) => {
-            users.push({
-              user_id: p.user_id,
-              email: p.email,
-              display_name: p.display_name,
-              current_route: p.current_route,
-              online_at: p.online_at,
-            });
+    const poll = () => {
+      const state = getPresenceState();
+      const users: PresenceUser[] = [];
+      Object.values(state).forEach((presences: any[]) => {
+        presences.forEach((p) => {
+          users.push({
+            user_id: p.user_id,
+            email: p.email,
+            display_name: p.display_name,
+            current_route: p.current_route,
+            online_at: p.online_at,
           });
         });
-        setRealtimeUsers(users);
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
+      });
+      setRealtimeUsers(users);
     };
+
+    poll();
+    const interval = setInterval(poll, 2000);
+    return () => clearInterval(interval);
   }, []);
 
   // Fetch history
