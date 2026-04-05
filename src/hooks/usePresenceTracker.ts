@@ -3,6 +3,13 @@ import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
+// Global presence state accessible by the admin monitor
+let presenceState: Record<string, any[]> = {};
+
+export function getPresenceState() {
+  return presenceState;
+}
+
 export function usePresenceTracker() {
   const { user } = useAuth();
   const location = useLocation();
@@ -20,13 +27,14 @@ export function usePresenceTracker() {
       online_at: new Date().toISOString(),
     };
 
-    // Presence channel
     const channel = supabase.channel('online-users', {
       config: { presence: { key: user.id } },
     });
 
     channel
-      .on('presence', { event: 'sync' }, () => {})
+      .on('presence', { event: 'sync' }, () => {
+        presenceState = channel.presenceState();
+      })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           await channel.track(payload);
@@ -60,6 +68,7 @@ export function usePresenceTracker() {
       if (channelRef.current) {
         channelRef.current.untrack();
         supabase.removeChannel(channelRef.current);
+        presenceState = {};
       }
     };
   }, [user, location.pathname]);
