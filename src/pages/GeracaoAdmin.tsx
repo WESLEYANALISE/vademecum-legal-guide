@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { ArrowLeft, Loader2, BarChart3, Play, Square, RefreshCw, Trash2, ChevronRight, Check, Globe, Pause } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,6 +39,8 @@ interface LeiDetail {
 const GeracaoGlobalCard = () => {
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const [ticking, setTicking] = useState(false);
+  const tickingRef = useRef(false);
 
   const { data: globalState, refetch } = useQuery({
     queryKey: ['geracao-global'],
@@ -60,6 +62,55 @@ const GeracaoGlobalCard = () => {
   const errors = globalState?.total_erros || 0;
   const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
 
+  // Auto-tick loop: when running, continuously call tick
+  useEffect(() => {
+    if (!isRunning) {
+      tickingRef.current = false;
+      setTicking(false);
+      return;
+    }
+    if (tickingRef.current) return; // already ticking
+    tickingRef.current = true;
+    setTicking(true);
+
+    const runTicks = async () => {
+      while (tickingRef.current) {
+        try {
+          const res = await fetch(`https://${projectId}.supabase.co/functions/v1/gerar-global`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${anonKey}` },
+            body: JSON.stringify({ action: 'tick' }),
+          });
+          const data = await res.json();
+          refetch();
+
+          if (data.stopped || data.done) {
+            tickingRef.current = false;
+            setTicking(false);
+            break;
+          }
+
+          if (data.rateLimited) {
+            // Wait 2 minutes on rate limit
+            await new Promise(r => setTimeout(r, 120000));
+          } else {
+            // Normal pace: 8s between ticks
+            await new Promise(r => setTimeout(r, 8000));
+          }
+        } catch {
+          await new Promise(r => setTimeout(r, 10000));
+        }
+      }
+    };
+
+    runTicks();
+
+    return () => {
+      tickingRef.current = false;
+      setTicking(false);
+    };
+  }, [isRunning, projectId, anonKey, refetch]);
+
   const handleStart = async () => {
     toast.info('Iniciando geração global...');
     await fetch(`https://${projectId}.supabase.co/functions/v1/gerar-global`, {
@@ -71,6 +122,7 @@ const GeracaoGlobalCard = () => {
   };
 
   const handleStop = async () => {
+    tickingRef.current = false;
     await fetch(`https://${projectId}.supabase.co/functions/v1/gerar-global`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${anonKey}` },
@@ -89,7 +141,7 @@ const GeracaoGlobalCard = () => {
         <div className="flex-1">
           <p className="font-display text-sm font-bold text-foreground">Geração Global</p>
           <p className="text-[11px] font-body text-muted-foreground">
-            {isRunning ? 'Processando no servidor...' : isDone ? 'Concluído!' : isPaused ? 'Pausado' : 'Pronto para iniciar'}
+            {isRunning && ticking ? 'Processando...' : isRunning ? 'Aguardando tick...' : isDone ? 'Concluído!' : isPaused ? 'Pausado' : 'Pronto para iniciar'}
           </p>
         </div>
         {isRunning ? (

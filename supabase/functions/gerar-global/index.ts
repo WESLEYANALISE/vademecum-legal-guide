@@ -41,7 +41,7 @@ const TABELAS = [
 
 const MODOS = ["explicacao", "exemplo", "termos", "sugerir_perguntas"];
 
-function buildPrompt(modo: string, artigo: { numero: string; caput: string; texto: string }, tabela: string): { prompt: string; system: string } {
+function buildPrompt(modo: string, artigo: { numero: string; caput: string; texto: string }, tabela: string) {
   const ctx = `Lei/Código: ${tabela.replace(/_/g, " ")}\n${artigo.numero}\n${artigo.caput || artigo.texto}`;
   switch (modo) {
     case "explicacao":
@@ -57,8 +57,8 @@ function buildPrompt(modo: string, artigo: { numero: string; caput: string; text
   }
 }
 
-async function callGemini(apiKey: string, prompt: string, system: string, retries = 3): Promise<string | null> {
-  for (let attempt = 0; attempt < retries; attempt++) {
+async function callGemini(apiKey: string, prompt: string, system: string): Promise<{ text: string | null; rateLimited: boolean }> {
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
@@ -70,28 +70,27 @@ async function callGemini(apiKey: string, prompt: string, system: string, retrie
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
           }),
-          signal: AbortSignal.timeout(60000),
+          signal: AbortSignal.timeout(30000),
         }
       );
       if (res.status === 429) {
-        const waitTime = Math.pow(2, attempt + 1) * 10000; // 20s, 40s, 80s
-        console.warn(`Gemini 429 — waiting ${waitTime / 1000}s (attempt ${attempt + 1}/${retries})`);
-        await new Promise(r => setTimeout(r, waitTime));
+        const wait = (attempt + 1) * 10000;
+        console.warn(`Gemini 429 — attempt ${attempt + 1}/3, waiting ${wait / 1000}s`);
+        await new Promise(r => setTimeout(r, wait));
         continue;
       }
       if (!res.ok) {
         console.error(`Gemini HTTP ${res.status}`);
-        return null;
+        return { text: null, rateLimited: false };
       }
       const json = await res.json();
-      return json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
+      return { text: json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null, rateLimited: false };
     } catch (e: any) {
       console.error(`Gemini error: ${e.message}`);
-      return null;
+      return { text: null, rateLimited: false };
     }
   }
-  console.error("Gemini: max retries exceeded (429)");
-  return null;
+  return { text: null, rateLimited: true };
 }
 
 Deno.serve(async (req) => {
@@ -100,16 +99,11 @@ Deno.serve(async (req) => {
   }
 
   const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
-  if (!GEMINI_KEY) return new Response(JSON.stringify({ error: "GEMINI_API_KEY not set" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  if (!GEMINI_KEY) return new Response(JSON.stringify({ error: "No API key" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
-
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const json = (data: any, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-  // GET → return current state
   if (req.method === "GET") {
     const { data } = await supabase.from("geracao_global").select("*").limit(1).single();
     return json(data);
@@ -118,29 +112,20 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const action = body.action;
 
-  // ── STOP ──
   if (action === "stop") {
     await supabase.from("geracao_global").update({ status: "paused", updated_at: new Date().toISOString() }).neq("status", "idle");
     return json({ ok: true, status: "paused" });
   }
 
-  // ── START ──
   if (action === "start") {
-    console.log("[gerar-global] START — counting pending...");
-
-    // Quick count: sum all articles × modes, minus cached
+    console.log("[gerar-global] START — counting...");
     let totalArticles = 0;
     for (const tabela of TABELAS) {
       const { count } = await supabase.from(tabela as any).select("*", { count: "exact", head: true });
       totalArticles += (count || 0);
     }
     const totalPossible = totalArticles * MODOS.length;
-
-    const { count: cachedCount } = await supabase
-      .from("artigo_ai_cache")
-      .select("*", { count: "exact", head: true })
-      .in("modo", MODOS);
-
+    const { count: cachedCount } = await supabase.from("artigo_ai_cache").select("*", { count: "exact", head: true }).in("modo", MODOS);
     const totalPending = totalPossible - (cachedCount || 0);
 
     await supabase.from("geracao_global").update({
@@ -155,73 +140,49 @@ Deno.serve(async (req) => {
       updated_at: new Date().toISOString(),
     }).not("id", "is", null);
 
-    console.log(`[gerar-global] Total pending: ${totalPending}. Starting tick chain...`);
-
-    // Fire-and-forget first tick
-    const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/gerar-global`;
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
-      body: JSON.stringify({ action: "tick" }),
-    }).catch(() => {});
-
+    console.log(`[gerar-global] Pending: ${totalPending}. Use tick to process.`);
     return json({ ok: true, status: "running", totalPending });
   }
 
-  // ── TICK ──
   if (action === "tick") {
-    // Check status
     const { data: state } = await supabase.from("geracao_global").select("*").limit(1).single();
     if (state?.status !== "running") {
-      console.log("[gerar-global] tick: not running, stopping");
       return json({ ok: true, stopped: true });
     }
 
-    // Resume from last position
+    // Find next uncached item
     const lastTabela = state.current_tabela || TABELAS[0];
     const lastModo = state.current_modo || MODOS[0];
-    
-    // Start searching from where we left off
     const tabelaIdx = Math.max(0, TABELAS.indexOf(lastTabela));
-    
+
     for (let ti = tabelaIdx; ti < TABELAS.length; ti++) {
       const tabela = TABELAS[ti];
-      
       for (const modo of MODOS) {
-        // Skip modes we've already done for this table position
         if (ti === tabelaIdx && MODOS.indexOf(modo) < MODOS.indexOf(lastModo)) continue;
 
-        // Get cached article numbers for this table+mode
         const { data: cached } = await supabase
           .from("artigo_ai_cache")
           .select("artigo_numero")
           .eq("tabela_nome", tabela)
           .eq("modo", modo);
-        
         const cachedSet = new Set((cached || []).map((c: any) => c.artigo_numero));
 
-        // Get first uncached article
         const { data: artigos } = await supabase
           .from(tabela as any)
           .select("numero, caput, texto")
           .order("ordem_numero", { ascending: true })
-          .limit(100);
-
+          .limit(200);
         const artigo = (artigos || []).find((a: any) => !cachedSet.has(a.numero));
-        if (!artigo) continue; // All cached for this table+mode
+        if (!artigo) continue;
 
-        // Found one — update status
-        console.log(`[gerar-global] tick: ${tabela} → ${artigo.numero} [${modo}]`);
+        console.log(`[tick] ${tabela} → ${artigo.numero} [${modo}]`);
         await supabase.from("geracao_global").update({
-          current_tabela: tabela,
-          current_artigo: artigo.numero,
-          current_modo: modo,
+          current_tabela: tabela, current_artigo: artigo.numero, current_modo: modo,
           updated_at: new Date().toISOString(),
         }).not("id", "is", null);
 
-        // Generate
         const { prompt, system } = buildPrompt(modo, artigo, tabela);
-        const result = await callGemini(GEMINI_KEY, prompt, system);
+        const { text: result, rateLimited } = await callGemini(GEMINI_KEY, prompt, system);
 
         if (result) {
           await supabase.from("artigo_ai_cache").upsert(
@@ -229,30 +190,19 @@ Deno.serve(async (req) => {
             { onConflict: "tabela_nome,artigo_numero,modo" }
           );
           await supabase.rpc("increment_geracao_processadas");
-          console.log(`[gerar-global] ✓ ${tabela} ${artigo.numero} [${modo}]`);
+          console.log(`[tick] ✓ ${tabela} ${artigo.numero} [${modo}]`);
+          return json({ ok: true, done: false, item: `${tabela}/${artigo.numero}/${modo}` });
+        } else if (rateLimited) {
+          console.log(`[tick] ⏳ Rate limited`);
+          return json({ ok: true, done: false, rateLimited: true });
         } else {
           await supabase.rpc("increment_geracao_erros");
-          console.log(`[gerar-global] ✗ ${tabela} ${artigo.numero} [${modo}]`);
+          console.log(`[tick] ✗ error`);
+          return json({ ok: true, done: false, error: true });
         }
-
-        // Wait 5s then fire-and-forget next tick BEFORE returning
-        await new Promise(r => setTimeout(r, 5000));
-        const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/gerar-global`;
-        fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
-          body: JSON.stringify({ action: "tick" }),
-        }).catch((e) => console.error("[gerar-global] self-invoke error:", e.message));
-
-        // Small delay to ensure fetch is dispatched
-        await new Promise(r => setTimeout(r, 200));
-
-        return json({ ok: true, generated: `${tabela}/${artigo.numero}/${modo}` });
       }
     }
 
-    // If we get here, nothing found — done
-    console.log("[gerar-global] tick: all done!");
     await supabase.from("geracao_global").update({ status: "done", updated_at: new Date().toISOString() }).not("id", "is", null);
     return json({ ok: true, done: true });
   }
