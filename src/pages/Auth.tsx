@@ -108,27 +108,14 @@ const LandingScreen = ({ onStart }: { onStart: () => void }) => (
       </motion.div>
     </div>
 
-    {/* Feature Cards */}
+    {/* Infinite Auto-Scrolling Feature Carousel */}
     <motion.div
       initial={{ y: 40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.55 }}
-      className="relative z-10 px-4 pb-8 flex gap-3 overflow-x-auto no-scrollbar"
+      className="relative z-10 pb-6 overflow-hidden"
     >
-      {[
-        { icon: BookOpen, label: 'Biblioteca', desc: 'Livros e resumos' },
-        { icon: Scale, label: 'Vade Mecum', desc: 'Leis atualizadas' },
-        { icon: Video, label: 'Videoaulas', desc: 'Aulas em vídeo' },
-      ].map((f, i) => (
-        <div
-          key={f.label}
-          className="flex-shrink-0 w-[140px] p-4 rounded-xl bg-card/60 border border-border/50 backdrop-blur-sm"
-        >
-          <f.icon className="w-6 h-6 text-primary mb-2" strokeWidth={1.5} />
-          <p className="text-sm font-body font-semibold text-foreground">{f.label}</p>
-          <p className="text-[11px] font-body text-muted-foreground mt-0.5">{f.desc}</p>
-        </div>
-      ))}
+      <InfiniteCarousel />
     </motion.div>
 
     <p className="relative z-10 text-center text-[10px] font-body text-muted-foreground pb-4">
