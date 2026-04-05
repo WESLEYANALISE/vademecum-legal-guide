@@ -7,6 +7,7 @@ import QuizView from '@/components/estudar/QuizView';
 import FlashcardView from '@/components/estudar/FlashcardView';
 import DesempenhoView from '@/components/estudar/DesempenhoView';
 import MindMapView from '@/components/estudar/MindMapView';
+import QuestoesDashboard from '@/components/estudar/QuestoesDashboard';
 
 import { Input } from '@/components/ui/input';
 import { useStudyStats } from '@/hooks/useStudyStats';
@@ -15,7 +16,7 @@ import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
 
 import { LEIS_COMPACTAS as LEIS } from '@/data/leisCatalog';
 
-type View = 'menu' | 'select-lei' | 'select-artigo' | 'questoes' | 'flashcards' | 'mapa_mental' | 'desempenho';
+type View = 'menu' | 'select-lei' | 'select-artigo' | 'questoes' | 'flashcards' | 'mapa_mental' | 'desempenho' | 'questoes-dashboard';
 
 const Estudar = () => {
   const navigate = useNavigate();
@@ -56,6 +57,11 @@ const Estudar = () => {
   };
 
   const handleSelectMode = (mode: 'questoes' | 'flashcards' | 'mapa_mental') => {
+    if (mode === 'questoes') {
+      setSelectedMode(mode);
+      setView('questoes-dashboard');
+      return;
+    }
     setSelectedMode(mode);
     setView('select-lei');
   };
@@ -79,6 +85,7 @@ const Estudar = () => {
       case 'flashcards':
       case 'mapa_mental': setView('select-artigo'); break;
       case 'desempenho': setView('menu'); break;
+      case 'questoes-dashboard': setView('menu'); break;
       default: navigate(-1);
     }
   };
@@ -128,6 +135,27 @@ const Estudar = () => {
       </div>
     </div>
   );
+
+  if (view === 'questoes-dashboard') {
+    return (
+      <DesktopPageLayout activeId="estudar" title="Questões" subtitle="Pratique por disciplina" mobileHeader={mobileHeader}>
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 lg:max-w-none lg:px-0 lg:py-0">
+          <QuestoesDashboard
+            onSelectLei={(lei) => {
+              const found = LEIS.find(l => l.tabela === lei.tabela);
+              if (found) {
+                setSelectedLei(found);
+                loadArtigos(found.tabela);
+                setView('select-artigo');
+              }
+            }}
+            onNavigateDesempenho={() => setView('desempenho')}
+            onBack={handleBack}
+          />
+        </div>
+      </DesktopPageLayout>
+    );
+  }
 
   return (
     <DesktopPageLayout
