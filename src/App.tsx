@@ -6,6 +6,7 @@ import PageTransition from "@/components/PageTransition";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { usePresenceTracker } from "@/hooks/usePresenceTracker";
 import { ThemeProvider } from "@/hooks/useTheme";
 import brasaoImg from "@/assets/brasao-republica.png";
 import { Loader2 } from "lucide-react";
@@ -113,11 +114,18 @@ function LazyFallback() {
   );
 }
 
+function PresenceWrapper() {
+  usePresenceTracker();
+  return null;
+}
+
 function AnimatedRoutes() {
   const location = useLocation();
+  const { user } = useAuth();
 
   return (
     <div className="overflow-x-hidden">
+      {user && <PresenceWrapper />}
       <Suspense fallback={<LazyFallback />}>
         <Routes location={location} key={location.pathname}>
           <Route path="/auth" element={<Auth />} />
