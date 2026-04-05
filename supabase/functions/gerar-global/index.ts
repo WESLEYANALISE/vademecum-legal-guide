@@ -225,15 +225,17 @@ Deno.serve(async (req) => {
           console.log(`[gerar-global] ✗ ${tabela} ${artigo.numero} [${modo}]`);
         }
 
-        // Schedule next tick with delay
-        setTimeout(() => {
-          const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/gerar-global`;
-          fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
-            body: JSON.stringify({ action: "tick" }),
-          }).catch((e) => console.error("[gerar-global] self-invoke error:", e.message));
-        }, 5000);
+        // Wait 5s then fire-and-forget next tick BEFORE returning
+        await new Promise(r => setTimeout(r, 5000));
+        const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/gerar-global`;
+        fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
+          body: JSON.stringify({ action: "tick" }),
+        }).catch((e) => console.error("[gerar-global] self-invoke error:", e.message));
+
+        // Small delay to ensure fetch is dispatched
+        await new Promise(r => setTimeout(r, 200));
 
         return json({ ok: true, generated: `${tabela}/${artigo.numero}/${modo}` });
       }
