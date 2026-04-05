@@ -5137,6 +5137,252 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_categories: {
+        Row: {
+          color_accent: string | null
+          color_primary: string | null
+          color_secondary: string | null
+          created_at: string
+          description: string | null
+          icon_url: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          color_accent?: string | null
+          color_primary?: string | null
+          color_secondary?: string | null
+          created_at?: string
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          color_accent?: string | null
+          color_primary?: string | null
+          color_secondary?: string | null
+          created_at?: string
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      quiz_match_answers: {
+        Row: {
+          created_at: string
+          id: string
+          is_correct: boolean
+          match_id: string
+          points_earned: number
+          question_id: string
+          response_time_ms: number
+          selected_answer: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_correct: boolean
+          match_id: string
+          points_earned?: number
+          question_id: string
+          response_time_ms: number
+          selected_answer: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          match_id?: string
+          points_earned?: number
+          question_id?: string
+          response_time_ms?: number
+          selected_answer?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_match_answers_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_match_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_match_questions: {
+        Row: {
+          id: string
+          match_id: string
+          question_id: string
+          question_order: number
+        }
+        Insert: {
+          id?: string
+          match_id: string
+          question_id: string
+          question_order: number
+        }
+        Update: {
+          id?: string
+          match_id?: string
+          question_id?: string
+          question_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_match_questions_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_match_questions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_matches: {
+        Row: {
+          category_id: string
+          created_at: string
+          current_question: number
+          finished_at: string | null
+          id: string
+          player1_id: string | null
+          player1_score: number
+          player2_id: string | null
+          player2_score: number
+          started_at: string | null
+          status: string
+          winner_id: string | null
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          current_question?: number
+          finished_at?: string | null
+          id?: string
+          player1_id?: string | null
+          player1_score?: number
+          player2_id?: string | null
+          player2_score?: number
+          started_at?: string | null
+          status?: string
+          winner_id?: string | null
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          current_question?: number
+          finished_at?: string | null
+          id?: string
+          player1_id?: string | null
+          player1_score?: number
+          player2_id?: string | null
+          player2_score?: number
+          started_at?: string | null
+          status?: string
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_matches_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_online_players: {
+        Row: {
+          category_id: string | null
+          id: string
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          id?: string
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string | null
+          id?: string
+          last_seen_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_online_players_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          alternatives: Json
+          category_id: string
+          correct_answer: number
+          created_at: string
+          difficulty: string
+          explanation: string | null
+          id: string
+          question: string
+        }
+        Insert: {
+          alternatives: Json
+          category_id: string
+          correct_answer: number
+          created_at?: string
+          difficulty?: string
+          explanation?: string | null
+          id?: string
+          question: string
+        }
+        Update: {
+          alternatives?: Json
+          category_id?: string
+          correct_answer?: number
+          created_at?: string
+          difficulty?: string
+          explanation?: string | null
+          id?: string
+          question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       radar_deputados: {
         Row: {
           atualizado_em: string
