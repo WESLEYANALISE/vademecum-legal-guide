@@ -486,26 +486,25 @@ const Index = () => {
 
                   {/* Desktop */}
                   <div
-                    className="relative flex items-center h-12 cursor-pointer flex-1 rounded-full overflow-hidden shadow-md shadow-blue-500/25"
-                    style={{ background: 'linear-gradient(135deg, hsl(220 70% 50%), hsl(230 65% 42%))' }}
+                    className="relative flex items-center h-12 cursor-pointer flex-1 rounded-full overflow-hidden shadow-md bg-card border border-border"
                     onClick={() => window.open('https://vademecum-legal-guide.lovable.app', '_blank')}
                   >
                     <div className="absolute inset-0 pointer-events-none z-10">
                       <div
-                        className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/25 to-transparent skew-x-[-20deg]"
+                        className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-foreground/10 to-transparent skew-x-[-20deg]"
                         style={{ animation: 'shinePratique 3.5s ease-in-out infinite 0.5s' }}
                       />
                     </div>
-                    <div className="w-11 h-11 rounded-full shrink-0 flex items-center justify-center z-10 bg-white/20 border-2 border-white/30">
+                    <div className="w-11 h-11 rounded-full shrink-0 flex items-center justify-center z-10" style={{ background: 'linear-gradient(135deg, hsl(220 70% 50%), hsl(230 65% 42%))' }}>
                       <Monitor className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1 flex items-center justify-between pl-2 pr-3 relative z-10">
-                      <span className="text-white text-[13px] font-display font-bold tracking-wide">Desktop</span>
+                      <span className="text-foreground text-[13px] font-display font-bold tracking-wide">Desktop</span>
                       <motion.div
                         animate={{ x: [0, 5, 0] }}
                         transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut', delay: 0.3 }}
                       >
-                        <ArrowRight className="w-4 h-4 text-white" strokeWidth={2.5} />
+                        <ArrowRight className="w-4 h-4 text-muted-foreground" strokeWidth={2.5} />
                       </motion.div>
                     </div>
                   </div>
