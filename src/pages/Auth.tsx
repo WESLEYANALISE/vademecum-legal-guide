@@ -63,7 +63,7 @@ function InfiniteCarousel() {
 
     const tick = () => {
       pos += speed;
-      if (pos >= 610) pos = 0;
+      if (pos >= 820) pos = 0;
       el.style.transform = `translateX(-${pos}px)`;
       animRef.current = requestAnimationFrame(tick);
     };
