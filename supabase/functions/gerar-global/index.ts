@@ -41,7 +41,7 @@ const TABELAS = [
 
 const MODOS = ["explicacao", "exemplo", "termos", "sugerir_perguntas"];
 
-function buildPrompt(modo: string, artigo: { numero: string; caput: string; texto: string }, tabela: string): { prompt: string; system: string } {
+function buildPrompt(modo: string, artigo: { numero: string; caput: string; texto: string }, tabela: string) {
   const ctx = `Lei/Código: ${tabela.replace(/_/g, " ")}\n${artigo.numero}\n${artigo.caput || artigo.texto}`;
   switch (modo) {
     case "explicacao":
@@ -70,12 +70,12 @@ async function callGemini(apiKey: string, prompt: string, system: string): Promi
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
           }),
-          signal: AbortSignal.timeout(60000),
+          signal: AbortSignal.timeout(30000),
         }
       );
       if (res.status === 429) {
-        const wait = (attempt + 1) * 15000; // 15s, 30s, 45s
-        console.warn(`Gemini 429 — waiting ${wait / 1000}s (attempt ${attempt + 1}/3)`);
+        const wait = (attempt + 1) * 10000;
+        console.warn(`Gemini 429 — attempt ${attempt + 1}/3, waiting ${wait / 1000}s`);
         await new Promise(r => setTimeout(r, wait));
         continue;
       }
@@ -84,30 +84,13 @@ async function callGemini(apiKey: string, prompt: string, system: string): Promi
         return { text: null, rateLimited: false };
       }
       const json = await res.json();
-      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
-      return { text, rateLimited: false };
+      return { text: json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null, rateLimited: false };
     } catch (e: any) {
       console.error(`Gemini error: ${e.message}`);
       return { text: null, rateLimited: false };
     }
   }
-  console.error("Gemini: max retries exceeded (429)");
   return { text: null, rateLimited: true };
-}
-
-async function selfInvoke(delayMs: number) {
-  if (delayMs > 0) await new Promise(r => setTimeout(r, delayMs));
-  const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/gerar-global`;
-  try {
-    await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
-      body: JSON.stringify({ action: "tick" }),
-    });
-    console.log(`[gerar-global] self-invoke sent after ${delayMs}ms`);
-  } catch (e: any) {
-    console.error("[gerar-global] self-invoke error:", e.message);
-  }
 }
 
 Deno.serve(async (req) => {
@@ -116,13 +99,9 @@ Deno.serve(async (req) => {
   }
 
   const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
-  if (!GEMINI_KEY) return new Response(JSON.stringify({ error: "GEMINI_API_KEY not set" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  if (!GEMINI_KEY) return new Response(JSON.stringify({ error: "No API key" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
-
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const json = (data: any, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   if (req.method === "GET") {
@@ -139,20 +118,14 @@ Deno.serve(async (req) => {
   }
 
   if (action === "start") {
-    console.log("[gerar-global] START — counting pending...");
-
+    console.log("[gerar-global] START — counting...");
     let totalArticles = 0;
     for (const tabela of TABELAS) {
       const { count } = await supabase.from(tabela as any).select("*", { count: "exact", head: true });
       totalArticles += (count || 0);
     }
     const totalPossible = totalArticles * MODOS.length;
-
-    const { count: cachedCount } = await supabase
-      .from("artigo_ai_cache")
-      .select("*", { count: "exact", head: true })
-      .in("modo", MODOS);
-
+    const { count: cachedCount } = await supabase.from("artigo_ai_cache").select("*", { count: "exact", head: true }).in("modo", MODOS);
     const totalPending = totalPossible - (cachedCount || 0);
 
     await supabase.from("geracao_global").update({
@@ -167,28 +140,23 @@ Deno.serve(async (req) => {
       updated_at: new Date().toISOString(),
     }).not("id", "is", null);
 
-    console.log(`[gerar-global] Total pending: ${totalPending}. Starting tick chain...`);
-
-    // Fire first tick after 2s
-    await selfInvoke(2000);
-
+    console.log(`[gerar-global] Pending: ${totalPending}. Use tick to process.`);
     return json({ ok: true, status: "running", totalPending });
   }
 
   if (action === "tick") {
     const { data: state } = await supabase.from("geracao_global").select("*").limit(1).single();
     if (state?.status !== "running") {
-      console.log("[gerar-global] tick: not running, stopping");
       return json({ ok: true, stopped: true });
     }
 
+    // Find next uncached item
     const lastTabela = state.current_tabela || TABELAS[0];
     const lastModo = state.current_modo || MODOS[0];
     const tabelaIdx = Math.max(0, TABELAS.indexOf(lastTabela));
 
     for (let ti = tabelaIdx; ti < TABELAS.length; ti++) {
       const tabela = TABELAS[ti];
-
       for (const modo of MODOS) {
         if (ti === tabelaIdx && MODOS.indexOf(modo) < MODOS.indexOf(lastModo)) continue;
 
@@ -197,7 +165,6 @@ Deno.serve(async (req) => {
           .select("artigo_numero")
           .eq("tabela_nome", tabela)
           .eq("modo", modo);
-
         const cachedSet = new Set((cached || []).map((c: any) => c.artigo_numero));
 
         const { data: artigos } = await supabase
@@ -205,15 +172,12 @@ Deno.serve(async (req) => {
           .select("numero, caput, texto")
           .order("ordem_numero", { ascending: true })
           .limit(200);
-
         const artigo = (artigos || []).find((a: any) => !cachedSet.has(a.numero));
         if (!artigo) continue;
 
-        console.log(`[gerar-global] tick: ${tabela} → ${artigo.numero} [${modo}]`);
+        console.log(`[tick] ${tabela} → ${artigo.numero} [${modo}]`);
         await supabase.from("geracao_global").update({
-          current_tabela: tabela,
-          current_artigo: artigo.numero,
-          current_modo: modo,
+          current_tabela: tabela, current_artigo: artigo.numero, current_modo: modo,
           updated_at: new Date().toISOString(),
         }).not("id", "is", null);
 
@@ -226,25 +190,19 @@ Deno.serve(async (req) => {
             { onConflict: "tabela_nome,artigo_numero,modo" }
           );
           await supabase.rpc("increment_geracao_processadas");
-          console.log(`[gerar-global] ✓ ${tabela} ${artigo.numero} [${modo}]`);
-          // Normal pace: next tick in 8s
-          await selfInvoke(8000);
+          console.log(`[tick] ✓ ${tabela} ${artigo.numero} [${modo}]`);
+          return json({ ok: true, done: false, item: `${tabela}/${artigo.numero}/${modo}` });
         } else if (rateLimited) {
-          // Rate limited — don't count as error, just wait longer and retry same item
-          console.log(`[gerar-global] ⏳ Rate limited, retrying in 120s...`);
-          await selfInvoke(120000); // Wait 2 minutes before retrying
+          console.log(`[tick] ⏳ Rate limited`);
+          return json({ ok: true, done: false, rateLimited: true });
         } else {
           await supabase.rpc("increment_geracao_erros");
-          console.log(`[gerar-global] ✗ ${tabela} ${artigo.numero} [${modo}]`);
-          // Error but not rate limit — continue normally
-          await selfInvoke(8000);
+          console.log(`[tick] ✗ error`);
+          return json({ ok: true, done: false, error: true });
         }
-
-        return json({ ok: true, generated: `${tabela}/${artigo.numero}/${modo}`, rateLimited });
       }
     }
 
-    console.log("[gerar-global] tick: all done!");
     await supabase.from("geracao_global").update({ status: "done", updated_at: new Date().toISOString() }).not("id", "is", null);
     return json({ ok: true, done: true });
   }
