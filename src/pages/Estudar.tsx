@@ -136,9 +136,31 @@ const Estudar = () => {
     </div>
   );
 
+  const questoesMobileHeader = (
+    <div className="relative bg-gradient-to-br from-rose-600 to-red-800 overflow-hidden px-4 pt-10 pb-8 sm:px-6">
+      <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/5" />
+      <Target className="absolute top-5 right-5 w-10 h-10 text-white/15 rotate-12" />
+      <div className="max-w-2xl mx-auto relative z-10">
+        <button onClick={handleBack} className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-medium transition-all text-sm px-3 py-1.5 rounded-lg mb-4">
+          <ArrowLeft className="w-4 h-4" />
+          Voltar
+        </button>
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-black/20 flex items-center justify-center">
+            <Target className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="font-display text-2xl text-white font-bold">Questões</h1>
+            <p className="text-white/70 text-sm">6 tipos de questão por artigo</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   if (view === 'questoes-dashboard') {
     return (
-      <DesktopPageLayout activeId="estudar" title="Questões" subtitle="Pratique por disciplina" mobileHeader={mobileHeader}>
+      <DesktopPageLayout activeId="estudar" title="Questões" subtitle="Pratique por disciplina" mobileHeader={questoesMobileHeader}>
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 lg:max-w-none lg:px-0 lg:py-0">
           <QuestoesDashboard
             onSelectLei={(lei) => {
