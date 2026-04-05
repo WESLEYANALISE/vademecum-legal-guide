@@ -6145,6 +6145,8 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      increment_geracao_erros: { Args: never; Returns: undefined }
+      increment_geracao_processadas: { Args: never; Returns: undefined }
     }
     Enums: {
       tipo_legislacao:
