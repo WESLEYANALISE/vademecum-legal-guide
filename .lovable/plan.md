@@ -1,81 +1,50 @@
 
+Diagnóstico
 
-## Plano: Redesign do fluxo "Questões" no Estudar
+O problema está no `src/components/estudar/QuizView.tsx`: o componente tenta achar questões prontas em `artigo_ai_cache` com `modo = 'questoes'`, mas o fluxo real de Questões usa a tabela `study_questions` (isso já está consistente na edge function `supabase/functions/gerar-estudo/index.ts`).  
+Resultado: o cache local sempre “falha”, o componente entra em `generating = true` e mostra “Gerando questões com IA...” mesmo quando o artigo já foi gerado antes.
 
-### Visão Geral
+Plano de ajuste
 
-Quando o usuário clicar em "Questões" no menu do Estudar, em vez de ir direto para a lista de leis, será aberto um **dashboard de questões** com estatísticas, opções de ação (Praticar, Progresso, Reforço, Cadernos) e a Dra. Arabella com análise personalizada. Ao clicar em "Praticar", abre um **grid de disciplinas/categorias** agrupando as leis por tipo (Constitucional, Penal, Civil, etc.) com ícones e porcentagens de progresso.
+1. Corrigir a fonte do cache no `QuizView`
+- Trocar a leitura de `artigo_ai_cache` por `study_questions`.
+- Ler o campo `questions` diretamente, sem `JSON.parse`, porque ele já vem como JSON.
 
-### Fluxo de Navegação
+2. Ir direto para o countdown quando já existir cache
+- Se `study_questions.questions` vier com array válido, preencher `questions`, desligar loading e iniciar `setCountdown(3)` imediatamente.
+- Nesse caminho, não ativar `generating`.
 
-```text
-Menu Estudar
-  └─ Questões → Dashboard de Questões (novo)
-       ├─ Praticar → Grid de Categorias (novo)
-       │    └─ Ex: "Penal" → Lista de leis penais (CP, CPP, CPM, etc.)
-       │         └─ Seleciona lei → Lista de artigos (existente)
-       ├─ Progresso → DesempenhoView (existente)
-       ├─ Reforço → Artigos fracos (< 40% acerto)
-       └─ Cadernos → (placeholder futuro)
-```
+3. Mostrar “Gerando com IA” só quando realmente estiver gerando
+- Só ativar `generating` depois de confirmar que não há cache em `study_questions`.
+- Manter a invoke de `gerar-estudo` apenas nesse cenário.
 
-### O que será feito
+4. Adicionar uma proteção extra com o retorno da edge function
+- Aproveitar `res.data?.cached` da `gerar-estudo` como fallback de segurança.
+- Se por algum motivo a função devolver conteúdo já cacheado, pular qualquer estado visual de geração e ir direto para `3, 2, 1`.
 
-**1. Nova view `questoes-dashboard`** — tela principal após clicar em Questões:
+5. Resetar estados transitórios ao abrir outro artigo
+- Ao carregar um novo artigo, resetar `countdown`, `currentIdx`, `answered`, `results` e `finished`.
+- Isso evita resquícios visuais entre uma tentativa e outra.
 
-- **Header gradiente** com ícone circular, título "Questões", contagem total de questões disponíveis (somatório de artigos × 40)
-- **Barra de stats** horizontal com 4 métricas: Respondidas, Acertos %, Erros %, Total Questões
-- **Grid 2×2** com cards: Praticar (vai para categorias), Progresso (vai para DesempenhoView), Reforço (filtra artigos fracos), Cadernos (placeholder)
-- **Seção Dra. Arabella** — avatar + balão de texto com análise gerada a partir dos `lawStats` e `articleStats` do usuário (texto dinâmico local, sem chamada de IA). Exemplo: "Parabéns! Você já estudou X questões. Seu ponto forte é Direito Penal (85%). Sugiro reforçar Constitucional (32%)."
-- Botão "Ver análise completa" que navega para Progresso/Desempenho
+6. Pequeno cleanup visual no mesmo arquivo
+- Ajustar o texto do artigo na tela de loading/countdown para evitar casos como `Art. Art. 1`, já que o número parece vir prefixado em alguns cenários.
 
-**2. Nova view `select-categoria`** — grid de categorias por disciplina:
+Escopo técnico
 
-- **Busca** no topo: "Buscar disciplina..."
-- **Tabs**: Principais, Frequentes, Extras
-- **Grid 2 colunas** com cards contendo:
-  - Ícone representativo da área (balança para Constitucional, martelo para Penal, etc.)
-  - Nome da categoria
-  - Badge com % de acerto
-  - Subtexto "X/Y feitas"
-- As categorias agrupam leis pelo campo `tipo` do `LEIS_CATALOG`:
-  - Constitucional = `constituicao`
-  - Penal = leis com tags penais (CP, CPP, CPM, LEP, etc.)
-  - Civil = CC, CPC
-  - Trabalhista = CLT
-  - Tributário = CTN, LRF
-  - Administrativo = L8112, LIA, NLL, LPAF
-  - Consumidor = CDC
-  - Ambiental = Código Florestal, LCA
-  - Eleitoral = CE, LPP, LEle, LFL
-  - E demais agrupamentos
+Arquivo principal:
+- `src/components/estudar/QuizView.tsx`
 
-**3. Ao selecionar uma categoria** → lista as leis daquela categoria no formato de grid com cards (igual imagem 168), com ícone, nome, progresso. Ao clicar numa lei → fluxo existente de seleção de artigo.
+Sem necessidade de alterar:
+- `supabase/functions/gerar-estudo/index.ts` (o backend já está lendo e salvando em `study_questions` corretamente)
 
-### Detalhes Técnicos
+Resultado esperado
 
-**Arquivo `src/pages/Estudar.tsx`**:
-- Adicionar novas views ao type: `'questoes-dashboard' | 'select-categoria' | 'select-lei-categoria'`
-- Quando `handleSelectMode('questoes')` → `setView('questoes-dashboard')` em vez de `'select-lei'`
-- Implementar as 3 novas views inline no componente
-- Lógica da Dra. Arabella: gerar texto dinâmico baseado em `lawStats`, `totalQuestions`, `avgPct`, identificando ponto forte e fraco
+- Artigos já gerados, como o art. 1 do Código Penal, não mostrarão mais “Gerando questões com IA...”.
+- Ao abrir novamente, irão direto para `3, 2, 1, Praticar`.
+- A animação de geração ficará restrita apenas a artigos realmente inéditos, sem cache.
 
-**Mapeamento de categorias** — array estático com:
-```typescript
-const CATEGORIAS = [
-  { id: 'constitucional', label: 'Constitucional', icon: Landmark, tipos: ['constituicao'], gradient: '...' },
-  { id: 'penal', label: 'Penal', icon: Gavel, tipos: ['codigo'], tabelas: ['CP_...', 'CPP_...', 'CPM_...'] },
-  // ...
-];
-```
+Validação
 
-**Stats por categoria** — agregar `lawStats` por categoria para calcular total feitas e % acerto.
-
-**Paleta de cores** — usar os gradientes do tema existente (primary, card, border, etc.) e os gradientes já usados no menu (rose, amber, purple, emerald).
-
-### Arquivos
-
-| Arquivo | Ação |
-|---------|------|
-| `src/pages/Estudar.tsx` | Adicionar 3 novas views (dashboard, categorias, leis por categoria) com toda a lógica e UI |
-
+- Abrir um artigo já gerado: deve entrar direto no countdown.
+- Abrir um artigo nunca gerado: pode mostrar geração, depois countdown.
+- Reabrir o primeiro artigo logo em seguida: não deve mais aparecer a animação de IA.
