@@ -28,6 +28,8 @@ const LivroDetailSheet = ({ livro, open, onClose, onRead, categoryId }: LivroDet
   const capaUrl = livro?.capa ? directImg(livro.capa, 400) : '';
   const hasFliphtml5 = !!livro?.link;
   const hasDrivePreview = !!livro?.download && !!extractDriveFileId(livro.download);
+  const DYNAMIC_CATEGORIES = ['classicos', 'lideranca', 'fora-da-toga'];
+  const hasDynamic = DYNAMIC_CATEGORIES.includes(categoryId ?? '');
 
   const handleReadMode = (mode: ReadMode) => {
     if (!livro) return;
