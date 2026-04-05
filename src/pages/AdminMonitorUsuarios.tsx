@@ -133,19 +133,22 @@ const AdminMonitorUsuarios = () => {
   useEffect(() => {
     const poll = () => {
       const state = getPresenceState();
-      const users: PresenceUser[] = [];
+      const map = new Map<string, PresenceUser>();
       Object.values(state).forEach((presences: any[]) => {
         presences.forEach((p) => {
-          users.push({
-            user_id: p.user_id,
-            email: p.email,
-            display_name: p.display_name,
-            current_route: p.current_route,
-            online_at: p.online_at,
-          });
+          const existing = map.get(p.user_id);
+          if (!existing || new Date(p.online_at) > new Date(existing.online_at)) {
+            map.set(p.user_id, {
+              user_id: p.user_id,
+              email: p.email,
+              display_name: p.display_name,
+              current_route: p.current_route,
+              online_at: p.online_at,
+            });
+          }
         });
       });
-      setRealtimeUsers(users);
+      setRealtimeUsers(Array.from(map.values()));
     };
     poll();
     const interval = setInterval(poll, 2000);
@@ -377,9 +380,9 @@ const AdminMonitorUsuarios = () => {
                   {realtimeUsers.slice(0, 5).map((u) => (
                     <div key={u.user_id} className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-foreground uppercase">
-                        {(u.display_name || u.email)?.[0] ?? '?'}
+                        {(u.email || u.display_name)?.[0] ?? '?'}
                       </div>
-                      <span className="text-xs text-foreground truncate flex-1">{u.display_name || u.email}</span>
+                      <span className="text-xs text-foreground truncate flex-1">{u.email || u.display_name}</span>
                       <span className="text-[10px] text-primary truncate max-w-[80px]">{getRouteLabel(u.current_route)}</span>
                     </div>
                   ))}
@@ -457,15 +460,15 @@ const AdminMonitorUsuarios = () => {
                 >
                   <div className="relative shrink-0">
                     <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-bold text-foreground uppercase">
-                      {(u.name || u.email)?.[0] ?? '?'}
+                      {(u.email || u.name)?.[0] ?? '?'}
                     </div>
                     {u.isOnline && (
                       <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-background animate-pulse" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{u.name || u.email}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{u.email}</p>
+                    <p className="text-sm font-semibold text-foreground truncate">{u.email || u.name}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{u.name}</p>
                   </div>
                   <div className="text-right shrink-0 space-y-0.5">
                     <p className="text-[11px] font-medium text-primary truncate max-w-[110px]">
