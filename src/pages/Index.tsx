@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Scale, Radar, Brain, GraduationCap, BookOpen, Wrench, Timer, BookOpenText, ScanEye, Sparkles, ArrowRight } from 'lucide-react';
+import { Search, Scale, Radar, Brain, GraduationCap, BookOpen, Wrench, Timer, BookOpenText, ScanEye, Sparkles, ArrowRight, Monitor } from 'lucide-react';
 import heroImage from '@/assets/hero-vademecum.jpg';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import camaraHero from '@/assets/radar/camara-hero.jpg';
@@ -447,25 +447,23 @@ const Index = () => {
                 <motion.div className="py-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, type: 'spring', stiffness: 260, damping: 24 }}>
                   <AtalhosCarousel onSelect={handleAtalhoSelect} onPersonalizarOpen={setPersonalizarOpen} />
                 </motion.div>
-                <motion.div className="py-4 flex justify-center" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 24 }}>
+                <motion.div className="py-4 flex gap-3 px-4 lg:hidden" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 24 }}>
+                  {/* Radar de Leis 360° — flex-[3] */}
                   <div
-                    className="relative flex items-center h-11 cursor-pointer w-[280px] rounded-full bg-primary shadow-md shadow-primary/25 overflow-hidden"
+                    className="relative flex items-center h-12 cursor-pointer flex-[3] rounded-full bg-primary shadow-md shadow-primary/25 overflow-hidden"
                     onClick={() => { navigate('/radar-360'); localStorage.setItem(RADAR_SEEN_KEY, String(Date.now())); setRadarBadge(0); }}
                   >
-                    {/* Shimmer reflection */}
                     <div className="absolute inset-0 pointer-events-none z-10">
                       <div
                         className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-20deg]"
                         style={{ animation: 'shinePratique 3s ease-in-out infinite' }}
                       />
                     </div>
-                    {/* Badge de notificação */}
                     {radarBadge > 0 && (
                       <span className="absolute -top-1.5 -right-1.5 z-20 min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground flex items-center justify-center shadow-md animate-pulse">
                         {radarBadge}
                       </span>
                     )}
-                    {/* Lottie icon dentro da barra */}
                     <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-card border-2 border-primary z-10">
                       <iframe
                         src="https://lottie.host/embed/3b2d7321-76b2-43fb-9eb0-5b564b42750f/D6XzVc9mGe.lottie"
@@ -473,17 +471,36 @@ const Index = () => {
                         title="Radar"
                       />
                     </div>
-                    <div className="flex-1 flex items-center justify-between pl-3 pr-3 relative z-10">
-                      <span className="text-primary-foreground text-[15px] font-display font-semibold tracking-wide italic">
+                    <div className="flex-1 flex items-center justify-between pl-2 pr-3 relative z-10">
+                      <span className="text-primary-foreground text-[13px] font-display font-semibold tracking-wide italic">
                         Radar de Leis 360°
                       </span>
                       <motion.div
                         animate={{ x: [0, 5, 0] }}
                         transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
                       >
-                        <ArrowRight className="w-5 h-5 text-primary-foreground" strokeWidth={2.5} />
+                        <ArrowRight className="w-4 h-4 text-primary-foreground" strokeWidth={2.5} />
                       </motion.div>
                     </div>
+                  </div>
+
+                  {/* Versão Desktop — flex-[2] */}
+                  <div
+                    className="relative flex flex-col items-center justify-center h-12 cursor-pointer flex-[2] rounded-full overflow-hidden shadow-md"
+                    style={{ background: 'linear-gradient(135deg, hsl(220 70% 50%), hsl(250 60% 45%))' }}
+                    onClick={() => window.open('https://vademecum-legal-guide.lovable.app', '_blank')}
+                  >
+                    <div className="absolute inset-0 pointer-events-none z-10">
+                      <div
+                        className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/25 to-transparent skew-x-[-20deg]"
+                        style={{ animation: 'shinePratique 3.5s ease-in-out infinite 0.5s' }}
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5 relative z-10">
+                      <Monitor className="w-4 h-4 text-white" />
+                      <span className="text-white text-[11px] font-display font-bold tracking-wide">Desktop</span>
+                    </div>
+                    <span className="text-white/70 text-[8px] font-body relative z-10 -mt-0.5">Tela ampla</span>
                   </div>
                 </motion.div>
                 <motion.div className="pb-4 pt-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16, type: 'spring', stiffness: 260, damping: 24 }}>
