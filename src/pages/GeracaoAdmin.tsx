@@ -35,6 +35,95 @@ interface LeiDetail {
   iconColor?: string;
 }
 
+/* ─── Geração Global Card Component ─── */
+const GeracaoGlobalCard = () => {
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+  const { data: globalState, refetch } = useQuery({
+    queryKey: ['geracao-global'],
+    queryFn: async () => {
+      const res = await fetch(`https://${projectId}.supabase.co/functions/v1/gerar-global`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${anonKey}` },
+      });
+      return res.json();
+    },
+    refetchInterval: 3000,
+  });
+
+  const isRunning = globalState?.status === 'running';
+  const isDone = globalState?.status === 'done';
+  const isPaused = globalState?.status === 'paused';
+  const total = globalState?.total_pendentes || 0;
+  const processed = globalState?.total_processadas || 0;
+  const errors = globalState?.total_erros || 0;
+  const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
+
+  const handleStart = async () => {
+    toast.info('Iniciando geração global...');
+    await fetch(`https://${projectId}.supabase.co/functions/v1/gerar-global`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${anonKey}` },
+      body: JSON.stringify({ action: 'start' }),
+    });
+    refetch();
+  };
+
+  const handleStop = async () => {
+    await fetch(`https://${projectId}.supabase.co/functions/v1/gerar-global`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${anonKey}` },
+      body: JSON.stringify({ action: 'stop' }),
+    });
+    toast.info('Geração global pausada');
+    refetch();
+  };
+
+  return (
+    <div className="rounded-2xl bg-card border-2 border-primary/30 p-5 space-y-3">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+          <Globe className="w-5 h-5 text-primary" />
+        </div>
+        <div className="flex-1">
+          <p className="font-display text-sm font-bold text-foreground">Geração Global</p>
+          <p className="text-[11px] font-body text-muted-foreground">
+            {isRunning ? 'Processando no servidor...' : isDone ? 'Concluído!' : isPaused ? 'Pausado' : 'Pronto para iniciar'}
+          </p>
+        </div>
+        {isRunning ? (
+          <button onClick={handleStop} className="px-3 py-2 rounded-lg bg-destructive/10 text-destructive text-xs font-semibold flex items-center gap-1.5 hover:bg-destructive/20 transition-colors">
+            <Pause className="w-3.5 h-3.5" /> Parar
+          </button>
+        ) : (
+          <button onClick={handleStart} className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/90 transition-colors">
+            <Play className="w-3.5 h-3.5" /> {isPaused ? 'Retomar' : 'Iniciar'}
+          </button>
+        )}
+      </div>
+
+      {total > 0 && (
+        <>
+          <Progress value={pct} className="h-2.5" />
+          <div className="flex items-center justify-between text-[11px] font-body text-muted-foreground">
+            <span>{processed.toLocaleString()} / {total.toLocaleString()} ({pct}%)</span>
+            {errors > 0 && <span className="text-destructive">{errors} erros</span>}
+          </div>
+          {isRunning && globalState?.current_tabela && (
+            <div className="flex items-center gap-2 text-[11px] font-body text-muted-foreground bg-secondary/50 rounded-lg px-3 py-2">
+              <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />
+              <span className="truncate">
+                {globalState.current_tabela?.replace(/_/g, ' ')} → {globalState.current_artigo} [{globalState.current_modo}]
+              </span>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
 const GeracaoAdmin = () => {
   const navigate = useNavigate();
   const catalog = useMemo(() => getLeisCatalog(), []);
