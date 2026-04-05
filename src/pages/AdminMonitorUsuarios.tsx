@@ -60,7 +60,7 @@ const AdminMonitorUsuarios = () => {
 
   // Presence listener
   useEffect(() => {
-    const channel = supabase.channel('online-users');
+    const channel = supabase.channel('online-users-monitor');
 
     channel
       .on('presence', { event: 'sync' }, () => {
