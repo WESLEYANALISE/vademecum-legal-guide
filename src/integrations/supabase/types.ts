@@ -2220,12 +2220,18 @@ export type Database = {
       }
       geracao_global: {
         Row: {
+          cooldown_until: string | null
           created_at: string | null
           current_artigo: string | null
           current_modo: string | null
           current_tabela: string | null
+          cursor_modo_idx: number
+          cursor_tabela_idx: number
           id: string
+          last_error: string | null
+          last_success_at: string | null
           modos: string[]
+          retry_count: number
           started_at: string | null
           status: string
           total_erros: number
@@ -2234,12 +2240,18 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          cooldown_until?: string | null
           created_at?: string | null
           current_artigo?: string | null
           current_modo?: string | null
           current_tabela?: string | null
+          cursor_modo_idx?: number
+          cursor_tabela_idx?: number
           id?: string
+          last_error?: string | null
+          last_success_at?: string | null
           modos?: string[]
+          retry_count?: number
           started_at?: string | null
           status?: string
           total_erros?: number
@@ -2248,12 +2260,18 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          cooldown_until?: string | null
           created_at?: string | null
           current_artigo?: string | null
           current_modo?: string | null
           current_tabela?: string | null
+          cursor_modo_idx?: number
+          cursor_tabela_idx?: number
           id?: string
+          last_error?: string | null
+          last_success_at?: string | null
           modos?: string[]
+          retry_count?: number
           started_at?: string | null
           status?: string
           total_erros?: number
