@@ -49,11 +49,24 @@ const AREA_ICONS: Record<string, LucideIcon> = {
 type View = 'menu' | 'category' | 'area-detail';
 type FilterTab = 'todos' | 'favoritos';
 
-const CATEGORIES: { id: string; label: string; desc: string; icon: LucideIcon }[] = [
-  { id: 'estudos', label: 'Estudos', icon: GraduationCap, desc: 'Materiais organizados por área do Direito' },
-  { id: 'classicos', label: 'Clássicos', icon: BookOpen, desc: 'Obras fundamentais do Direito' },
-  { id: 'lideranca', label: 'Liderança', icon: Crown, desc: 'Desenvolvimento pessoal e profissional' },
-  { id: 'fora-da-toga', label: 'Fora da Toga', icon: Coffee, desc: 'Leituras complementares' },
+const CATEGORIES: { id: string; label: string; desc: string; icon: LucideIcon; gradient: string }[] = [
+  { id: 'estudos', label: 'Estudos', icon: GraduationCap, desc: 'Materiais organizados por área do Direito', gradient: 'from-emerald-600 to-emerald-800' },
+  { id: 'classicos', label: 'Clássicos', icon: BookOpen, desc: 'Obras fundamentais do Direito', gradient: 'from-amber-600 to-amber-800' },
+  { id: 'lideranca', label: 'Liderança', icon: Crown, desc: 'Desenvolvimento pessoal e profissional', gradient: 'from-violet-600 to-violet-800' },
+  { id: 'fora-da-toga', label: 'Fora da Toga', icon: Coffee, desc: 'Leituras complementares', gradient: 'from-rose-600 to-rose-800' },
+];
+
+const AREA_COLORS = [
+  'from-emerald-600 to-emerald-800',
+  'from-sky-600 to-sky-800',
+  'from-amber-600 to-amber-800',
+  'from-violet-600 to-violet-800',
+  'from-rose-600 to-rose-800',
+  'from-teal-600 to-teal-800',
+  'from-indigo-600 to-indigo-800',
+  'from-orange-600 to-orange-800',
+  'from-pink-600 to-pink-800',
+  'from-cyan-600 to-cyan-800',
 ];
 
 function isDynamicProcessingStatus(status?: string | null): boolean {
@@ -69,45 +82,53 @@ function makeLivroKey(livro: LivroUnificado): string {
   return `${livro.categoria}-${livro.id}`;
 }
 
-const CategoryIconCard = ({ icon: Icon, label, desc, count, onClick }: { icon: LucideIcon; label: string; desc: string; count: number; onClick: () => void }) => (
+const CategoryIconCard = ({ icon: Icon, label, desc, count, gradient, onClick }: { icon: LucideIcon; label: string; desc: string; count: number; gradient: string; onClick: () => void }) => (
   <button
     onClick={onClick}
-    className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-emerald-500/40 transition-all group text-left overflow-hidden relative"
+    className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-white/20 transition-all group text-left overflow-hidden relative"
   >
-    <div className="w-20 flex-shrink-0 relative overflow-hidden bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center">
+    <div className={`w-20 flex-shrink-0 relative overflow-hidden bg-gradient-to-br ${gradient} flex items-center justify-center`}>
       <Icon className="w-8 h-8 text-white/90" strokeWidth={1.5} />
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+      <div
+        className="absolute inset-0 pointer-events-none overflow-hidden"
+        style={{ animation: 'shinePratique 3s ease-in-out infinite' }}
+      >
+        <div className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg]" style={{ animation: 'shinePratique 3s ease-in-out infinite' }} />
+      </div>
     </div>
     <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{label}</p>
+        <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{label}</p>
         <p className="text-xs text-muted-foreground">{desc}</p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <span className="text-xs text-muted-foreground">{count > 0 ? count : '...'}</span>
-        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors shrink-0" />
+        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
       </div>
     </div>
   </button>
 );
 
-const AreaIconCard = ({ label, count, onClick }: { label: string; count: number; onClick: () => void }) => {
+const AreaIconCard = ({ label, count, index, onClick }: { label: string; count: number; index: number; onClick: () => void }) => {
   const Icon = AREA_ICONS[label] || BookOpen;
+  const gradient = AREA_COLORS[index % AREA_COLORS.length];
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-emerald-500/40 transition-all group text-left overflow-hidden relative"
+      className="w-full flex items-stretch rounded-xl bg-card border border-border hover:border-white/20 transition-all group text-left overflow-hidden relative"
     >
-      <div className="w-20 flex-shrink-0 relative overflow-hidden bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
+      <div className={`w-20 flex-shrink-0 relative overflow-hidden bg-gradient-to-br ${gradient} flex items-center justify-center`}>
         <Icon className="w-7 h-7 text-white/90" strokeWidth={1.5} />
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg]" style={{ animation: 'shinePratique 3s ease-in-out infinite', animationDelay: `${index * 0.4}s` }} />
+        </div>
       </div>
       <div className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3">
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{label}</p>
+          <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{label}</p>
           <p className="text-xs text-muted-foreground">{count} materiais</p>
         </div>
-        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors shrink-0" />
+        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
       </div>
     </button>
   );
@@ -521,6 +542,7 @@ const Biblioteca = () => {
             label={cat.label}
             desc={cat.desc}
             count={livros.length}
+            gradient={cat.gradient}
             onClick={() => handleSelectCategory(cat.id)}
           />
         );
@@ -554,11 +576,12 @@ const Biblioteca = () => {
         <>
           {renderSearchBar('Buscar área do direito...')}
           <div className="space-y-3">
-            {filteredAreas.map((section) => (
+            {filteredAreas.map((section, idx) => (
               <AreaIconCard
                 key={section.label}
                 label={section.label}
                 count={section.items.length}
+                index={idx}
                 onClick={() => handleSelectArea(section.label)}
               />
             ))}
