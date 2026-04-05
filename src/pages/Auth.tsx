@@ -63,7 +63,7 @@ function InfiniteCarousel() {
 
     const tick = () => {
       pos += speed;
-      if (pos >= 610) pos = 0;
+      if (pos >= 820) pos = 0;
       el.style.transform = `translateX(-${pos}px)`;
       animRef.current = requestAnimationFrame(tick);
     };
@@ -75,14 +75,14 @@ function InfiniteCarousel() {
   const items = [...FEATURES, ...FEATURES];
 
   return (
-    <div className="overflow-hidden px-4">
-      <div ref={scrollRef} className="flex gap-3 will-change-transform" style={{ width: 'max-content' }}>
+    <div className="overflow-hidden px-4 lg:px-0">
+      <div ref={scrollRef} className="flex gap-3 lg:gap-4 will-change-transform" style={{ width: 'max-content' }}>
         {items.map((f, i) => (
           <div
             key={`${f.label}-${i}`}
-            className="flex-shrink-0 w-[110px] rounded-2xl overflow-hidden border border-primary/20 shadow-lg shine-effect"
+            className="flex-shrink-0 w-[110px] lg:w-[160px] rounded-2xl overflow-hidden border border-primary/20 shadow-lg shine-effect"
           >
-            <div className="relative h-[140px]">
+            <div className="relative h-[140px] lg:h-[200px]">
               <img
                 src={f.img}
                 alt={f.label}
@@ -91,8 +91,8 @@ function InfiniteCarousel() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-3">
-                <p className="text-sm font-body font-bold text-foreground drop-shadow-lg">{f.label}</p>
-                <p className="text-[10px] font-body text-foreground/70 mt-0.5">{f.desc}</p>
+                <p className="text-sm lg:text-base font-body font-bold text-foreground drop-shadow-lg">{f.label}</p>
+                <p className="text-[10px] lg:text-xs font-body text-foreground/70 mt-0.5">{f.desc}</p>
               </div>
             </div>
           </div>
@@ -112,89 +112,107 @@ const LandingScreen = ({ onStart }: { onStart: () => void }) => (
     transition={{ duration: 0.35 }}
     className="min-h-screen relative flex flex-col overflow-hidden"
   >
-    {/* Background - more visible */}
+    {/* Background */}
     <div className="absolute inset-0 z-0">
       <img src={themisBg} alt="" className="w-full h-full object-cover opacity-40" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40 lg:bg-gradient-to-r lg:from-background lg:via-background/75 lg:to-background/30" />
     </div>
 
-    {/* Content */}
-    <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center">
-      {/* Logo */}
+    {/* Content — centered on mobile, left-aligned on desktop */}
+    <div className="relative z-10 flex-1 flex flex-col lg:flex-row items-center lg:items-center justify-center px-6 lg:px-16 xl:px-24 2xl:px-32 text-center lg:text-left">
+      {/* Left column — text */}
+      <div className="lg:flex-1 lg:max-w-2xl">
+        {/* Logo */}
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="shine-effect rounded-2xl inline-block"
+        >
+          <img
+            src={logoVacatio}
+            alt="Vacatio"
+            className="w-20 h-20 lg:w-24 lg:h-24 rounded-2xl shadow-xl object-cover mb-4"
+          />
+        </motion.div>
+
+        <motion.h1
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.15 }}
+          className="font-display text-3xl lg:text-5xl xl:text-6xl font-bold text-foreground"
+        >
+          Vacatio
+        </motion.h1>
+        <motion.p
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-sm lg:text-lg font-body text-muted-foreground mt-1 mb-8"
+        >
+          Vade Mecum 2026
+        </motion.p>
+
+        {/* Headline */}
+        <motion.h2
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.25 }}
+          className="font-display text-xl lg:text-3xl xl:text-4xl font-semibold text-foreground leading-relaxed max-w-xs lg:max-w-lg"
+        >
+          Toda a{' '}
+          <span className="text-primary border-b-2 border-primary/50">legislação brasileira</span>{' '}
+          comentada e{' '}
+          <span className="text-primary border-b-2 border-primary/50">explicada</span>.
+        </motion.h2>
+
+        <motion.p
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="text-sm lg:text-lg font-body text-muted-foreground mt-4 max-w-xs lg:max-w-md leading-relaxed"
+        >
+          Lei seca, comentários, explicações artigo por artigo, narração, resumos e muito mais para você{' '}
+          <strong className="text-foreground">dominar a legislação</strong>.
+        </motion.p>
+
+        {/* CTA */}
+        <motion.button
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          onClick={onStart}
+          className="mt-8 px-8 lg:px-12 py-3.5 lg:py-4 bg-primary text-primary-foreground rounded-full font-body font-semibold text-base lg:text-lg flex items-center gap-2 shadow-lg hover:opacity-90 transition-opacity mx-auto lg:mx-0"
+        >
+          Iniciar Agora
+          <ArrowRight className="w-5 h-5 lg:w-6 lg:h-6" />
+        </motion.button>
+
+        {/* Social proof */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-6 flex items-center gap-1.5 text-xs lg:text-sm font-body text-muted-foreground justify-center lg:justify-start"
+        >
+          <Star className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-yellow-500 fill-yellow-500" />
+          +10.000 alunos já estudam com a gente
+        </motion.div>
+      </div>
+
+      {/* Right column — decorative logo (desktop only) */}
       <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        className="shine-effect rounded-2xl"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3, type: 'spring', stiffness: 150, damping: 20 }}
+        className="hidden lg:flex items-center justify-center lg:flex-1"
       >
-        <img
-          src={logoVacatio}
-          alt="Vacatio"
-          className="w-20 h-20 rounded-2xl shadow-xl object-cover mb-4"
-        />
-      </motion.div>
-
-      <motion.h1
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.15 }}
-        className="font-display text-3xl font-bold text-foreground"
-      >
-        Vacatio
-      </motion.h1>
-      <motion.p
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="text-sm font-body text-muted-foreground mt-1 mb-8"
-      >
-        Vade Mecum 2026
-      </motion.p>
-
-      {/* Headline */}
-      <motion.h2
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.25 }}
-        className="font-display text-xl font-semibold text-foreground leading-relaxed max-w-xs"
-      >
-        Toda a{' '}
-        <span className="text-primary border-b-2 border-primary/50">legislação brasileira</span>{' '}
-        comentada e{' '}
-        <span className="text-primary border-b-2 border-primary/50">explicada</span>.
-      </motion.h2>
-
-      <motion.p
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="text-sm font-body text-muted-foreground mt-4 max-w-xs leading-relaxed"
-      >
-        Lei seca, comentários, explicações artigo por artigo, narração, resumos e muito mais para você{' '}
-        <strong className="text-foreground">dominar a legislação</strong>.
-      </motion.p>
-
-      {/* CTA */}
-      <motion.button
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        onClick={onStart}
-        className="mt-8 px-8 py-3.5 bg-primary text-primary-foreground rounded-full font-body font-semibold text-base flex items-center gap-2 shadow-lg hover:opacity-90 transition-opacity"
-      >
-        Iniciar Agora
-        <ArrowRight className="w-5 h-5" />
-      </motion.button>
-
-      {/* Social proof */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="mt-6 flex items-center gap-1.5 text-xs font-body text-muted-foreground"
-      >
-        <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-        +10.000 alunos já estudam com a gente
+        <div className="relative">
+          <div className="absolute inset-0 blur-3xl bg-primary/15 rounded-full scale-150" />
+          <div className="relative w-48 h-48 xl:w-56 xl:h-56 2xl:w-64 2xl:h-64 rounded-3xl overflow-hidden shadow-2xl border-2 border-primary/20 shine-effect">
+            <img src={logoVacatio} alt="Vacatio" className="w-full h-full object-cover" />
+          </div>
+        </div>
       </motion.div>
     </div>
 
@@ -208,7 +226,7 @@ const LandingScreen = ({ onStart }: { onStart: () => void }) => (
       <InfiniteCarousel />
     </motion.div>
 
-    <p className="relative z-10 text-center text-[10px] font-body text-muted-foreground pb-4">
+    <p className="relative z-10 text-center text-[10px] lg:text-xs font-body text-muted-foreground pb-4">
       Vacatio — Vade Mecum © 2026
     </p>
   </motion.main>
