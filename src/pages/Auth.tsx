@@ -17,12 +17,39 @@ import landingEstudar from '@/assets/landing-estudar.jpg';
 import landingRadar from '@/assets/landing-radar.jpg';
 
 const FEATURES = [
-  { label: 'Biblioteca', desc: 'Livros e resumos', img: landingBiblioteca },
-  { label: 'Vade Mecum', desc: 'Leis atualizadas', img: landingVademecum },
+  { label: 'Vade Mecum', desc: 'Lei seca comentada', img: landingVademecum },
+  { label: 'Biblioteca', desc: 'Livros jurídicos', img: landingBiblioteca },
   { label: 'Videoaulas', desc: 'Aulas em vídeo', img: landingVideoaulas },
   { label: 'Estudar', desc: 'Flashcards e questões', img: landingEstudar },
   { label: 'Radar', desc: 'Monitoramento legislativo', img: landingRadar },
 ];
+
+/* CSS for shine animation injected once */
+const shineStyleId = 'shine-anim-style';
+if (typeof document !== 'undefined' && !document.getElementById(shineStyleId)) {
+  const style = document.createElement('style');
+  style.id = shineStyleId;
+  style.textContent = `
+    @keyframes shineSlide {
+      0% { transform: translateX(-100%) rotate(25deg); }
+      100% { transform: translateX(250%) rotate(25deg); }
+    }
+    .shine-effect { position: relative; overflow: hidden; }
+    .shine-effect::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 40%;
+      height: 200%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+      transform: translateX(-100%) rotate(25deg);
+      animation: shineSlide 3s ease-in-out infinite;
+      pointer-events: none;
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 function InfiniteCarousel() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -32,11 +59,10 @@ function InfiniteCarousel() {
     const el = scrollRef.current;
     if (!el) return;
     let pos = 0;
-    const speed = 0.4; // px per frame
+    const speed = 0.4;
 
     const tick = () => {
       pos += speed;
-      // Each card is 160px + 12px gap = 172px, 5 items = 860px
       if (pos >= 860) pos = 0;
       el.style.transform = `translateX(-${pos}px)`;
       animRef.current = requestAnimationFrame(tick);
@@ -46,7 +72,6 @@ function InfiniteCarousel() {
     return () => cancelAnimationFrame(animRef.current);
   }, []);
 
-  // Duplicate items for seamless loop
   const items = [...FEATURES, ...FEATURES];
 
   return (
@@ -55,7 +80,7 @@ function InfiniteCarousel() {
         {items.map((f, i) => (
           <div
             key={`${f.label}-${i}`}
-            className="flex-shrink-0 w-[160px] rounded-2xl overflow-hidden border border-border/30 shadow-lg group"
+            className="flex-shrink-0 w-[160px] rounded-2xl overflow-hidden border border-primary/20 shadow-lg shine-effect"
           >
             <div className="relative h-[200px]">
               <img
@@ -64,7 +89,7 @@ function InfiniteCarousel() {
                 className="w-full h-full object-cover"
                 loading="lazy"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-3">
                 <p className="text-sm font-body font-bold text-foreground drop-shadow-lg">{f.label}</p>
                 <p className="text-[10px] font-body text-foreground/70 mt-0.5">{f.desc}</p>
@@ -87,23 +112,27 @@ const LandingScreen = ({ onStart }: { onStart: () => void }) => (
     transition={{ duration: 0.35 }}
     className="min-h-screen relative flex flex-col overflow-hidden"
   >
-    {/* Background */}
+    {/* Background - more visible */}
     <div className="absolute inset-0 z-0">
-      <img src={themisBg} alt="" className="w-full h-full object-cover opacity-20" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/60" />
+      <img src={themisBg} alt="" className="w-full h-full object-cover opacity-40" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
     </div>
 
     {/* Content */}
     <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center">
       {/* Logo */}
-      <motion.img
-        src={logoVacatio}
-        alt="Vacatio"
+      <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="w-20 h-20 rounded-2xl shadow-xl object-cover mb-4"
-      />
+        className="shine-effect rounded-2xl"
+      >
+        <img
+          src={logoVacatio}
+          alt="Vacatio"
+          className="w-20 h-20 rounded-2xl shadow-xl object-cover mb-4"
+        />
+      </motion.div>
 
       <motion.h1
         initial={{ y: 20, opacity: 0 }}
@@ -129,10 +158,10 @@ const LandingScreen = ({ onStart }: { onStart: () => void }) => (
         transition={{ delay: 0.25 }}
         className="font-display text-xl font-semibold text-foreground leading-relaxed max-w-xs"
       >
-        Tudo para você{' '}
-        <span className="text-primary border-b-2 border-primary/50">estudar Direito</span>{' '}
-        em um{' '}
-        <span className="text-primary border-b-2 border-primary/50">só lugar</span>.
+        Toda a{' '}
+        <span className="text-primary border-b-2 border-primary/50">legislação brasileira</span>{' '}
+        comentada e{' '}
+        <span className="text-primary border-b-2 border-primary/50">explicada</span>.
       </motion.h2>
 
       <motion.p
@@ -141,8 +170,8 @@ const LandingScreen = ({ onStart }: { onStart: () => void }) => (
         transition={{ delay: 0.3 }}
         className="text-sm font-body text-muted-foreground mt-4 max-w-xs leading-relaxed"
       >
-        Leis, resumos, flashcards, questões, audioaulas e muito mais para você{' '}
-        <strong className="text-foreground">dominar o Direito</strong>.
+        Lei seca, comentários, explicações artigo por artigo, narração, resumos e muito mais para você{' '}
+        <strong className="text-foreground">dominar a legislação</strong>.
       </motion.p>
 
       {/* CTA */}
