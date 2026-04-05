@@ -166,6 +166,13 @@ const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
     load();
   }, [tabelaNome, artigoNumero]);
 
+  // Countdown timer
+  useEffect(() => {
+    if (countdown === null || countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown(prev => (prev !== null ? prev - 1 : null)), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
   const q = questions[currentIdx];
   const progress = questions.length > 0 ? ((currentIdx + (answered ? 1 : 0)) / questions.length) * 100 : 0;
 
