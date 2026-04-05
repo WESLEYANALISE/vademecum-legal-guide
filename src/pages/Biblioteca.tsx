@@ -49,11 +49,24 @@ const AREA_ICONS: Record<string, LucideIcon> = {
 type View = 'menu' | 'category' | 'area-detail';
 type FilterTab = 'todos' | 'favoritos';
 
-const CATEGORIES: { id: string; label: string; desc: string; icon: LucideIcon }[] = [
-  { id: 'estudos', label: 'Estudos', icon: GraduationCap, desc: 'Materiais organizados por área do Direito' },
-  { id: 'classicos', label: 'Clássicos', icon: BookOpen, desc: 'Obras fundamentais do Direito' },
-  { id: 'lideranca', label: 'Liderança', icon: Crown, desc: 'Desenvolvimento pessoal e profissional' },
-  { id: 'fora-da-toga', label: 'Fora da Toga', icon: Coffee, desc: 'Leituras complementares' },
+const CATEGORIES: { id: string; label: string; desc: string; icon: LucideIcon; gradient: string }[] = [
+  { id: 'estudos', label: 'Estudos', icon: GraduationCap, desc: 'Materiais organizados por área do Direito', gradient: 'from-emerald-600 to-emerald-800' },
+  { id: 'classicos', label: 'Clássicos', icon: BookOpen, desc: 'Obras fundamentais do Direito', gradient: 'from-amber-600 to-amber-800' },
+  { id: 'lideranca', label: 'Liderança', icon: Crown, desc: 'Desenvolvimento pessoal e profissional', gradient: 'from-violet-600 to-violet-800' },
+  { id: 'fora-da-toga', label: 'Fora da Toga', icon: Coffee, desc: 'Leituras complementares', gradient: 'from-rose-600 to-rose-800' },
+];
+
+const AREA_COLORS = [
+  'from-emerald-600 to-emerald-800',
+  'from-sky-600 to-sky-800',
+  'from-amber-600 to-amber-800',
+  'from-violet-600 to-violet-800',
+  'from-rose-600 to-rose-800',
+  'from-teal-600 to-teal-800',
+  'from-indigo-600 to-indigo-800',
+  'from-orange-600 to-orange-800',
+  'from-pink-600 to-pink-800',
+  'from-cyan-600 to-cyan-800',
 ];
 
 function isDynamicProcessingStatus(status?: string | null): boolean {
