@@ -12,6 +12,7 @@ interface LivroDetailSheetProps {
   open: boolean;
   onClose: () => void;
   onRead: (livro: LivroUnificado, mode: ReadMode) => void;
+  categoryId?: string;
 }
 
 function extractDriveFileId(url: string): string | null {
