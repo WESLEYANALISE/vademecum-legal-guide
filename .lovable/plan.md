@@ -1,42 +1,75 @@
 
 
-## Plano: Corrigir Monitoramento em Tempo Real
+## Plano: Otimização para Deploy na Vercel
 
-### Problema
+### Visão Geral
 
-O tracker de presença (`usePresenceTracker`) publica no canal `online-users`. O monitor admin escuta no canal `online-users-monitor` — um canal completamente diferente e vazio. Por isso "Em tempo real" sempre mostra 0.
+Configurar o projeto Vite/React SPA para funcionar perfeitamente na Vercel, com deep linking, analytics, speed insights e headers de cache otimizados.
 
-### Solução
+### O que será feito
 
-Mudar o monitor para escutar o mesmo canal `online-users`, mas **sem chamar `.track()`** — apenas ouvindo. O erro anterior ("cannot add presence callbacks after subscribe") acontecia porque o Supabase não permite dois objetos de canal com o mesmo nome no mesmo cliente. A solução é:
+**1. Arquivo `vercel.json` (SPA Rewrites + Headers de Cache)**
 
-1. No `AdminMonitorUsuarios.tsx`, usar o canal `online-users` com uma **key de presença diferente** (ex: `monitor-{random}`) para que o Supabase trate como uma instância separada mas conectada ao mesmo tópico.
+Criar o arquivo na raiz do projeto com:
+- Rewrite de todas as rotas para `index.html` (essencial para SPA com React Router)
+- Headers de cache para assets estáticos (JS, CSS, imagens, fontes) com `max-age` de 1 ano (imutáveis pois Vite gera hashes nos nomes)
+- Header `X-Content-Type-Options: nosniff` para segurança
 
-Na verdade, o Supabase não permite dois canais com o mesmo nome no mesmo cliente. A abordagem correta é:
+**2. Instalar `@vercel/analytics`**
 
-**Opção escolhida**: O monitor vai se juntar ao canal `online-users` fazendo `.track()` com seus próprios dados (marcado como admin/monitor), e assim consegue ver todos os outros participantes via `presenceState()`. Porém, para evitar o erro de canal duplicado, o `usePresenceTracker` no `App.tsx` precisa ser desativado quando o usuário está na página de monitoramento, OU o monitor reutiliza o canal existente.
+Pacote oficial para rastrear visitantes, pageviews e origens de tráfego no dashboard da Vercel. Gratuito em todos os planos.
 
-**Melhor abordagem**: Usar o canal com um sufixo único no tracker E no monitor, ambos apontando para o mesmo canal Supabase. O problema real é que o Supabase SDK não permite criar dois objetos `channel('online-users')` no mesmo cliente. Então:
+- Instalar o pacote
+- Adicionar `<Analytics />` no `App.tsx`
 
-- Mudar o monitor para usar `online-users` como nome do canal
-- Remover o canal do tracker antes de criar o do monitor (ou vice-versa)
+**3. Instalar `@vercel/speed-insights`**
 
-**Abordagem final mais simples**: Mudar o `usePresenceTracker` para expor o canal/state globalmente, e o monitor consome esse state ao invés de criar um segundo canal.
+Pacote que coleta métricas de Core Web Vitals (LCP, FID, CLS, TTFB) dos usuários reais e exibe no dashboard.
 
-### Implementação
+- Instalar o pacote
+- Adicionar `<SpeedInsights />` no `App.tsx`
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/hooks/usePresenceTracker.ts` | Exportar um store/ref global com o `presenceState` atualizado em cada sync |
-| `src/pages/AdminMonitorUsuarios.tsx` | Importar o state de presença do hook ao invés de criar canal próprio. Usar polling do state a cada 2s para manter atualizado |
+### Detalhes Técnicos
 
-**Detalhes técnicos:**
+**`vercel.json`** (novo arquivo na raiz):
+```json
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/sw-cache.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    }
+  ]
+}
+```
 
-1. **`usePresenceTracker.ts`**: Adicionar uma variável global `presenceStateRef` que é atualizada no callback de `sync`. Exportar uma função `getPresenceState()` e o próprio `channelRef` para que o monitor possa acessar.
+**`App.tsx`** — adicionar no componente `App`:
+```tsx
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
-2. **`AdminMonitorUsuarios.tsx`**: Ao invés de criar um canal separado, usar `setInterval` de 2s que chama `getPresenceState()` do tracker e atualiza a lista de usuários em tempo real. Isso elimina completamente o conflito de canais duplicados.
+// Dentro do JSX do App:
+<Analytics />
+<SpeedInsights />
+```
 
-### Resultado
+### Arquivos
 
-O bloco "Em tempo real" vai mostrar corretamente todos os usuários conectados, incluindo o próprio admin.
+| Arquivo | Ação |
+|---------|------|
+| `vercel.json` | Criar — rewrites SPA + headers de cache |
+| `src/App.tsx` | Adicionar componentes Analytics e SpeedInsights |
+| `package.json` | Instalar `@vercel/analytics` e `@vercel/speed-insights` |
 
