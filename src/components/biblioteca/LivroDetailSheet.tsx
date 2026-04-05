@@ -12,6 +12,7 @@ interface LivroDetailSheetProps {
   open: boolean;
   onClose: () => void;
   onRead: (livro: LivroUnificado, mode: ReadMode) => void;
+  categoryId?: string;
 }
 
 function extractDriveFileId(url: string): string | null {
@@ -19,7 +20,7 @@ function extractDriveFileId(url: string): string | null {
   return match?.[1] ?? null;
 }
 
-const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProps) => {
+const LivroDetailSheet = ({ livro, open, onClose, onRead, categoryId }: LivroDetailSheetProps) => {
   const [modePickerOpen, setModePickerOpen] = useState(false);
 
   if (!livro && !open) return null;
@@ -27,6 +28,8 @@ const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProp
   const capaUrl = livro?.capa ? directImg(livro.capa, 400) : '';
   const hasFliphtml5 = !!livro?.link;
   const hasDrivePreview = !!livro?.download && !!extractDriveFileId(livro.download);
+  const DYNAMIC_CATEGORIES = ['classicos', 'lideranca', 'fora-da-toga'];
+  const hasDynamic = DYNAMIC_CATEGORIES.includes(categoryId ?? '');
 
   const handleReadMode = (mode: ReadMode) => {
     if (!livro) return;
@@ -164,15 +167,17 @@ const LivroDetailSheet = ({ livro, open, onClose, onRead }: LivroDetailSheetProp
                           <span className="text-xs font-bold text-white">Vertical</span>
                         </button>
                       )}
-                      <button
-                        onClick={() => handleReadMode('dinamico')}
-                        className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-gradient-to-br from-violet-500/90 to-violet-700/90 border border-violet-400/30 hover:scale-105 transition-all shadow-lg"
-                      >
-                        <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                          <Smartphone className="w-5 h-5 text-white" />
-                        </div>
-                        <span className="text-xs font-bold text-white">Dinâmico</span>
-                      </button>
+                      {hasDynamic && (
+                        <button
+                          onClick={() => handleReadMode('dinamico')}
+                          className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-gradient-to-br from-violet-500/90 to-violet-700/90 border border-violet-400/30 hover:scale-105 transition-all shadow-lg"
+                        >
+                          <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <Smartphone className="w-5 h-5 text-white" />
+                          </div>
+                          <span className="text-xs font-bold text-white">Dinâmico</span>
+                        </button>
+                      )}
                     </div>
                     <button
                       onClick={() => setModePickerOpen(false)}

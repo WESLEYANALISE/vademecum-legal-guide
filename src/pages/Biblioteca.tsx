@@ -633,7 +633,7 @@ const Biblioteca = () => {
         </div>
       </DesktopPageLayout>
 
-      <LivroDetailSheet livro={selected} open={detailOpen} onClose={() => setDetailOpen(false)} onRead={handleRead} />
+      <LivroDetailSheet livro={selected} open={detailOpen} onClose={() => setDetailOpen(false)} onRead={handleRead} categoryId={activeCategory} />
 
       {readerUrl && (
         <LeitorWebView url={readerUrl} titulo={readerTitle} onClose={() => setReaderUrl(null)} />
