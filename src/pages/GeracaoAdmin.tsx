@@ -332,6 +332,9 @@ const GeracaoAdmin = () => {
         </div>
       ) : (
         <div className="max-w-4xl mx-auto p-4 space-y-4">
+          {/* ─── Geração Global Card ─── */}
+          <GeracaoGlobalCard />
+
           {/* Summary */}
           <div className="rounded-2xl bg-card border border-border p-5">
             <div className="flex items-center gap-3 mb-3">
