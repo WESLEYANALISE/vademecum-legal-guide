@@ -1,82 +1,65 @@
 
+Do I know what the issue is? Sim.
 
-## Plano: Geração Global com Cron Job Persistente
+Diagnóstico confirmado
+- A Geração Global não está “girando” de forma persistente. Hoje ela depende de um loop no navegador em `src/pages/GeracaoAdmin.tsx` (`useEffect` com `while`), então não é um cron real. Se a aba parar/recarregar, o motor para.
+- O worker está travando no mesmo item: `CF88_CONSTITUICAO_FEDERAL → Art. 64 [explicacao]`.
+- Evidência lida no projeto:
+  - Network: o `POST /functions/v1/gerar-global` respondeu `{ "rateLimited": true }`.
+  - Logs da edge function: 3 respostas seguidas `Gemini 429` e depois `[tick] Rate limited`.
+  - Banco: `geracao_global` continua com `total_processadas = 0`, `current_artigo = Art. 64`.
+  - Cache: não existe registro salvo para `CF88 / Art. 64 / explicacao`.
+- Ou seja: ele tenta o mesmo item, toma 429, volta sem avançar, e a fila fica aparentemente congelada.
+- Há mais 3 problemas estruturais:
+  1. `supabase/config.toml` não agenda `gerar-global`, então não existe cron real para manter a fila viva.
+  2. O `tick` usa `.limit(200)`, então artigos acima do 200º podem nunca entrar na fila.
+  3. A fila global cobre só 4 modos (`explicacao`, `exemplo`, `termos`, `sugerir_perguntas`), mas o painel exibe mais categorias; então “global” hoje não corresponde a “todas as funções”.
 
-### Problema Atual
-A geração roda no navegador (client-side). Se o usuário fechar a aba, tudo para. Não há visão consolidada de pendências globais.
+Plano de correção
+1. Tornar a fila realmente server-side
+- Remover a responsabilidade do frontend de ficar chamando `tick` em loop.
+- Deixar o frontend apenas iniciar, pausar e consultar status.
+- Agendar `gerar-global` via cron/schedule do projeto para rodar sozinho no servidor.
 
-### Solução
+2. Reescrever o `gerar-global` para não travar no mesmo artigo
+- Trocar o algoritmo atual por um cursor real de progresso.
+- Processar o próximo item de forma determinística, sem depender do “primeiro uncached dentro dos 200 primeiros”.
+- Ao tomar 429, salvar `cooldown_until` e sair.
+- Na próxima execução agendada, respeitar esse cooldown e retomar automaticamente.
+- Após algumas falhas no mesmo item, marcar erro e avançar para o próximo, em vez de bloquear a fila inteira.
 
-Criar um sistema server-side com uma tabela de controle + edge function que se auto-invoca até processar tudo.
+3. Ampliar a tabela `geracao_global`
+- Adicionar campos de controle como:
+  - `cooldown_until`
+  - `retry_count`
+  - `last_error`
+  - `last_success_at`
+  - cursor/ponteiro do item atual
+- Em “Retomar”, não resetar tudo para zero; recalcular pendências com base no cache já existente.
 
-### Arquitetura
+4. Alinhar escopo da fila com o painel
+- Decidir quais modos entram de fato na Geração Global.
+- Corrigir a inconsistência entre o card global e as categorias exibidas no admin.
+- Se a intenção é “todas as funções de todas as leis”, expandir a fila para os modos reais do app, não só os 4 atuais.
 
-```text
-┌─────────────┐    ┌──────────────────┐    ┌────────────────────┐
-│  UI (Admin)  │───▶│ geracao_global    │◀──▶│ EF: gerar-global   │
-│  Botão Play  │    │ (tabela status)  │    │ (processa 1 item,  │
-│  + progresso │    │                  │    │  re-invoca a si)   │
-└─────────────┘    └──────────────────┘    └────────────────────┘
-```
+5. Melhorar a visibilidade no admin
+- Mostrar estados claros:
+  - Rodando
+  - Em cooldown por limite da IA
+  - Pausado
+  - Concluído
+  - Com erro
+- Exibir item atual, último erro e próxima tentativa.
+- Assim o painel deixa de parecer travado quando estiver só aguardando o cooldown.
 
-### 1. Nova tabela: `geracao_global`
+Arquivos
+- `src/pages/GeracaoAdmin.tsx` — remover loop client-side e manter só controles + polling de status.
+- `supabase/functions/gerar-global/index.ts` — reescrever o worker com cursor, cooldown e avanço seguro.
+- `supabase/config.toml` — adicionar agendamento real da função.
+- `supabase/migrations/...sql` — evoluir `geracao_global` para retries/cooldown/erro/cursor.
 
-```sql
-create table public.geracao_global (
-  id uuid primary key default gen_random_uuid(),
-  status text not null default 'idle', -- idle | running | paused | done
-  modos text[] not null default '{"explicacao","exemplo","termos","quiz","flashcard","grifos"}',
-  total_pendentes int not null default 0,
-  total_processadas int not null default 0,
-  total_erros int not null default 0,
-  current_tabela text,
-  current_artigo text,
-  current_modo text,
-  started_at timestamptz,
-  updated_at timestamptz default now(),
-  created_at timestamptz default now()
-);
--- Apenas 1 linha (singleton)
-insert into geracao_global (id) values (gen_random_uuid());
-```
-
-### 2. Nova Edge Function: `gerar-global`
-
-- **POST com action: "start"** → Calcula total pendente (todas as leis × modos, menos o que já existe em `artigo_ai_cache`), atualiza a tabela para `running`, e se auto-invoca para processar o primeiro item.
-- **POST com action: "stop"** → Atualiza status para `paused`.
-- **POST com action: "tick"** → Pega o próximo item pendente (query: artigos sem cache para o modo atual), gera via Gemini, salva no `artigo_ai_cache`, incrementa `total_processadas`, atualiza `current_*`. Se status ainda for `running`, se auto-invoca novamente (com delay de 2s). Se não houver mais pendentes, marca `done`.
-- **GET** → Retorna o estado atual da tabela.
-
-A auto-invocação usa `fetch` para chamar a si mesma, garantindo que o processamento continua mesmo sem o navegador aberto.
-
-### 3. UI no GeracaoAdmin
-
-Adicionar um card "Geração Global" acima da lista de leis com:
-- Total pendente / total processado / erros
-- Barra de progresso
-- Indicação do item atual (lei + artigo + modo)
-- Botão **Iniciar** (chama `gerar-global` com action: "start")
-- Botão **Parar** (chama com action: "stop")
-- Polling a cada 3s via `useQuery` + `refetchInterval` para atualizar o progresso em tempo real
-- Se o usuário sair e voltar, o polling mostra o progresso atual do cron que continua rodando no servidor
-
-### 4. Lógica do "tick"
-
-```text
-1. SELECT status FROM geracao_global → se não for 'running', para
-2. Para cada tabela no catálogo, para cada modo:
-   - Busca 1 artigo que NÃO tenha cache (LEFT JOIN artigo_ai_cache)
-   - Se encontrar, gera o conteúdo, salva, atualiza contadores
-   - Se auto-invoca com action: "tick"
-   - return
-3. Se nenhum pendente encontrado → status = 'done'
-```
-
-### Arquivos
-
-| Arquivo | Ação |
-|---------|------|
-| Migration SQL | Criar tabela `geracao_global` |
-| `supabase/functions/gerar-global/index.ts` | Nova edge function com start/stop/tick |
-| `src/pages/GeracaoAdmin.tsx` | Adicionar card de Geração Global com controles e polling |
-
+Resultado esperado
+- O Art. 64 deixa de bloquear a fila inteira.
+- Mesmo com 429, a fila entra em espera e volta a andar sozinha.
+- Fechar ou recarregar a página não interrompe o processamento.
+- O progresso mostrado no admin passa a refletir atividade real e contínua.
