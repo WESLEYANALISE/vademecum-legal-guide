@@ -1,47 +1,40 @@
 
 
-## Plano: Adicionar Card "Acesso Desktop" ao lado do Radar de Leis 360°
+## Plano: Deduplicar Usuários Online e Mostrar E-mail
 
-### Visão Geral
+### Problema
 
-Transformar a barra do "Radar de Leis 360°" em uma linha com dois cards lado a lado: o Radar (maior, ~60% da largura) e um novo card "Acesso Desktop" (~40%). O card Desktop mostra vantagens da versão desktop e só aparece em mobile/tablet (< 1024px).
+O polling de presença em `AdminMonitorUsuarios.tsx` (linhas 134-148) empurra **todas** as entradas do `presenceState` sem deduplicar. Se um usuário tem múltiplas presenças (múltiplas abas, reconexões), ele aparece repetido. Além disso, mostra `display_name` ao invés do e-mail.
 
-### O que será feito
+### Solução
 
-**1. Reestruturar o layout do Radar de Leis 360°**
+**1. Deduplicar por `user_id` no polling de presença (linhas 134-148)**
 
-Ambos os locais onde o Radar aparece (mobile e desktop layout) serão ajustados para exibir dois cards lado a lado com `flex` e `gap`.
+Usar um `Map<string, PresenceUser>` para manter apenas a entrada mais recente de cada `user_id`:
 
-**2. Criar o card "Acesso Desktop"**
-
-Card com ícone de monitor, título "Versão Desktop", breve descrição das vantagens (tela ampla, multitarefas, atalhos). Estilo similar ao Radar mas com gradiente diferenciado (ex: azul/índigo). Ao clicar, pode abrir um sheet ou redirecionar para a URL publicada.
-
-**3. Visibilidade apenas mobile/tablet**
-
-Toda a linha com os dois cards só aparece em telas < 1024px. No desktop, o Radar já aparece na barra superior, então o card Desktop não é necessário.
-
-### Layout Visual
-
-```text
-┌──────────────────────┐ ┌───────────────┐
-│ 🔴 Radar de Leis 360°│ │ 🖥 Desktop    │
-│      (flex-[3])      │ │  (flex-[2])   │
-└──────────────────────┘ └───────────────┘
+```typescript
+const poll = () => {
+  const state = getPresenceState();
+  const map = new Map<string, PresenceUser>();
+  Object.values(state).forEach((presences: any[]) => {
+    presences.forEach((p) => {
+      const existing = map.get(p.user_id);
+      if (!existing || new Date(p.online_at) > new Date(existing.online_at)) {
+        map.set(p.user_id, { ... });
+      }
+    });
+  });
+  setRealtimeUsers(Array.from(map.values()));
+};
 ```
 
-### Detalhes Técnicos
+**2. Mostrar e-mail no lugar do nome na lista de usuários**
 
-**Mobile (dentro do `activeTab === 'legislacao'`)** — linha ~450-488:
-- Trocar `flex justify-center` por `flex gap-3`
-- Radar: de `w-[280px]` para `flex-[3]` (maior)
-- Novo card Desktop: `flex-[2]`, gradiente azul, ícone `Monitor`, texto "Versão Desktop" com subtítulo curto
-
-**Desktop layout (linha ~255-290)**:
-- Manter apenas o Radar (o card Desktop não aparece em desktop)
+Na renderização dos cards de usuário, exibir `user.email` como texto principal (truncado se necessário) em vez de `user.name`.
 
 ### Arquivos
 
 | Arquivo | Ação |
 |---------|------|
-| `src/pages/Index.tsx` | Adicionar card Desktop ao lado do Radar na seção mobile; ajustar proporções |
+| `src/pages/AdminMonitorUsuarios.tsx` | Deduplicar presença por user_id; exibir e-mail como identificador principal |
 
