@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { ArrowLeft, Loader2, BarChart3, Play, Square, RefreshCw, Trash2, ChevronRight, Check } from 'lucide-react';
+import { ArrowLeft, Loader2, BarChart3, Play, Square, RefreshCw, Trash2, ChevronRight, Check, Globe, Pause } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { getLeisCatalog } from '@/services/legislacaoService';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 
 const MODOS = [
   { key: 'explicacao', label: 'Explicação', color: 'bg-green-500' },

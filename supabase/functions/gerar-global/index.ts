@@ -196,21 +196,9 @@ Deno.serve(async (req) => {
             { tabela_nome: tabela, artigo_numero: artigo.numero, modo, conteudo: result },
             { onConflict: "tabela_nome,artigo_numero,modo" }
           );
-          await supabase.from("geracao_global").update({
-            total_processadas: (state as any).total_processadas ? undefined : undefined,
-            updated_at: new Date().toISOString(),
-          }).not("id", "is", null);
-
-          // Increment processadas with raw SQL via RPC or direct
-          await supabase.rpc("increment_geracao_processadas").catch(async () => {
-            // Fallback: read and write
-            const { data: cur } = await supabase.from("geracao_global").select("total_processadas").limit(1).single();
-            await supabase.from("geracao_global").update({ total_processadas: (cur?.total_processadas || 0) + 1, updated_at: new Date().toISOString() }).not("id", "is", null);
-          });
+          await supabase.rpc("increment_geracao_processadas");
         } else {
-          // Increment errors
-          const { data: cur } = await supabase.from("geracao_global").select("total_erros").limit(1).single();
-          await supabase.from("geracao_global").update({ total_erros: (cur?.total_erros || 0) + 1, updated_at: new Date().toISOString() }).not("id", "is", null);
+          await supabase.rpc("increment_geracao_erros");
         }
 
         // Wait 2s then self-invoke
