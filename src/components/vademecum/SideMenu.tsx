@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Scale, FileText, Newspaper, BookOpen, Gavel, Landmark, Shield, ScrollText, Settings, Bell, Rss, Info, Palette, LogOut, User, LifeBuoy, Lightbulb, Building2, BookA, BellRing, MessageCircle, Mic, Gamepad2, ShieldCheck, ClipboardList, Brain, Activity, ChevronDown, Lock } from 'lucide-react';
+import { X, Scale, FileText, Newspaper, BookOpen, Gavel, Landmark, Shield, ScrollText, Settings, Bell, Rss, Info, Palette, LogOut, User, LifeBuoy, Lightbulb, Building2, BookA, BellRing, MessageCircle, Mic, Gamepad2, ShieldCheck, ClipboardList, Brain, Activity, Lock } from 'lucide-react';
 import SuporteSheet from './SuporteSheet';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import { useAuth } from '@/hooks/useAuth';
@@ -41,27 +41,10 @@ const MENU_SECTIONS = [
   },
 ];
 
-const ADMIN_FUNCTIONS = [
-  { id: 'admin-monitor', label: 'Monitoramento', icon: Activity },
-  { id: 'geracao-admin', label: 'Geração Admin', icon: ShieldCheck },
-  { id: 'simulado-admin', label: 'Simulado Admin', icon: ClipboardList },
-  { id: 'biblioteca-admin', label: 'Biblioteca Admin', icon: BookOpen },
-  { id: 'gamificacao', label: 'Gamificação', icon: Gamepad2 },
-  { id: 'mapa-mental', label: 'Mapa Mental', icon: Brain },
-  { id: 'dicionario', label: 'Dicionário Jurídico', icon: BookA },
-  { id: 'assistente-whatsapp', label: 'Assistente WhatsApp', icon: MessageCircle },
-  { id: 'notificacao-push', label: 'Notificação Push', icon: BellRing },
-  { id: 'narracao', label: 'Narração de Artigos', icon: Mic },
-  { id: 'explicacao-lei', label: 'Gerar Explicações (IA)', icon: Lightbulb },
-  { id: 'camara-deputados', label: 'Câmara dos Deputados', icon: Building2 },
-  { id: 'boletins', label: 'Boletins', icon: Rss },
-  { id: 'paleta-cores', label: 'Paleta de Cores', icon: Palette },
-];
 
 const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
-  const [adminOpen, setAdminOpen] = useState(false);
   const [suporteOpen, setSuporteOpen] = useState(false);
 
   const handleItemClick = async (id: string) => {
@@ -189,30 +172,12 @@ const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
               {isAdmin && (
                 <div className="mb-3">
                   <button
-                    onClick={() => setAdminOpen(!adminOpen)}
+                    onClick={() => { navigate('/admin-funcoes'); onClose(); }}
                     className="w-full flex items-center gap-3.5 px-5 py-3 text-foreground/80 hover:bg-secondary hover:text-foreground transition-colors"
                   >
                     <Lock className="w-5 h-5 text-primary/70" />
                     <span className="font-body text-[15px] font-semibold">Funções Admin</span>
-                    <ChevronDown className={`w-4 h-4 ml-auto text-muted-foreground transition-transform ${adminOpen ? 'rotate-180' : ''}`} />
                   </button>
-                  {adminOpen && (
-                    <div className="bg-secondary/30">
-                      {ADMIN_FUNCTIONS.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => handleItemClick(item.id)}
-                            className="w-full flex items-center gap-3.5 px-7 py-2.5 text-foreground/80 hover:bg-secondary hover:text-foreground transition-colors"
-                          >
-                            <Icon className="w-4.5 h-4.5 text-primary/70" />
-                            <span className="font-body text-[14px]">{item.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
                 </div>
               )}
             </div>

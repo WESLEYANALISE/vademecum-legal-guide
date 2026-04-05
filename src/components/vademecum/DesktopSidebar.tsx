@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Scale, BookOpen, FileText, Newspaper, Landmark, Shield, ScrollText, Gavel, Settings, PanelLeftClose, Radar, RefreshCw, Rss, Bell, Building2, Lightbulb, Mic, BookA, BellRing, MessageCircle, Palette, Info, LogOut, Gamepad2, ClipboardList, ShieldCheck, Brain, Activity, BookMarked, HeartPulse, ChevronDown, Lock, ImageIcon } from 'lucide-react';
+import { Scale, BookOpen, FileText, Newspaper, Landmark, Shield, ScrollText, Gavel, Settings, PanelLeftClose, Radar, RefreshCw, Bell, Info, LogOut, BookMarked, HeartPulse, Lock } from 'lucide-react';
 import SuporteSheet from './SuporteSheet';
 import vacatioLogo from '@/assets/logo-vacatio.jpeg';
 import { useNavigate } from 'react-router-dom';
@@ -30,23 +30,6 @@ const CONTEUDO_ITEMS = [
 ];
 
 
-const ADMIN_FUNCTIONS = [
-  { id: 'admin-monitor', label: 'Monitoramento', icon: Activity, route: '/admin-monitor' },
-  { id: 'geracao-admin', label: 'Geração Admin', icon: ShieldCheck, route: '/geracao-admin' },
-  { id: 'simulado-admin', label: 'Simulado Admin', icon: ClipboardList, route: '/simulado-admin' },
-  { id: 'biblioteca-admin', label: 'Biblioteca Admin', icon: BookOpen, route: '/biblioteca-admin' },
-  { id: 'gamificacao', label: 'Gamificação', icon: Gamepad2, route: '/gamificacao' },
-  { id: 'mapa-mental', label: 'Mapa Mental', icon: Brain, route: '/mapa-mental' },
-  { id: 'dicionario', label: 'Dicionário Jurídico', icon: BookA },
-  { id: 'assistente-whatsapp', label: 'Assistente WhatsApp', icon: MessageCircle },
-  { id: 'notificacao-push', label: 'Notificação Push', icon: BellRing },
-  { id: 'narracao', label: 'Narração de Artigos', icon: Mic, route: '/narracao' },
-  { id: 'explicacao-lei', label: 'Gerar Explicações (IA)', icon: Lightbulb, route: '/explicacao-lei' },
-  { id: 'camara-deputados', label: 'Câmara dos Deputados', icon: Building2, route: '/radar/deputados' },
-  { id: 'boletins', label: 'Boletins', icon: Rss },
-  { id: 'paleta-cores', label: 'Paleta de Cores', icon: Palette, route: '/configuracoes' },
-  { id: 'gerador-post', label: 'Gerador de Post', icon: ImageIcon, route: '/gerador-post' },
-];
 
 const CONFIG_ITEMS = [
   { id: 'perfil', label: 'Perfil', icon: Settings, route: '/perfil' },
@@ -59,7 +42,6 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
   const { signOut, user } = useAuth();
   const isAdmin = user?.email === 'wn7corporation@gmail.com';
   const [collapsed, setCollapsed] = useState(false);
-  const [adminOpen, setAdminOpen] = useState(false);
   const [suporteOpen, setSuporteOpen] = useState(false);
 
   const handleItemClick = async (item: { id: string; route?: string }) => {
@@ -195,31 +177,13 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
         {isAdmin && (
           <div className="py-2 border-t border-border">
             <button
-              onClick={() => setAdminOpen(!adminOpen)}
+              onClick={() => navigate('/admin-funcoes')}
               title={collapsed ? 'Funções Admin' : undefined}
               className={`w-full flex items-center gap-3 ${collapsed ? 'justify-center px-0' : 'px-5'} py-2.5 text-sm font-body text-foreground/70 hover:bg-secondary hover:text-foreground transition-colors`}
             >
               <Lock className="w-[16px] h-[16px] text-primary/60 shrink-0" />
               {!collapsed && <span className="font-semibold">Funções Admin</span>}
-              {!collapsed && <ChevronDown className={`w-3.5 h-3.5 ml-auto text-muted-foreground transition-transform ${adminOpen ? 'rotate-180' : ''}`} />}
             </button>
-            {adminOpen && !collapsed && (
-              <div className="bg-secondary/20">
-                {ADMIN_FUNCTIONS.map(item => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleItemClick(item)}
-                      className="w-full flex items-center gap-3 px-7 py-2 text-sm font-body text-foreground/70 hover:bg-secondary hover:text-foreground transition-colors"
-                    >
-                      <Icon className="w-[15px] h-[15px] text-primary/60 shrink-0" />
-                      <span>{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
           </div>
         )}
 
