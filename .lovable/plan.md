@@ -1,55 +1,79 @@
 
 
-## Plano: Tela de Landing + Redesign da Autenticação
+## Plano: Dashboard de Monitoramento de Usuários Online (Tempo Real)
 
 ### Visão Geral
 
-Criar duas telas no fluxo de autenticação, inspiradas nas imagens de referência:
+Criar uma nova página de monitoramento que exibe usuários online em tempo real usando Supabase Realtime Presence. Três blocos: **Em tempo real**, **Últimos 5 minutos** e **Hoje**. Cada usuário mostra e-mail, tempo de cadastro e a página/função que está acessando.
 
-1. **Landing Page** (`/auth`) — Tela inicial com imagem da Themis ao fundo (na paleta vinho do app), logo, headline, botão "Iniciar Agora", benefícios e preview de funcionalidades
-2. **Tela de Login/Cadastro** — Desliza da direita para a esquerda ao clicar "Iniciar Agora", com imagem da Themis no topo, logo abaixo, abas Entrar/Cadastrar e formulário
+### Arquitetura
 
-### Estrutura
+O Supabase Realtime Presence permite rastrear quem está online sem tabela extra. Cada cliente se conecta a um canal de presença e publica seu estado (rota atual, e-mail, user_id). O admin escuta todas as presenças.
 
-O `Auth.tsx` atual será refatorado em dois estados internos: `screen: 'landing' | 'auth'`.
+**Porém**, Presence só mostra quem está *agora*. Para "Últimos 5 minutos" e "Hoje", precisamos de uma tabela de log de atividade.
 
-- **Estado `landing`**: Mostra a landing page completa
-- **Estado `auth`**: Mostra o formulário de autenticação com animação slide-in
+### 1. Tabela `user_activity_log` (nova migração)
 
-Não será criada uma rota separada — tudo fica em `/auth`.
+```sql
+CREATE TABLE public.user_activity_log (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  email text,
+  display_name text,
+  current_route text,
+  last_seen_at timestamptz NOT NULL DEFAULT now()
+);
 
-### Detalhes da Landing Page
+CREATE INDEX idx_activity_last_seen ON user_activity_log (last_seen_at DESC);
+CREATE UNIQUE INDEX idx_activity_user ON user_activity_log (user_id);
 
-- **Fundo**: Imagem `themis-bg.jpg` cobrindo toda a tela, com overlay gradiente escuro (vinho/background) de baixo para cima
-- **Logo**: `logo-vacatio.jpeg` centralizado no topo, arredondado
-- **Nome**: "Vacatio" + subtítulo "Vade Mecum 2026"
-- **Headline**: "Tudo para você **estudar Direito** em um **só lugar**." com palavras-chave destacadas na cor primary (sublinhadas)
-- **Descrição**: "Leis, resumos, flashcards, questões, audioaulas e muito mais, tudo em um só lugar para você **dominar o Direito**."
-- **Botão CTA**: "Iniciar Agora →" com ícone, estilo primary, rounded-full, tamanho grande
-- **Link secundário**: "▷ Ver demonstração" (sem ação por agora)
-- **Social proof**: "⭐ +10.000 alunos já estudam com a gente"
-- **Cards de preview** na parte inferior: 3 cards horizontais (Biblioteca, Vade Mecum, Videoaulas) com gradiente escuro e ícones
+ALTER TABLE user_activity_log ENABLE ROW LEVEL SECURITY;
 
-### Detalhes da Tela de Autenticação
+CREATE POLICY "Admin read all" ON user_activity_log
+  FOR SELECT TO authenticated
+  USING (true);
 
-- **Transição**: `AnimatePresence` com slide da direita para a esquerda (x: 100% → 0)
-- **Topo**: Imagem da Themis ocupando ~35% superior com gradiente fade para o fundo
-- **Botão voltar**: Seta no canto superior esquerdo (círculo primary) para retornar à landing
-- **Logo + nome**: Centralizados abaixo da imagem
-- **Abas**: Entrar / Cadastrar com estilo de pills (aba ativa em primary/vermelho-vinho)
-- **Formulário**: Mantém toda a lógica atual (login, signup, forgot password) sem alterações
-- **Inputs**: Estilo clean com placeholder e ícone à direita (ao invés da esquerda)
+CREATE POLICY "Users upsert own" ON user_activity_log
+  FOR ALL TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+```
 
-### Arquivos a alterar
+### 2. Hook `usePresenceTracker` (novo)
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/Auth.tsx` | Refatorar completamente: adicionar estado `screen`, criar seção landing e redesenhar seção auth |
+- Arquivo: `src/hooks/usePresenceTracker.ts`
+- Conecta ao canal Supabase Presence `online-users`
+- Publica estado do usuário (e-mail, rota atual via `useLocation`)
+- A cada 30s faz upsert na tabela `user_activity_log` com a rota atual e `last_seen_at = now()`
+- Montado no `App.tsx` para todos os usuários logados
 
-### Paleta de cores utilizada
+### 3. Página `AdminMonitorUsuarios` (nova)
 
-- Fundo/overlay: `background` (vinho escuro)
-- Destaques: `primary` (marfim/amarelo)
-- Texto: `foreground` (claro)
-- Cards: gradientes escuros com opacidade
+- Arquivo: `src/pages/AdminMonitorUsuarios.tsx`
+- Rota: `/admin-monitor-usuarios`
+- Três cards/blocos:
+
+| Bloco | Fonte | Lógica |
+|-------|-------|--------|
+| **Em tempo real** | Supabase Presence | Lista quem está no canal agora (bolinha verde pulsante) |
+| **Últimos 5 min** | `user_activity_log WHERE last_seen_at > now() - 5min` | Query a cada 30s |
+| **Hoje** | `user_activity_log WHERE last_seen_at > início do dia` | Query ao carregar |
+
+- Cada linha mostra: avatar, display_name, e-mail, rota atual (ex: "Vade Mecum", "Biblioteca"), tempo de cadastro (calculado de `profiles.created_at`), indicador online/offline
+
+### 4. Integração
+
+- Adicionar rota no `App.tsx`
+- Adicionar card no `AdminFuncoes.tsx` com ícone `Users` e link para `/admin-monitor-usuarios`
+- O `usePresenceTracker` será montado no `App.tsx` apenas quando o usuário estiver logado
+
+### Arquivos
+
+| Arquivo | Ação |
+|---------|------|
+| Migração SQL | Criar tabela `user_activity_log` |
+| `src/hooks/usePresenceTracker.ts` | Novo — tracker de presença + heartbeat |
+| `src/pages/AdminMonitorUsuarios.tsx` | Nova página com os 3 blocos |
+| `src/App.tsx` | Adicionar rota + montar hook |
+| `src/pages/AdminFuncoes.tsx` | Adicionar card "Usuários Online" |
 
