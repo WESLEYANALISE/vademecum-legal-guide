@@ -75,14 +75,14 @@ function InfiniteCarousel() {
   const items = [...FEATURES, ...FEATURES];
 
   return (
-    <div className="overflow-hidden px-4">
-      <div ref={scrollRef} className="flex gap-3 will-change-transform" style={{ width: 'max-content' }}>
+    <div className="overflow-hidden px-4 lg:px-0">
+      <div ref={scrollRef} className="flex gap-3 lg:gap-4 will-change-transform" style={{ width: 'max-content' }}>
         {items.map((f, i) => (
           <div
             key={`${f.label}-${i}`}
-            className="flex-shrink-0 w-[110px] rounded-2xl overflow-hidden border border-primary/20 shadow-lg shine-effect"
+            className="flex-shrink-0 w-[110px] lg:w-[160px] rounded-2xl overflow-hidden border border-primary/20 shadow-lg shine-effect"
           >
-            <div className="relative h-[140px]">
+            <div className="relative h-[140px] lg:h-[200px]">
               <img
                 src={f.img}
                 alt={f.label}
@@ -91,8 +91,8 @@ function InfiniteCarousel() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-3">
-                <p className="text-sm font-body font-bold text-foreground drop-shadow-lg">{f.label}</p>
-                <p className="text-[10px] font-body text-foreground/70 mt-0.5">{f.desc}</p>
+                <p className="text-sm lg:text-base font-body font-bold text-foreground drop-shadow-lg">{f.label}</p>
+                <p className="text-[10px] lg:text-xs font-body text-foreground/70 mt-0.5">{f.desc}</p>
               </div>
             </div>
           </div>
