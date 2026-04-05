@@ -1,15 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2,
-  ShieldCheck, KeyRound, ArrowLeft, BookOpen, Scale, Video, Star
+  ShieldCheck, KeyRound, ArrowLeft, BookOpen, Scale, Video, Star, Brain, Radar
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import logoVacatio from '@/assets/logo-vacatio.jpeg';
 import themisBg from '@/assets/themis-bg.jpg';
+import landingBiblioteca from '@/assets/landing-biblioteca.jpg';
+import landingVademecum from '@/assets/landing-vademecum.jpg';
+import landingVideoaulas from '@/assets/landing-videoaulas.jpg';
+import landingEstudar from '@/assets/landing-estudar.jpg';
+import landingRadar from '@/assets/landing-radar.jpg';
 
 /* ─── Landing Screen ─── */
 const LandingScreen = ({ onStart }: { onStart: () => void }) => (
