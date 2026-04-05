@@ -6,6 +6,7 @@ import PageTransition from "@/components/PageTransition";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { usePresenceTracker } from "@/hooks/usePresenceTracker";
 import { ThemeProvider } from "@/hooks/useTheme";
 import brasaoImg from "@/assets/brasao-republica.png";
 import { Loader2 } from "lucide-react";
@@ -54,6 +55,7 @@ import Biblioteca from "./pages/Biblioteca.tsx";
 const BibliotecaAdmin = lazy(() => import("./pages/BibliotecaAdmin.tsx"));
 const CompressaoImagens = lazy(() => import("./pages/CompressaoImagens.tsx"));
 const AdminFuncoes = lazy(() => import("./pages/AdminFuncoes.tsx"));
+const AdminMonitorUsuarios = lazy(() => import("./pages/AdminMonitorUsuarios.tsx"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -112,11 +114,18 @@ function LazyFallback() {
   );
 }
 
+function PresenceWrapper() {
+  usePresenceTracker();
+  return null;
+}
+
 function AnimatedRoutes() {
   const location = useLocation();
+  const { user } = useAuth();
 
   return (
     <div className="overflow-x-hidden">
+      {user && <PresenceWrapper />}
       <Suspense fallback={<LazyFallback />}>
         <Routes location={location} key={location.pathname}>
           <Route path="/auth" element={<Auth />} />
@@ -159,6 +168,7 @@ function AnimatedRoutes() {
           <Route path="/biblioteca-admin" element={<ProtectedRoute><PageTransition><BibliotecaAdmin /></PageTransition></ProtectedRoute>} />
           <Route path="/compressao-imagens" element={<ProtectedRoute><PageTransition><CompressaoImagens /></PageTransition></ProtectedRoute>} />
           <Route path="/admin-funcoes" element={<ProtectedRoute><PageTransition><AdminFuncoes /></PageTransition></ProtectedRoute>} />
+          <Route path="/admin-monitor-usuarios" element={<ProtectedRoute><PageTransition><AdminMonitorUsuarios /></PageTransition></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

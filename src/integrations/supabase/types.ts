@@ -5967,6 +5967,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity_log: {
+        Row: {
+          current_route: string | null
+          display_name: string | null
+          email: string | null
+          id: string
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          current_route?: string | null
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          current_route?: string | null
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          last_seen_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_preferences: {
         Row: {
           favorites: Json | null
