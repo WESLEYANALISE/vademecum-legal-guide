@@ -57,31 +57,41 @@ function buildPrompt(modo: string, artigo: { numero: string; caput: string; text
   }
 }
 
-async function callGemini(apiKey: string, prompt: string, system: string): Promise<string | null> {
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: system }] },
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
-        }),
-        signal: AbortSignal.timeout(60000),
+async function callGemini(apiKey: string, prompt: string, system: string, retries = 3): Promise<string | null> {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: system }] },
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+          }),
+          signal: AbortSignal.timeout(60000),
+        }
+      );
+      if (res.status === 429) {
+        const waitTime = Math.pow(2, attempt + 1) * 10000; // 20s, 40s, 80s
+        console.warn(`Gemini 429 — waiting ${waitTime / 1000}s (attempt ${attempt + 1}/${retries})`);
+        await new Promise(r => setTimeout(r, waitTime));
+        continue;
       }
-    );
-    if (!res.ok) {
-      console.error(`Gemini HTTP ${res.status}`);
+      if (!res.ok) {
+        console.error(`Gemini HTTP ${res.status}`);
+        return null;
+      }
+      const json = await res.json();
+      return json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
+    } catch (e: any) {
+      console.error(`Gemini error: ${e.message}`);
       return null;
     }
-    const json = await res.json();
-    return json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
-  } catch (e: any) {
-    console.error(`Gemini error: ${e.message}`);
-    return null;
   }
+  console.error("Gemini: max retries exceeded (429)");
+  return null;
 }
 
 Deno.serve(async (req) => {
