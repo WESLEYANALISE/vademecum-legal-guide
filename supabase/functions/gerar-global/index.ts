@@ -228,16 +228,16 @@ Deno.serve(async (req) => {
           await supabase.rpc("increment_geracao_processadas");
           console.log(`[gerar-global] ✓ ${tabela} ${artigo.numero} [${modo}]`);
           // Normal pace: next tick in 8s
-          selfInvoke(8000);
+          await selfInvoke(8000);
         } else if (rateLimited) {
           // Rate limited — don't count as error, just wait longer and retry same item
           console.log(`[gerar-global] ⏳ Rate limited, retrying in 120s...`);
-          selfInvoke(120000); // Wait 2 minutes before retrying
+          await selfInvoke(120000); // Wait 2 minutes before retrying
         } else {
           await supabase.rpc("increment_geracao_erros");
           console.log(`[gerar-global] ✗ ${tabela} ${artigo.numero} [${modo}]`);
           // Error but not rate limit — continue normally
-          selfInvoke(8000);
+          await selfInvoke(8000);
         }
 
         return json({ ok: true, generated: `${tabela}/${artigo.numero}/${modo}`, rateLimited });
