@@ -167,15 +167,17 @@ const LivroDetailSheet = ({ livro, open, onClose, onRead, categoryId }: LivroDet
                           <span className="text-xs font-bold text-white">Vertical</span>
                         </button>
                       )}
-                      <button
-                        onClick={() => handleReadMode('dinamico')}
-                        className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-gradient-to-br from-violet-500/90 to-violet-700/90 border border-violet-400/30 hover:scale-105 transition-all shadow-lg"
-                      >
-                        <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                          <Smartphone className="w-5 h-5 text-white" />
-                        </div>
-                        <span className="text-xs font-bold text-white">Dinâmico</span>
-                      </button>
+                      {hasDynamic && (
+                        <button
+                          onClick={() => handleReadMode('dinamico')}
+                          className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-gradient-to-br from-violet-500/90 to-violet-700/90 border border-violet-400/30 hover:scale-105 transition-all shadow-lg"
+                        >
+                          <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <Smartphone className="w-5 h-5 text-white" />
+                          </div>
+                          <span className="text-xs font-bold text-white">Dinâmico</span>
+                        </button>
+                      )}
                     </div>
                     <button
                       onClick={() => setModePickerOpen(false)}
