@@ -35,7 +35,7 @@ interface LeiDetail {
   iconColor?: string;
 }
 
-/* ─── Geração Global Card Component ─── */
+/* ─── Geração Global Card ─── */
 const GeracaoGlobalCard = () => {
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
