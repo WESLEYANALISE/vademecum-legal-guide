@@ -1,15 +1,81 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2,
-  ShieldCheck, KeyRound, ArrowLeft, BookOpen, Scale, Video, Star
+  ShieldCheck, KeyRound, ArrowLeft, BookOpen, Scale, Video, Star, Brain, Radar
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import logoVacatio from '@/assets/logo-vacatio.jpeg';
 import themisBg from '@/assets/themis-bg.jpg';
+import landingBiblioteca from '@/assets/landing-biblioteca.jpg';
+import landingVademecum from '@/assets/landing-vademecum.jpg';
+import landingVideoaulas from '@/assets/landing-videoaulas.jpg';
+import landingEstudar from '@/assets/landing-estudar.jpg';
+import landingRadar from '@/assets/landing-radar.jpg';
+
+const FEATURES = [
+  { label: 'Biblioteca', desc: 'Livros e resumos', img: landingBiblioteca },
+  { label: 'Vade Mecum', desc: 'Leis atualizadas', img: landingVademecum },
+  { label: 'Videoaulas', desc: 'Aulas em vídeo', img: landingVideoaulas },
+  { label: 'Estudar', desc: 'Flashcards e questões', img: landingEstudar },
+  { label: 'Radar', desc: 'Monitoramento legislativo', img: landingRadar },
+];
+
+function InfiniteCarousel() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const animRef = useRef<number>(0);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let pos = 0;
+    const speed = 0.4; // px per frame
+
+    const tick = () => {
+      pos += speed;
+      // Each card is 160px + 12px gap = 172px, 5 items = 860px
+      if (pos >= 860) pos = 0;
+      el.style.transform = `translateX(-${pos}px)`;
+      animRef.current = requestAnimationFrame(tick);
+    };
+
+    animRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animRef.current);
+  }, []);
+
+  // Duplicate items for seamless loop
+  const items = [...FEATURES, ...FEATURES];
+
+  return (
+    <div className="overflow-hidden px-4">
+      <div ref={scrollRef} className="flex gap-3 will-change-transform" style={{ width: 'max-content' }}>
+        {items.map((f, i) => (
+          <div
+            key={`${f.label}-${i}`}
+            className="flex-shrink-0 w-[160px] rounded-2xl overflow-hidden border border-border/30 shadow-lg group"
+          >
+            <div className="relative h-[200px]">
+              <img
+                src={f.img}
+                alt={f.label}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-3">
+                <p className="text-sm font-body font-bold text-foreground drop-shadow-lg">{f.label}</p>
+                <p className="text-[10px] font-body text-foreground/70 mt-0.5">{f.desc}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /* ─── Landing Screen ─── */
 const LandingScreen = ({ onStart }: { onStart: () => void }) => (
@@ -103,27 +169,14 @@ const LandingScreen = ({ onStart }: { onStart: () => void }) => (
       </motion.div>
     </div>
 
-    {/* Feature Cards */}
+    {/* Infinite Auto-Scrolling Feature Carousel */}
     <motion.div
       initial={{ y: 40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.55 }}
-      className="relative z-10 px-4 pb-8 flex gap-3 overflow-x-auto no-scrollbar"
+      className="relative z-10 pb-6 overflow-hidden"
     >
-      {[
-        { icon: BookOpen, label: 'Biblioteca', desc: 'Livros e resumos' },
-        { icon: Scale, label: 'Vade Mecum', desc: 'Leis atualizadas' },
-        { icon: Video, label: 'Videoaulas', desc: 'Aulas em vídeo' },
-      ].map((f, i) => (
-        <div
-          key={f.label}
-          className="flex-shrink-0 w-[140px] p-4 rounded-xl bg-card/60 border border-border/50 backdrop-blur-sm"
-        >
-          <f.icon className="w-6 h-6 text-primary mb-2" strokeWidth={1.5} />
-          <p className="text-sm font-body font-semibold text-foreground">{f.label}</p>
-          <p className="text-[11px] font-body text-muted-foreground mt-0.5">{f.desc}</p>
-        </div>
-      ))}
+      <InfiniteCarousel />
     </motion.div>
 
     <p className="relative z-10 text-center text-[10px] font-body text-muted-foreground pb-4">
