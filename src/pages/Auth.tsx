@@ -112,23 +112,27 @@ const LandingScreen = ({ onStart }: { onStart: () => void }) => (
     transition={{ duration: 0.35 }}
     className="min-h-screen relative flex flex-col overflow-hidden"
   >
-    {/* Background */}
+    {/* Background - more visible */}
     <div className="absolute inset-0 z-0">
-      <img src={themisBg} alt="" className="w-full h-full object-cover opacity-20" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/60" />
+      <img src={themisBg} alt="" className="w-full h-full object-cover opacity-40" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
     </div>
 
     {/* Content */}
     <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center">
       {/* Logo */}
-      <motion.img
-        src={logoVacatio}
-        alt="Vacatio"
+      <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="w-20 h-20 rounded-2xl shadow-xl object-cover mb-4"
-      />
+        className="shine-effect rounded-2xl"
+      >
+        <img
+          src={logoVacatio}
+          alt="Vacatio"
+          className="w-20 h-20 rounded-2xl shadow-xl object-cover mb-4"
+        />
+      </motion.div>
 
       <motion.h1
         initial={{ y: 20, opacity: 0 }}
@@ -154,10 +158,10 @@ const LandingScreen = ({ onStart }: { onStart: () => void }) => (
         transition={{ delay: 0.25 }}
         className="font-display text-xl font-semibold text-foreground leading-relaxed max-w-xs"
       >
-        Tudo para você{' '}
-        <span className="text-primary border-b-2 border-primary/50">estudar Direito</span>{' '}
-        em um{' '}
-        <span className="text-primary border-b-2 border-primary/50">só lugar</span>.
+        Toda a{' '}
+        <span className="text-primary border-b-2 border-primary/50">legislação brasileira</span>{' '}
+        comentada e{' '}
+        <span className="text-primary border-b-2 border-primary/50">explicada</span>.
       </motion.h2>
 
       <motion.p
@@ -166,8 +170,8 @@ const LandingScreen = ({ onStart }: { onStart: () => void }) => (
         transition={{ delay: 0.3 }}
         className="text-sm font-body text-muted-foreground mt-4 max-w-xs leading-relaxed"
       >
-        Leis, resumos, flashcards, questões, audioaulas e muito mais para você{' '}
-        <strong className="text-foreground">dominar o Direito</strong>.
+        Lei seca, comentários, explicações artigo por artigo, narração, resumos e muito mais para você{' '}
+        <strong className="text-foreground">dominar a legislação</strong>.
       </motion.p>
 
       {/* CTA */}
