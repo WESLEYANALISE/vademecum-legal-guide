@@ -131,7 +131,7 @@ const Ferramentas = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.06 }}
             onClick={() => handleToolClick(tool.id)}
-            className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:border-primary/40 transition-all group"
+            className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:border-primary/40 transition-all group w-full"
           >
             <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center shrink-0 shadow-md`}>
               <Icon className="w-5 h-5 text-white" />
@@ -158,7 +158,7 @@ const Ferramentas = () => {
       subtitle="Recursos para potencializar seus estudos"
       mobileHeader={mobileHeader}
     >
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 lg:max-w-none lg:px-0 lg:py-0">
+      <div className="px-4 sm:px-6 py-4 lg:max-w-none lg:px-0 lg:py-0">
         {toolsList}
       </div>
 
