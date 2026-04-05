@@ -69,13 +69,17 @@ async function callGemini(apiKey: string, prompt: string, system: string): Promi
           contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
         }),
-        signal: AbortSignal.timeout(30000),
+        signal: AbortSignal.timeout(60000),
       }
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error(`Gemini HTTP ${res.status}`);
+      return null;
+    }
     const json = await res.json();
     return json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
-  } catch {
+  } catch (e: any) {
+    console.error(`Gemini error: ${e.message}`);
     return null;
   }
 }
@@ -93,10 +97,12 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
+  const json = (data: any, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
   // GET → return current state
   if (req.method === "GET") {
     const { data } = await supabase.from("geracao_global").select("*").limit(1).single();
-    return new Response(JSON.stringify(data), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return json(data);
   }
 
   const body = await req.json().catch(() => ({}));
@@ -105,19 +111,27 @@ Deno.serve(async (req) => {
   // ── STOP ──
   if (action === "stop") {
     await supabase.from("geracao_global").update({ status: "paused", updated_at: new Date().toISOString() }).neq("status", "idle");
-    return new Response(JSON.stringify({ ok: true, status: "paused" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return json({ ok: true, status: "paused" });
   }
 
   // ── START ──
   if (action === "start") {
-    // Count total pending across all tables and modes
-    let totalPending = 0;
+    console.log("[gerar-global] START — counting pending...");
+
+    // Quick count: sum all articles × modes, minus cached
+    let totalArticles = 0;
     for (const tabela of TABELAS) {
-      const { count: artCount } = await supabase.from(tabela as any).select("*", { count: "exact", head: true });
-      const { count: cacheCount } = await supabase.from("artigo_ai_cache").select("*", { count: "exact", head: true }).eq("tabela_nome", tabela).in("modo", MODOS);
-      const maxPossible = (artCount || 0) * MODOS.length;
-      totalPending += maxPossible - (cacheCount || 0);
+      const { count } = await supabase.from(tabela as any).select("*", { count: "exact", head: true });
+      totalArticles += (count || 0);
     }
+    const totalPossible = totalArticles * MODOS.length;
+
+    const { count: cachedCount } = await supabase
+      .from("artigo_ai_cache")
+      .select("*", { count: "exact", head: true })
+      .in("modo", MODOS);
+
+    const totalPending = totalPossible - (cachedCount || 0);
 
     await supabase.from("geracao_global").update({
       status: "running",
@@ -131,7 +145,9 @@ Deno.serve(async (req) => {
       updated_at: new Date().toISOString(),
     }).not("id", "is", null);
 
-    // Self-invoke tick
+    console.log(`[gerar-global] Total pending: ${totalPending}. Starting tick chain...`);
+
+    // Fire-and-forget first tick
     const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/gerar-global`;
     fetch(url, {
       method: "POST",
@@ -139,48 +155,53 @@ Deno.serve(async (req) => {
       body: JSON.stringify({ action: "tick" }),
     }).catch(() => {});
 
-    return new Response(JSON.stringify({ ok: true, status: "running", totalPending }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return json({ ok: true, status: "running", totalPending });
   }
 
   // ── TICK ──
   if (action === "tick") {
-    // Check if still running
-    const { data: state } = await supabase.from("geracao_global").select("status").limit(1).single();
+    // Check status
+    const { data: state } = await supabase.from("geracao_global").select("*").limit(1).single();
     if (state?.status !== "running") {
-      return new Response(JSON.stringify({ ok: true, stopped: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      console.log("[gerar-global] tick: not running, stopping");
+      return json({ ok: true, stopped: true });
     }
 
-    // Find next pending item
-    let found = false;
-    for (const tabela of TABELAS) {
+    // Resume from last position
+    const lastTabela = state.current_tabela || TABELAS[0];
+    const lastModo = state.current_modo || MODOS[0];
+    
+    // Start searching from where we left off
+    const tabelaIdx = Math.max(0, TABELAS.indexOf(lastTabela));
+    
+    for (let ti = tabelaIdx; ti < TABELAS.length; ti++) {
+      const tabela = TABELAS[ti];
+      
       for (const modo of MODOS) {
-        // Find one article without cache for this mode
-        const { data: artigos } = await supabase.rpc("find_uncached_artigo", { p_tabela: tabela, p_modo: modo });
+        // Skip modes we've already done for this table position
+        if (ti === tabelaIdx && MODOS.indexOf(modo) < MODOS.indexOf(lastModo)) continue;
+
+        // Get cached article numbers for this table+mode
+        const { data: cached } = await supabase
+          .from("artigo_ai_cache")
+          .select("artigo_numero")
+          .eq("tabela_nome", tabela)
+          .eq("modo", modo);
         
-        // Fallback: manual query if RPC doesn't exist
-        let artigo: any = artigos?.[0];
-        if (!artigo) {
-          // Get all articles, then check cache
-          const { data: allArt } = await supabase.from(tabela as any).select("numero, caput, texto").order("ordem_numero", { ascending: true }).limit(1);
-          if (!allArt?.length) continue;
-          
-          // Check if this one is cached
-          const { data: cached } = await supabase.from("artigo_ai_cache").select("id").eq("tabela_nome", tabela).eq("artigo_numero", allArt[0].numero).eq("modo", modo).limit(1);
-          if (cached?.length) {
-            // Need to find uncached - do batch check
-            const { data: batchArt } = await supabase.from(tabela as any).select("numero, caput, texto").order("ordem_numero", { ascending: true }).limit(5000);
-            const { data: batchCache } = await supabase.from("artigo_ai_cache").select("artigo_numero").eq("tabela_nome", tabela).eq("modo", modo);
-            const cachedSet = new Set((batchCache || []).map((c: any) => c.artigo_numero));
-            artigo = (batchArt || []).find((a: any) => !cachedSet.has(a.numero));
-          } else {
-            artigo = allArt[0];
-          }
-        }
+        const cachedSet = new Set((cached || []).map((c: any) => c.artigo_numero));
 
-        if (!artigo) continue;
+        // Get first uncached article
+        const { data: artigos } = await supabase
+          .from(tabela as any)
+          .select("numero, caput, texto")
+          .order("ordem_numero", { ascending: true })
+          .limit(100);
 
-        // Found one! Generate it
-        found = true;
+        const artigo = (artigos || []).find((a: any) => !cachedSet.has(a.numero));
+        if (!artigo) continue; // All cached for this table+mode
+
+        // Found one — update status
+        console.log(`[gerar-global] tick: ${tabela} → ${artigo.numero} [${modo}]`);
         await supabase.from("geracao_global").update({
           current_tabela: tabela,
           current_artigo: artigo.numero,
@@ -188,6 +209,7 @@ Deno.serve(async (req) => {
           updated_at: new Date().toISOString(),
         }).not("id", "is", null);
 
+        // Generate
         const { prompt, system } = buildPrompt(modo, artigo, tabela);
         const result = await callGemini(GEMINI_KEY, prompt, system);
 
@@ -197,30 +219,31 @@ Deno.serve(async (req) => {
             { onConflict: "tabela_nome,artigo_numero,modo" }
           );
           await supabase.rpc("increment_geracao_processadas");
+          console.log(`[gerar-global] ✓ ${tabela} ${artigo.numero} [${modo}]`);
         } else {
           await supabase.rpc("increment_geracao_erros");
+          console.log(`[gerar-global] ✗ ${tabela} ${artigo.numero} [${modo}]`);
         }
 
-        // Wait 2s then self-invoke
-        await new Promise(r => setTimeout(r, 2000));
-        const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/gerar-global`;
-        fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
-          body: JSON.stringify({ action: "tick" }),
-        }).catch(() => {});
+        // Schedule next tick with delay
+        setTimeout(() => {
+          const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/gerar-global`;
+          fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
+            body: JSON.stringify({ action: "tick" }),
+          }).catch((e) => console.error("[gerar-global] self-invoke error:", e.message));
+        }, 1500);
 
-        return new Response(JSON.stringify({ ok: true, generated: tabela, artigo: artigo.numero, modo }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return json({ ok: true, generated: `${tabela}/${artigo.numero}/${modo}` });
       }
     }
 
-    // Nothing pending → done
-    if (!found) {
-      await supabase.from("geracao_global").update({ status: "done", updated_at: new Date().toISOString() }).not("id", "is", null);
-    }
-
-    return new Response(JSON.stringify({ ok: true, done: !found }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // If we get here, nothing found — done
+    console.log("[gerar-global] tick: all done!");
+    await supabase.from("geracao_global").update({ status: "done", updated_at: new Date().toISOString() }).not("id", "is", null);
+    return json({ ok: true, done: true });
   }
 
-  return new Response(JSON.stringify({ error: "Unknown action" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  return json({ error: "Unknown action" }, 400);
 });
