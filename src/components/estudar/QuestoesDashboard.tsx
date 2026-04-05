@@ -100,22 +100,6 @@ export default function QuestoesDashboard({ onSelectLei, onNavigateDesempenho, o
   if (view === 'dashboard') {
     return (
       <div className="space-y-5">
-        {/* Header */}
-        <div className="relative bg-gradient-to-br from-rose-600 to-red-800 overflow-hidden rounded-2xl p-5">
-          <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10" />
-          <button onClick={onBack} className="flex items-center gap-1.5 text-white/80 hover:text-white text-xs mb-3 transition-colors">
-            <ArrowLeft className="w-3.5 h-3.5" /> Voltar
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
-              <Target className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="font-display text-xl text-white font-bold">Questões</h2>
-              <p className="text-white/70 text-xs">6 tipos de questão por artigo</p>
-            </div>
-          </div>
-        </div>
 
         {/* Stats bar */}
         <div className="grid grid-cols-4 gap-2">
