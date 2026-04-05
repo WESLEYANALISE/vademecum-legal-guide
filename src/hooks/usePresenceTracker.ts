@@ -15,7 +15,26 @@ export function usePresenceTracker() {
   const location = useLocation();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const routeRef = useRef(location.pathname);
 
+  // Keep routeRef in sync without re-running the channel effect
+  useEffect(() => {
+    routeRef.current = location.pathname;
+  }, [location.pathname]);
+
+  // Update presence track when route changes (without recreating channel)
+  useEffect(() => {
+    if (!user || !channelRef.current) return;
+    channelRef.current.track({
+      user_id: user.id,
+      email: user.email ?? '',
+      display_name: user.user_metadata?.display_name ?? user.email?.split('@')[0] ?? '',
+      current_route: location.pathname,
+      online_at: new Date().toISOString(),
+    });
+  }, [location.pathname, user]);
+
+  // Connect channel once per user session
   useEffect(() => {
     if (!user) return;
 
@@ -23,7 +42,7 @@ export function usePresenceTracker() {
       user_id: user.id,
       email: user.email ?? '',
       display_name: user.user_metadata?.display_name ?? user.email?.split('@')[0] ?? '',
-      current_route: location.pathname,
+      current_route: routeRef.current,
       online_at: new Date().toISOString(),
     };
 
@@ -52,7 +71,7 @@ export function usePresenceTracker() {
             user_id: user.id,
             email: user.email ?? '',
             display_name: user.user_metadata?.display_name ?? user.email?.split('@')[0] ?? '',
-            current_route: location.pathname,
+            current_route: routeRef.current,
             last_seen_at: new Date().toISOString(),
           },
           { onConflict: 'user_id' }
@@ -68,8 +87,9 @@ export function usePresenceTracker() {
       if (channelRef.current) {
         channelRef.current.untrack();
         supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
         presenceState = {};
       }
     };
-  }, [user, location.pathname]);
+  }, [user?.id]); // Only reconnect when user changes, not on every route change
 }
