@@ -41,27 +41,10 @@ const MENU_SECTIONS = [
   },
 ];
 
-const ADMIN_FUNCTIONS = [
-  { id: 'admin-monitor', label: 'Monitoramento', icon: Activity },
-  { id: 'geracao-admin', label: 'Geração Admin', icon: ShieldCheck },
-  { id: 'simulado-admin', label: 'Simulado Admin', icon: ClipboardList },
-  { id: 'biblioteca-admin', label: 'Biblioteca Admin', icon: BookOpen },
-  { id: 'gamificacao', label: 'Gamificação', icon: Gamepad2 },
-  { id: 'mapa-mental', label: 'Mapa Mental', icon: Brain },
-  { id: 'dicionario', label: 'Dicionário Jurídico', icon: BookA },
-  { id: 'assistente-whatsapp', label: 'Assistente WhatsApp', icon: MessageCircle },
-  { id: 'notificacao-push', label: 'Notificação Push', icon: BellRing },
-  { id: 'narracao', label: 'Narração de Artigos', icon: Mic },
-  { id: 'explicacao-lei', label: 'Gerar Explicações (IA)', icon: Lightbulb },
-  { id: 'camara-deputados', label: 'Câmara dos Deputados', icon: Building2 },
-  { id: 'boletins', label: 'Boletins', icon: Rss },
-  { id: 'paleta-cores', label: 'Paleta de Cores', icon: Palette },
-];
 
 const SideMenu = ({ open, onClose, onNavigate }: SideMenuProps) => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
-  const [adminOpen, setAdminOpen] = useState(false);
   const [suporteOpen, setSuporteOpen] = useState(false);
 
   const handleItemClick = async (id: string) => {
