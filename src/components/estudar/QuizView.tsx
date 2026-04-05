@@ -163,7 +163,7 @@ const QuizView = ({ tabelaNome, artigoNumero, leiNome, onBack }: Props) => {
           .maybeSingle();
 
         if (cached?.questions && Array.isArray(cached.questions) && cached.questions.length > 0) {
-          setQuestions(cached.questions as Question[]);
+          setQuestions(cached.questions as unknown as Question[]);
           setLoading(false);
           setCountdown(3);
           return;
