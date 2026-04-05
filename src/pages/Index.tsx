@@ -382,7 +382,7 @@ const Index = () => {
 
       {/* Tabs - hidden on desktop (sidebar handles it) */}
       <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8">
+        <div className="max-w-5xl lg:max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
           <div className="flex">
             {TABS.map((tab) => {
               const Icon = tab.icon;
