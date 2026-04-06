@@ -1410,6 +1410,17 @@ const CategoriaLegislacao = () => {
                   <button
                     key={tab.key}
                     onClick={() => {
+                      const premiumOnly = ['fav', 'playlist', 'anotacoes', 'radar'];
+                      if (!isPremium && premiumOnly.includes(tab.key)) {
+                        setPremiumGateDesc(
+                          tab.key === 'fav' ? 'Favoritar artigos é exclusivo para assinantes.' :
+                          tab.key === 'playlist' ? 'Playlist de narrações é exclusiva para assinantes.' :
+                          tab.key === 'anotacoes' ? 'Anotações são exclusivas para assinantes.' :
+                          'O Radar Legislativo é exclusivo para assinantes.'
+                        );
+                        setShowPremiumGate(true);
+                        return;
+                      }
                       if (tab.key === 'grafos') {
                         setShowGrafo(true);
                       } else {
