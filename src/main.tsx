@@ -2,13 +2,15 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-// Redirect desktop users to the main website
+// Redirect desktop users to the main website (production only)
 const isDesktop = window.innerWidth >= 1024;
-const isPreview = window.location.hostname.includes('lovableproject.com') ||
-  window.location.hostname.includes('id-preview--');
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const host = window.location.hostname;
+const isDev = host === 'localhost' || host === '127.0.0.1';
+const isLovablePreview = host.includes('lovableproject.com') || host.includes('id-preview--');
+const isVercelPreview = host.endsWith('.vercel.app') && host !== 'vademecum-legal-guide.vercel.app';
+const isProduction = !isDev && !isLovablePreview && !isVercelPreview;
 
-if (isDesktop && !isPreview && !isLocalhost) {
+if (isDesktop && isProduction) {
   window.location.replace('https://www.vacatio.com.br');
 } else {
   createRoot(document.getElementById("root")!).render(<App />);
