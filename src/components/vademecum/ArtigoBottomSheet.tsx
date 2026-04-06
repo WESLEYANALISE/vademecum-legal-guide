@@ -228,6 +228,8 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
   const { isPremium } = useSubscription();
   const { canUse, registerUsage } = usePremiumUsage();
 
+  const openPremiumGate = (desc: string) => { setPremiumGateDesc(desc); setShowPremiumGate(true); };
+
   // ─── Grifo Mágico state ───
   interface MagicGrifo {
     trechoExato: string;
