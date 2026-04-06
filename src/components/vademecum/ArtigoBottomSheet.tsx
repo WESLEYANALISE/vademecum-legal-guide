@@ -975,7 +975,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
               <Copy className="w-5 h-5 text-muted-foreground hover:text-foreground" />
             </button>
             <button
-              onClick={() => onToggleFavorito?.()}
+              onClick={() => { if (!isPremium) { openPremiumGate('Favorite artigos para consulta rápida. Assine para desbloquear.'); return; } onToggleFavorito?.(); }}
               className={`p-2 rounded-full transition-colors ${isFavorito ? 'bg-amber-400/20' : 'hover:bg-secondary'}`}
               title={isFavorito ? 'Remover favorito' : 'Favoritar'}
             >
@@ -1604,7 +1604,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
               </span>
             </div>
             <button
-              onClick={() => { setShowAnotacoesSheet(true); setShowFontControls(false); }}
+              onClick={() => { if (!isPremium) { openPremiumGate('Anotações pessoais em cada artigo. Assine para desbloquear.'); return; } setShowAnotacoesSheet(true); setShowFontControls(false); }}
               className="flex flex-col items-center justify-center gap-1 py-2 relative transition-colors text-white hover:text-amber-400"
             >
               <div className="relative">
@@ -1615,7 +1615,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
 
             {/* Perguntar */}
             <button
-              onClick={() => setShowPerguntarSheet(true)}
+              onClick={() => { if (!isPremium) { openPremiumGate('Pergunte à IA sobre qualquer artigo. Assine para desbloquear.'); return; } setShowPerguntarSheet(true); }}
               className="flex flex-col items-center justify-center gap-1 py-2 transition-colors text-white hover:text-amber-400"
             >
               <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7" />
