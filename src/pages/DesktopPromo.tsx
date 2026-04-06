@@ -135,6 +135,20 @@ const DesktopPromo = () => {
           </div>
         </div>
 
+        {/* CTA */}
+        <motion.a
+          href="https://www.vacatio.com.br"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-3 w-full py-4 rounded-full bg-primary text-primary-foreground font-display font-bold text-lg shadow-lg shadow-primary/30"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          <Globe className="w-5 h-5" />
+          Acessar no Desktop
+        </motion.a>
+        <p className="text-center text-xs text-muted-foreground">www.vacatio.com.br</p>
+
         {/* Benefits list */}
         <section className="space-y-3">
           <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
@@ -149,20 +163,6 @@ const DesktopPromo = () => {
             ))}
           </div>
         </section>
-
-        {/* CTA */}
-        <motion.a
-          href="https://www.vacatio.com.br"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-3 w-full py-4 rounded-full bg-primary text-primary-foreground font-display font-bold text-lg shadow-lg shadow-primary/30"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.97 }}
-        >
-          <Globe className="w-5 h-5" />
-          Acessar no Desktop
-        </motion.a>
-        <p className="text-center text-xs text-muted-foreground">www.vacatio.com.br</p>
       </div>
     </div>
   );
