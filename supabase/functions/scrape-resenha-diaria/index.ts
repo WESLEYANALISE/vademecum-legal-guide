@@ -204,6 +204,27 @@ Deno.serve(async (req) => {
     );
     if (error) throw error;
 
+    // Chain: trigger popular-texto-resenha to fetch full text + explanations
+    if (unique.length > 0) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      try {
+        console.log(`Triggering popular-texto-resenha for ${unique.length} new atos...`);
+        const popResp = await fetch(`${supabaseUrl}/functions/v1/popular-texto-resenha`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({ limit: 20 }),
+        });
+        const popResult = await popResp.json();
+        console.log("popular-texto-resenha result:", JSON.stringify(popResult));
+      } catch (chainErr) {
+        console.error("Failed to chain popular-texto-resenha:", chainErr);
+      }
+    }
+
     return new Response(JSON.stringify({ message: `Scraped ${unique.length} atos`, count: unique.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err) {
