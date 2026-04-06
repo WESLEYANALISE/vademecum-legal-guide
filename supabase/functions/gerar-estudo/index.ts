@@ -77,16 +77,18 @@ async function callGemini(prompt: string): Promise<string> {
       throw new Error(`Erro Gemini ${res.status}: ${JSON.stringify(json).slice(0, 1000)}`);
     }
 
-  const raw = json?.candidates?.[0]?.content?.parts
-    ?.map((part: { text?: string }) => part.text ?? "")
-    .join("")
-    .trim() ?? "";
+    const raw = json?.candidates?.[0]?.content?.parts
+      ?.map((part: { text?: string }) => part.text ?? "")
+      .join("")
+      .trim() ?? "";
 
-  if (!raw) {
-    throw new Error(`IA retornou resposta vazia: ${JSON.stringify(json).slice(0, 1000)}`);
+    if (!raw) {
+      throw new Error(`IA retornou resposta vazia: ${JSON.stringify(json).slice(0, 1000)}`);
+    }
+
+    return raw;
   }
-
-  return raw;
+  throw new Error("All Gemini API keys exhausted (rate limited)");
 }
 
 function extractJson(raw: string): unknown {
