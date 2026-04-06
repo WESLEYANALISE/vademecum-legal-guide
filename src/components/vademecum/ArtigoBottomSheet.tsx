@@ -21,6 +21,9 @@ import { buildPlanaltoArticleUrl } from '@/services/legislacaoService';
 import ShareButtons from './ShareButtons';
 import VideoaulaSheet from './VideoaulaSheet';
 import ResumoSelectorSheet from './ResumoSelectorSheet';
+import { useSubscription } from '@/hooks/useSubscription';
+import { usePremiumUsage } from '@/hooks/usePremiumUsage';
+import PremiumGate from '@/components/PremiumGate';
 
 export interface ModificationInfo {
   tipo: string;        // "Incluído", "Alterada", etc.
@@ -220,6 +223,12 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
   const navigate = useNavigate();
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [showGrafo, setShowGrafo] = useState(false);
+  const [showPremiumGate, setShowPremiumGate] = useState(false);
+  const [premiumGateDesc, setPremiumGateDesc] = useState('');
+  const { isPremium } = useSubscription();
+  const { canUse, registerUsage } = usePremiumUsage();
+
+  const openPremiumGate = (desc: string) => { setPremiumGateDesc(desc); setShowPremiumGate(true); };
 
   // ─── Grifo Mágico state ───
   interface MagicGrifo {
@@ -966,7 +975,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
               <Copy className="w-5 h-5 text-muted-foreground hover:text-foreground" />
             </button>
             <button
-              onClick={() => onToggleFavorito?.()}
+              onClick={() => { if (!isPremium) { openPremiumGate('Favorite artigos para consulta rápida. Assine para desbloquear.'); return; } onToggleFavorito?.(); }}
               className={`p-2 rounded-full transition-colors ${isFavorito ? 'bg-amber-400/20' : 'hover:bg-secondary'}`}
               title={isFavorito ? 'Remover favorito' : 'Favoritar'}
             >
@@ -1083,7 +1092,13 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
           )}
         </AnimatePresence>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <Tabs value={activeTab} onValueChange={(v) => {
+          if (!isPremium && (v === 'explicacao' || v === 'exemplo' || v === 'termos')) {
+            if (!canUse('explicacao')) { openPremiumGate('Você atingiu o limite de 3 explicações/mês. Assine para desbloquear.'); return; }
+            registerUsage('explicacao', `${tabelaNome}_${artigo?.numero}`);
+          }
+          setActiveTab(v);
+        }} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {modificationInfo ? (
             <TabsList className="mx-5 bg-secondary/60 rounded-xl h-11 grid grid-cols-2 w-auto">
               <TabsTrigger value="artigo" className="rounded-lg text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">Artigo</TabsTrigger>
@@ -1577,7 +1592,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
                   </svg>
                 )}
                 <button
-                  onClick={handleNarrar}
+                  onClick={() => { if (!isPremium && !narracaoPlaying && !narracaoUrl && !canUse('narracao')) { openPremiumGate('Você atingiu o limite de 3 narrações/mês. Assine para desbloquear.'); return; } if (!isPremium && !narracaoPlaying && !narracaoUrl) { registerUsage('narracao', `${tabelaNome}_${artigo?.numero}`); } handleNarrar(); }}
                   disabled={narracaoLoading}
                   className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ${narracaoPlaying ? 'bg-primary shadow-primary/40 scale-105' : 'bg-primary shadow-primary/30 hover:bg-primary/90'}`}
                 >
@@ -1595,7 +1610,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
               </span>
             </div>
             <button
-              onClick={() => { setShowAnotacoesSheet(true); setShowFontControls(false); }}
+              onClick={() => { if (!isPremium) { openPremiumGate('Anotações pessoais em cada artigo. Assine para desbloquear.'); return; } setShowAnotacoesSheet(true); setShowFontControls(false); }}
               className="flex flex-col items-center justify-center gap-1 py-2 relative transition-colors text-white hover:text-amber-400"
             >
               <div className="relative">
@@ -1606,7 +1621,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
 
             {/* Perguntar */}
             <button
-              onClick={() => setShowPerguntarSheet(true)}
+              onClick={() => { if (!isPremium) { openPremiumGate('Pergunte à IA sobre qualquer artigo. Assine para desbloquear.'); return; } setShowPerguntarSheet(true); }}
               className="flex flex-col items-center justify-center gap-1 py-2 transition-colors text-white hover:text-amber-400"
             >
               <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7" />
@@ -1824,6 +1839,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
         artigoNumero={artigo.numero}
       />
     )}
+      <PremiumGate open={showPremiumGate} onClose={() => setShowPremiumGate(false)} description={premiumGateDesc} />
       </>
   );
 };

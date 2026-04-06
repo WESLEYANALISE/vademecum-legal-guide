@@ -2,6 +2,8 @@ import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Search, BookOpen, ChevronRight, Scale, ArrowLeft, Landmark, Shield, FileText, ScrollText, Loader2, Star, Gavel, Building2, Briefcase, ShieldCheck, DollarSign, Car, Vote, Droplets, Plane, Bus, ListMusic, Sparkles, StickyNote, Calendar, ExternalLink, ArrowUp, BadgeCheck, Ban, Play, Pause, CheckCircle2, Radar, GitBranch, Info, BookMarked, HeartPulse } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useSubscription } from '@/hooks/useSubscription';
+import PremiumGate from '@/components/PremiumGate';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -59,6 +61,9 @@ const CategoriaLegislacao = () => {
   const { tipo } = useParams<{ tipo: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isPremium } = useSubscription();
+  const [showPremiumGate, setShowPremiumGate] = useState(false);
+  const [premiumGateDesc, setPremiumGateDesc] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLeiId, setSelectedLeiId] = useState<string | null>(null);
   const [selectedLeiNome, setSelectedLeiNome] = useState('');
@@ -1405,6 +1410,17 @@ const CategoriaLegislacao = () => {
                   <button
                     key={tab.key}
                     onClick={() => {
+                      const premiumOnly = ['fav', 'playlist', 'anotacoes', 'radar'];
+                      if (!isPremium && premiumOnly.includes(tab.key)) {
+                        setPremiumGateDesc(
+                          tab.key === 'fav' ? 'Favoritar artigos é exclusivo para assinantes.' :
+                          tab.key === 'playlist' ? 'Playlist de narrações é exclusiva para assinantes.' :
+                          tab.key === 'anotacoes' ? 'Anotações são exclusivas para assinantes.' :
+                          'O Radar Legislativo é exclusivo para assinantes.'
+                        );
+                        setShowPremiumGate(true);
+                        return;
+                      }
                       if (tab.key === 'grafos') {
                         setShowGrafo(true);
                       } else {
@@ -1742,6 +1758,7 @@ const CategoriaLegislacao = () => {
           </div>
         )}
       </div>
+    <PremiumGate open={showPremiumGate} onClose={() => setShowPremiumGate(false)} description={premiumGateDesc} />
     </div>
     );
   };

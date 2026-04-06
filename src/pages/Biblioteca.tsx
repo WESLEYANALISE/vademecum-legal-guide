@@ -5,6 +5,8 @@ import { ArrowLeft, Library, ChevronRight, Search, Star, BookOpen, Crown, Coffee
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
+import PremiumGate from '@/components/PremiumGate';
 import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
 import LivroCard, { type LivroUnificado } from '@/components/biblioteca/LivroCard';
 import LivroDetailSheet, { type ReadMode } from '@/components/biblioteca/LivroDetailSheet';
@@ -138,6 +140,8 @@ const Biblioteca = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
+  const { isPremium } = useSubscription();
+  const [showPremiumGate, setShowPremiumGate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [classicos, setClassicos] = useState<LivroUnificado[]>([]);
   const [lideranca, setLideranca] = useState<LivroUnificado[]>([]);
@@ -287,13 +291,30 @@ const Biblioteca = () => {
   }, []);
 
   const getLivros = (catId: string) => {
+    let livros: LivroUnificado[];
     switch (catId) {
-      case 'estudos': return estudos;
-      case 'classicos': return classicos;
-      case 'lideranca': return lideranca;
-      case 'fora-da-toga': return foraDaToga;
-      default: return [];
+      case 'estudos': livros = estudos; break;
+      case 'classicos': livros = classicos; break;
+      case 'lideranca': livros = lideranca; break;
+      case 'fora-da-toga': livros = foraDaToga; break;
+      default: livros = [];
     }
+    if (isPremium) return livros;
+    // Free limits: classicos=2, lideranca=1, fora-da-toga=1, estudos=2 per area
+    if (catId === 'classicos') return livros.slice(0, 2);
+    if (catId === 'lideranca') return livros.slice(0, 1);
+    if (catId === 'fora-da-toga') return livros.slice(0, 1);
+    if (catId === 'estudos') {
+      const areaMap = new Map<string, number>();
+      return livros.filter(l => {
+        const area = l.area || 'Geral';
+        const count = areaMap.get(area) || 0;
+        if (count >= 2) return false;
+        areaMap.set(area, count + 1);
+        return true;
+      });
+    }
+    return livros;
   };
 
   const areasByCategory = useMemo(() => {
@@ -642,6 +663,7 @@ const Biblioteca = () => {
       {ebookData && (
         <LeitorEbook livro={ebookData} onBack={() => setEbookData(null)} onUpdateBookmark={() => {}} />
       )}
+      <PremiumGate open={showPremiumGate} onClose={() => setShowPremiumGate(false)} description="Assine para acessar toda a biblioteca sem limites." />
     </>
   );
 };

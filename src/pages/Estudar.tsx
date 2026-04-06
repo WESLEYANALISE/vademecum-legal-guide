@@ -13,6 +13,9 @@ import { Input } from '@/components/ui/input';
 import { useStudyStats } from '@/hooks/useStudyStats';
 import { Progress } from '@/components/ui/progress';
 import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
+import { useSubscription } from '@/hooks/useSubscription';
+import { usePremiumUsage } from '@/hooks/usePremiumUsage';
+import PremiumGate from '@/components/PremiumGate';
 
 import { LEIS_COMPACTAS as LEIS } from '@/data/leisCatalog';
 
@@ -28,7 +31,10 @@ const Estudar = () => {
   const [selectedArtigo, setSelectedArtigo] = useState('');
   const [loadingArtigos, setLoadingArtigos] = useState(false);
   const [searchArtigo, setSearchArtigo] = useState('');
+  const [showPremiumGate, setShowPremiumGate] = useState(false);
 
+  const { isPremium } = useSubscription();
+  const { canUse, registerUsage } = usePremiumUsage();
   const { loading: statsLoading, lawStats, articleStats, totalSessions, totalQuestions, avgPct } = useStudyStats();
 
   useEffect(() => {
@@ -73,6 +79,13 @@ const Estudar = () => {
   };
 
   const handleSelectArtigo = (numero: string) => {
+    if (!isPremium && selectedMode === 'questoes' && !canUse('questoes')) {
+      setShowPremiumGate(true);
+      return;
+    }
+    if (!isPremium && selectedMode === 'questoes') {
+      registerUsage('questoes', `${selectedLei?.tabela}_${numero}`);
+    }
     setSelectedArtigo(numero);
     setView(selectedMode);
   };
@@ -180,6 +193,7 @@ const Estudar = () => {
   }
 
   return (
+    <>
     <DesktopPageLayout
       activeId="estudar"
       title="Estudar"
@@ -312,6 +326,8 @@ const Estudar = () => {
         )}
       </div>
     </DesktopPageLayout>
+    <PremiumGate open={showPremiumGate} onClose={() => setShowPremiumGate(false)} description="Você atingiu o limite de 3 artigos/mês para questões. Assine para praticar sem limites." />
+    </>
   );
 };
 
