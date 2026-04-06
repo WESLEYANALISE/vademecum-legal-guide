@@ -1,89 +1,97 @@
 
 
-## Plano: Checkout Interno com Cartão, PIX e Parcelamento
+## Plano: Sistema de Paywall Premium (Freemium)
 
-### O que muda
+### Visão Geral
 
-Em vez de redirecionar para o Asaas, o app terá sua própria tela de checkout (igual à imagem de referência). O pagamento será processado via API direta do Asaas.
+Criar um hook central `useSubscription` que verifica se o usuário tem assinatura ativa na tabela `assinaturas`, e um componente `PremiumGate` (card flutuante) que bloqueia funcionalidades premium com botão "Ver planos". Implementar contadores de uso mensal para funcionalidades com limite gratuito (3/mês).
 
 ### Regras de negócio
 
-- **Mensal (R$ 21,90)**: Apenas cartão de crédito. Assinatura recorrente (MONTHLY). Sem opção de parcelas nem PIX.
-- **Anual (R$ 119,90)**: Cartão de crédito + PIX.
-  - Cartão: permite parcelamento de 2x a 12x (valor da parcela = R$ 119,90 / nº parcelas).
-  - PIX: pagamento à vista, exibe QR Code + código copia-e-cola.
+**Funcionalidades 100% bloqueadas (só assinantes):**
+- Favoritar artigos
+- Anotações
+- Perguntar (assistente IA)
+- Playlist de narrações
+- Radar Legislativo (overlay na legislação)
 
-### Fluxo
+**Funcionalidades com limite de 3 usos/mês (total, não por lei):**
+- Praticar questões (3 artigos/mês)
+- Explicação, Exemplo e Termos (3 artigos/mês no total entre os três)
+- Narração (3 artigos/mês)
 
-```text
-Tela Assinatura (planos)
-  └─ Clica "Assinar Mensal" ou "Assinar Anual"
-       └─ Abre tela de Checkout interna
-            ├─ Abas: [Cartão] [PIX] (PIX só aparece no anual)
-            │
-            ├─ Formulário Cartão:
-            │   ├─ Número do cartão
-            │   ├─ Nome no cartão
-            │   ├─ Validade (MM/AA) + CVV
-            │   ├─ CPF do titular
-            │   ├─ CEP → busca ViaCEP → preenche endereço
-            │   ├─ Parcelas (dropdown, só no anual: 1x a 12x)
-            │   └─ Botão "Pagar R$ XX,XX"
-            │
-            └─ Tela PIX (só anual):
-                ├─ QR Code (imagem base64)
-                ├─ Código copia-e-cola
-                └─ Polling de status até confirmar
-```
+**Biblioteca (livros):**
+- Clássicos: limite de 2 livros
+- Liderança: limite de 1 livro
+- Fora da Toga: limite de 1 livro
+- Estudos: 2 livros por área do Direito
+- Assinantes: tudo liberado
+
+**Desktop:** acesso liberado para todos (não bloqueado)
 
 ### Implementação
 
-**1. Nova Edge Function `processar-pagamento`**
+**1. Tabela `premium_usage` (migration)**
 
-Substitui a lógica atual de `criar-assinatura`. Recebe os dados do checkout e processa o pagamento diretamente na API do Asaas:
+Rastreia o uso mensal de funcionalidades gratuitas:
 
-- Cria/reutiliza o customer no Asaas (com CPF, email, postalCode, addressNumber)
-- **Mensal + Cartão**: `POST /v3/subscriptions` com `billingType: CREDIT_CARD`, `cycle: MONTHLY`, passando `creditCard` e `creditCardHolderInfo`
-- **Anual + Cartão à vista**: `POST /v3/payments` com `billingType: CREDIT_CARD`, passando `creditCard` e `creditCardHolderInfo`
-- **Anual + Cartão parcelado**: `POST /v3/payments` com `installmentCount` e `totalValue: 119.90`
-- **Anual + PIX**: `POST /v3/payments` com `billingType: PIX`, depois `GET /v3/payments/{id}/pixQrCode` para obter QR Code
+```sql
+CREATE TABLE public.premium_usage (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  feature text NOT NULL, -- 'questoes', 'explicacao', 'narracao'
+  ref_key text,          -- ex: 'CP_Art. 1' para saber qual artigo
+  used_at timestamptz DEFAULT now()
+);
+ALTER TABLE public.premium_usage ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users see own usage" ON public.premium_usage
+  FOR ALL USING (auth.uid() = user_id);
+CREATE INDEX idx_premium_usage_user_month 
+  ON public.premium_usage(user_id, feature, used_at);
+```
 
-Campos obrigatórios para o Asaas `creditCardHolderInfo`:
-- `name`, `email`, `cpfCnpj`, `postalCode`, `addressNumber`, `phone`
+**2. Hook `useSubscription` (`src/hooks/useSubscription.ts`)**
 
-O `remoteIp` do cliente é enviado pelo frontend (via header ou body).
+- Consulta `assinaturas` WHERE `user_id = auth.uid()` AND `status = 'active'`
+- Retorna `{ isPremium, loading, plano }`
+- Cached no contexto para não re-consultar em cada componente
 
-**2. Tela de Checkout (`src/pages/Assinatura.tsx`)**
+**3. Hook `usePremiumUsage` (`src/hooks/usePremiumUsage.ts`)**
 
-Ao clicar em "Assinar", navega para uma view de checkout (dentro do mesmo componente, usando estado):
+- Conta usos do mês atual por feature
+- Retorna `{ canUse(feature), usageCount(feature), registerUsage(feature, ref) }`
+- Limites: questoes=3, explicacao=3, narracao=3
 
-- **Abas Cartão / PIX** (PIX oculta no mensal)
-- Formulário com máscara para cartão (XXXX XXXX XXXX XXXX), CPF (XXX.XXX.XXX-XX), CEP (XXXXX-XXX)
-- CEP consulta `viacep.com.br/ws/{cep}/json/` e preenche cidade/estado/rua automaticamente
-- Seletor de parcelas (1x a 12x) para plano anual com cartão — exibe valor por parcela
-- No PIX: exibe QR Code como imagem + campo copiável do payload, com polling a cada 5s no status do pagamento
-- Rodapé: "Criptografia SSL · Asaas"
+**4. Componente `PremiumGate` (`src/components/PremiumGate.tsx`)**
 
-**3. Cálculo de parcelas**
+Card flutuante/modal com:
+- Ícone de coroa dourada
+- "Funcionalidade Premium"
+- Descrição contextual
+- Botão "Ver planos" → navega para `/assinatura`
+- Aparece ao clicar em funcionalidade bloqueada
 
-O Asaas não cobra juros do comprador no parcelamento padrão — a taxa é do lojista. Então as parcelas serão sem juros para o usuário:
-- 1x = R$ 119,90
-- 2x = R$ 59,95
-- ...
-- 12x = R$ 9,99
+**5. Integrações nos componentes existentes**
 
-### Detalhes técnicos
-
-- O `remoteIp` do cliente é capturado no frontend e enviado ao edge function (obrigatório para pagamentos com cartão no Asaas)
-- O CEP é consultado via `fetch('https://viacep.com.br/ws/{cep}/json/')` direto do frontend
-- O status do pagamento PIX usa polling (`GET /v3/payments/{id}`) verificando se `status === 'RECEIVED'`
-- Os dados do cartão nunca são armazenados — passam direto para o Asaas via edge function
+| Local | O que muda |
+|-------|-----------|
+| `ArtigoBottomSheet.tsx` | Favoritar, Anotações, Perguntar → verifica `isPremium`, senão mostra `PremiumGate` |
+| `ArtigoBottomSheet.tsx` | Abas Explicação/Exemplo/Termos → verifica limite mensal, senão mostra gate |
+| `CategoriaLegislacao.tsx` | Botões Favoritos, Playlist, Anotações, Radar → verifica `isPremium` |
+| `QuizView.tsx` / fluxo Questões | Antes de iniciar, verifica limite de 3 artigos/mês |
+| Narração (no ArtigoBottomSheet) | Verifica limite de 3/mês antes de gerar |
+| `Biblioteca.tsx` | Limita livros visíveis por categoria para não-assinantes |
 
 ### Arquivos
 
 | Arquivo | Ação |
 |---------|------|
-| `supabase/functions/processar-pagamento/index.ts` | Nova EF: cria customer, processa cartão/PIX, retorna resultado |
-| `src/pages/Assinatura.tsx` | Reescrever com tela de checkout integrada (formulário cartão, PIX, parcelas) |
-| `supabase/functions/criar-assinatura/index.ts` | Será substituída pela nova função |
+| Migration SQL | Criar tabela `premium_usage` |
+| `src/hooks/useSubscription.ts` | Novo hook: verifica assinatura ativa |
+| `src/hooks/usePremiumUsage.ts` | Novo hook: contagem de uso mensal |
+| `src/components/PremiumGate.tsx` | Novo componente: card flutuante de bloqueio |
+| `src/components/vademecum/ArtigoBottomSheet.tsx` | Gating em favoritar, anotações, perguntar, explicação/exemplo/termos |
+| `src/pages/CategoriaLegislacao.tsx` | Gating em favoritos, playlist, anotações, radar |
+| `src/pages/Biblioteca.tsx` | Limitar livros por categoria |
+| `src/pages/Estudar.tsx` | Gating em questões (limite 3/mês) |
 
