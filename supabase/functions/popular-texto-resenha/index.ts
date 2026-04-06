@@ -192,7 +192,7 @@ async function fetchTextoCompleto(url: string, numeroAto: string): Promise<strin
 
 // ── Gemini explanation generator ──
 
-async function gerarExplicacao(ementa: string, textoCompleto: string, geminiKey: string): Promise<string> {
+async function gerarExplicacao(ementa: string, textoCompleto: string, geminiKeys: string[]): Promise<string> {
   const textoTruncado = textoCompleto.length > 12000 ? textoCompleto.substring(0, 12000) + '...' : textoCompleto;
 
   const prompt = `Você é um professor de Direito brasileiro. Gere uma explicação didática e acessível sobre esta lei/decreto.
@@ -210,26 +210,35 @@ Sua explicação deve conter:
 
 Use linguagem acessível, evite jargão excessivo. Formato em Markdown com títulos ##.`;
 
-  const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 2048, temperature: 0.4 },
-      }),
+  for (const key of geminiKeys) {
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 2048, temperature: 0.4 },
+        }),
+      }
+    );
+
+    if (resp.status === 429) {
+      console.warn("Gemini 429, trying fallback key...");
+      continue;
     }
-  );
 
-  if (!resp.ok) {
-    const err = await resp.text();
-    console.error(`Gemini error ${resp.status}: ${err}`);
-    return '';
+    if (!resp.ok) {
+      const err = await resp.text();
+      console.error(`Gemini error ${resp.status}: ${err}`);
+      return '';
+    }
+
+    const data = await resp.json();
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
   }
-
-  const data = await resp.json();
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  console.error("All Gemini keys rate limited for explicacao");
+  return '';
 }
 
 // Parse articles from the full law text

@@ -108,26 +108,32 @@ async function extractPdfText(pdfUrl: string, mistralKey: string): Promise<strin
   } catch { return null; }
 }
 
-async function callGemini(geminiKey: string, systemPrompt: string, userPrompt: string, opts?: { temp?: number; maxTokens?: number }): Promise<string | null> {
+async function callGemini(geminiKeys: string[], systemPrompt: string, userPrompt: string, opts?: { temp?: number; maxTokens?: number }): Promise<string | null> {
   const body = {
     system_instruction: { parts: [{ text: systemPrompt }] },
     contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
     generationConfig: { temperature: opts?.temp ?? 0.7, maxOutputTokens: opts?.maxTokens ?? 4096 },
   };
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (text) return text;
+  for (const key of geminiKeys) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+        );
+        if (res.status === 429) {
+          console.warn(`Gemini 429 on key, trying next...`);
+          break; // try next key
+        }
+        if (res.ok) {
+          const data = await res.json();
+          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          if (text) return text;
+        }
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+      } catch {
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
       }
-      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
-    } catch {
-      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
     }
   }
   return null;
