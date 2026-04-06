@@ -94,7 +94,9 @@ Deno.serve(async (req) => {
   }
 
   const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
-  if (!GEMINI_KEY) return new Response(JSON.stringify({ error: "No API key" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  const GEMINI_KEY2 = Deno.env.get("GEMINI_API_KEY2");
+  const geminiKeys = [GEMINI_KEY, GEMINI_KEY2].filter(Boolean) as string[];
+  if (!geminiKeys.length) return new Response(JSON.stringify({ error: "No API key" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const json = (data: any, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
