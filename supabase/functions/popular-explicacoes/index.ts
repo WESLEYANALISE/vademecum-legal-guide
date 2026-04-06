@@ -88,7 +88,8 @@ Deno.serve(async (req) => {
 
   try {
     const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_KEY) throw new Error("GEMINI_API_KEY not set");
+    const GEMINI_KEY2 = Deno.env.get("GEMINI_API_KEY2");
+    if (!GEMINI_KEY && !GEMINI_KEY2) throw new Error("GEMINI_API_KEY not set");
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
