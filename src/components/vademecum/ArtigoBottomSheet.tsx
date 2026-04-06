@@ -1586,7 +1586,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
                   </svg>
                 )}
                 <button
-                  onClick={handleNarrar}
+                  onClick={() => { if (!isPremium && !narracaoPlaying && !narracaoUrl && !canUse('narracao')) { openPremiumGate('Você atingiu o limite de 3 narrações/mês. Assine para desbloquear.'); return; } if (!isPremium && !narracaoPlaying && !narracaoUrl) { registerUsage('narracao', `${tabelaNome}_${artigo?.numero}`); } handleNarrar(); }}
                   disabled={narracaoLoading}
                   className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ${narracaoPlaying ? 'bg-primary shadow-primary/40 scale-105' : 'bg-primary shadow-primary/30 hover:bg-primary/90'}`}
                 >
