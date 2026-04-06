@@ -459,7 +459,7 @@ Deno.serve(async (req) => {
         if (needHeadline) {
           let headline: string | null = null
           for (let attempt = 0; attempt < 2; attempt++) {
-            const raw = await callGemini(GEMINI_API_KEY, SYSTEM_PROMPT_HEADLINE, userPrompt, { temp: 0.6, maxTokens: 150 })
+            const raw = await callGemini(geminiKeys, SYSTEM_PROMPT_HEADLINE, userPrompt, { temp: 0.6, maxTokens: 150 })
             if (raw) {
               const cleaned = raw.replace(/^['"]|['"]$/g, '').trim()
               if (isValidHeadline(cleaned)) { headline = cleaned; break; }
@@ -470,7 +470,7 @@ Deno.serve(async (req) => {
 
         // Generate analysis
         if (needAnalise) {
-          const analise = await callGemini(GEMINI_API_KEY, SYSTEM_PROMPT_ANALISE_PL, userPrompt)
+          const analise = await callGemini(geminiKeys, SYSTEM_PROMPT_ANALISE_PL, userPrompt)
           upsertData.analise = analise || null
         }
 

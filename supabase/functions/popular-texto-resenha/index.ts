@@ -449,7 +449,7 @@ Deno.serve(async (req) => {
       let generated = 0;
 
       for (const item of pendingItems) {
-        const explicacao = await gerarExplicacao(item.ementa, item.texto_completo, geminiKey);
+        const explicacao = await gerarExplicacao(item.ementa, item.texto_completo, geminiKeys);
         if (explicacao.length > 50) {
           const { error: uErr } = await supabase
             .from("resenha_diaria")
@@ -502,7 +502,7 @@ Deno.serve(async (req) => {
 
         // Generate explanation if Gemini key is available
         if (geminiKey) {
-          const explicacao = await gerarExplicacao(item.ementa, texto, geminiKey);
+          const explicacao = await gerarExplicacao(item.ementa, texto, geminiKeys);
           if (explicacao.length > 50) {
             updateData.explicacao = explicacao;
           }
