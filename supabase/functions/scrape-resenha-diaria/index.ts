@@ -39,7 +39,8 @@ function normalizeDateToISO(dateStr: string): string {
 }
 
 async function fetchPage(url: string): Promise<string | null> {
-  const MIN_CHARS = 10000;
+  const MIN_CHARS = 3000;
+  const hasContent = (html: string) => html.length > MIN_CHARS && /planalto\.gov\.br\/ccivil_03/i.test(html);
 
   // Strategy 1: Direct fetch with retries
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -55,8 +56,8 @@ async function fetchPage(url: string): Promise<string | null> {
       });
       if (resp.ok) {
         const t = await resp.text();
-        if (t.length > MIN_CHARS) { console.log(`Direct OK: ${t.length} chars`); return t; }
-        else { console.log(`Direct too short (${t.length} chars)`); }
+        if (hasContent(t)) { console.log(`Direct OK: ${t.length} chars`); return t; }
+        else { console.log(`Direct no content (${t.length} chars)`); }
       }
     } catch (e) { console.log(`Direct attempt ${attempt} failed: ${e}`); }
   }
@@ -76,7 +77,7 @@ async function fetchPage(url: string): Promise<string | null> {
       if (resp.ok) {
         const t = await resp.text();
         console.log(`Proxy response: ${t.length} chars`);
-        if (t.length > MIN_CHARS) return t;
+        if (hasContent(t)) return t;
       }
     } catch (e) { console.log(`Proxy failed: ${e}`); }
   }
@@ -103,8 +104,8 @@ async function fetchPage(url: string): Promise<string | null> {
         if (resp.ok) {
           const t = await resp.text();
           console.log(`Browserless response: ${t.length} chars`);
-          if (t.length > MIN_CHARS) return t;
-          else console.log(`Browserless too short: ${t.length}`);
+          if (hasContent(t)) return t;
+          else console.log(`Browserless no content: ${t.length}`);
         } else {
           console.log(`Browserless ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
         }
@@ -118,7 +119,7 @@ async function fetchPage(url: string): Promise<string | null> {
     const resp = await fetch(archiveUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
     });
-    if (resp.ok) { const t = await resp.text(); if (t.length > MIN_CHARS) { console.log(`Archive OK: ${t.length} chars`); return t; } }
+    if (resp.ok) { const t = await resp.text(); if (hasContent(t)) { console.log(`Archive OK: ${t.length} chars`); return t; } }
   } catch (e) { console.log(`Archive failed: ${e}`); }
 
   return null;
