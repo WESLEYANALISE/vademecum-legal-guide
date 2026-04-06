@@ -8,8 +8,11 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useIsDesktop } from '@/hooks/use-desktop';
 import logoVacatio from '@/assets/logo-vacatio.jpeg';
 import themisBg from '@/assets/themis-bg.jpg';
+import authBgLeft from '@/assets/auth-bg-left.jpg';
+import authBgRight from '@/assets/auth-bg-right.jpg';
 import landingBiblioteca from '@/assets/landing-biblioteca.jpg';
 import landingVademecum from '@/assets/landing-vademecum.jpg';
 import landingVideoaulas from '@/assets/landing-videoaulas.jpg';
