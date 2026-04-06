@@ -663,6 +663,7 @@ const Biblioteca = () => {
       {ebookData && (
         <LeitorEbook livro={ebookData} onBack={() => setEbookData(null)} onUpdateBookmark={() => {}} />
       )}
+      <PremiumGate open={showPremiumGate} onClose={() => setShowPremiumGate(false)} description="Assine para acessar toda a biblioteca sem limites." />
     </>
   );
 };
