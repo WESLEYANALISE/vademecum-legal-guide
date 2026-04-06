@@ -101,6 +101,42 @@ export type Database = {
         }
         Relationships: []
       }
+      assinaturas: {
+        Row: {
+          asaas_customer_id: string | null
+          asaas_subscription_id: string | null
+          created_at: string
+          id: string
+          payment_link: string | null
+          plano: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
+          created_at?: string
+          id?: string
+          payment_link?: string | null
+          plano: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
+          created_at?: string
+          id?: string
+          payment_link?: string | null
+          plano?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       biblioteca_classicos: {
         Row: {
           analise_status: string | null
