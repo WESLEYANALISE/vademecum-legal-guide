@@ -176,6 +176,8 @@ Deno.serve(async (req) => {
     )
 
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
+    const GEMINI_API_KEY2 = Deno.env.get('GEMINI_API_KEY2') || '';
+    const geminiKeys = [GEMINI_API_KEY, GEMINI_API_KEY2].filter(Boolean);
     const MISTRAL_API_KEY = Deno.env.get('MISTRAL_API_KEY') || '';
 
     // Check if only_headlines mode (skip API fetch, just generate headlines)

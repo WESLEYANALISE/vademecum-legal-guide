@@ -402,6 +402,8 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const geminiKey = Deno.env.get("GEMINI_API_KEY") || '';
+    const geminiKey2 = Deno.env.get("GEMINI_API_KEY2") || '';
+    const geminiKeys = [geminiKey, geminiKey2].filter(Boolean);
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json().catch(() => ({}));
