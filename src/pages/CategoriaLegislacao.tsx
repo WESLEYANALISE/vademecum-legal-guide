@@ -61,6 +61,9 @@ const CategoriaLegislacao = () => {
   const { tipo } = useParams<{ tipo: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isPremium } = useSubscription();
+  const [showPremiumGate, setShowPremiumGate] = useState(false);
+  const [premiumGateDesc, setPremiumGateDesc] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLeiId, setSelectedLeiId] = useState<string | null>(null);
   const [selectedLeiNome, setSelectedLeiNome] = useState('');
