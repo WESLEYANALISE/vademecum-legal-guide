@@ -501,7 +501,7 @@ Deno.serve(async (req) => {
         const updateData: Record<string, string> = { texto_completo: texto };
 
         // Generate explanation if Gemini key is available
-        if (geminiKey) {
+        if (geminiKeys.length > 0) {
           const explicacao = await gerarExplicacao(item.ementa, texto, geminiKeys);
           if (explicacao.length > 50) {
             updateData.explicacao = explicacao;
@@ -521,8 +521,8 @@ Deno.serve(async (req) => {
           await detectarReferencias(item.ementa, texto, item.numero_ato, supabase);
 
           // Pre-generate per-article explanations and cache in artigo_ai_cache
-          if (geminiKey) {
-            await gerarExplicacoesArtigos(item.id, texto, item.ementa, geminiKey, supabase);
+          if (geminiKeys.length > 0) {
+            await gerarExplicacoesArtigos(item.id, texto, item.ementa, geminiKeys[0], supabase);
           }
         } else {
           console.error(`Erro update ${item.numero_ato}:`, updateError);
