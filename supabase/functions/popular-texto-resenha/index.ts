@@ -422,7 +422,7 @@ Deno.serve(async (req) => {
 
     // Mode 1: only generate explanations for items that already have texto_completo
     if (onlyExplicacao) {
-      if (!geminiKey) {
+      if (!geminiKeys.length) {
         return new Response(
           JSON.stringify({ error: "GEMINI_API_KEY not configured" }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
