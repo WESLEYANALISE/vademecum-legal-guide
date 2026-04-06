@@ -2,7 +2,17 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Redirect desktop users to the main website
+const isDesktop = window.innerWidth >= 1024;
+const isPreview = window.location.hostname.includes('lovableproject.com') ||
+  window.location.hostname.includes('id-preview--');
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+if (isDesktop && !isPreview && !isLocalhost) {
+  window.location.replace('https://www.vacatio.com.br');
+} else {
+  createRoot(document.getElementById("root")!).render(<App />);
+}
 
 // Register Service Worker for persistent image caching (production only)
 if ('serviceWorker' in navigator) {
