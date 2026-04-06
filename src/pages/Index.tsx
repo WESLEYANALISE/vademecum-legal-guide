@@ -161,8 +161,6 @@ const Index = () => {
   if (isDesktop) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        {/* Full-width hero banner */}
-        <DesktopHeroBanner />
 
         <div className="flex flex-1 min-h-0">
         <DesktopSidebar activeTab={activeTab} onTabChange={setActiveTab} />
