@@ -66,7 +66,6 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           name: user.user_metadata?.display_name || user.email?.split('@')[0] || 'Usuário',
           email: user.email,
-          cpfCnpj: '00000000000', // placeholder — user fills in checkout
           notificationDisabled: false,
         }),
       })
