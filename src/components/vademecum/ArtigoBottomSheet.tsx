@@ -1839,6 +1839,7 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
         artigoNumero={artigo.numero}
       />
     )}
+      <PremiumGate open={showPremiumGate} onClose={() => setShowPremiumGate(false)} description={premiumGateDesc} />
       </>
   );
 };
