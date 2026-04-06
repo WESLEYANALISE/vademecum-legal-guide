@@ -487,8 +487,9 @@ Regras:
 
     let reply = mode === 'headline' ? '' : 'Desculpe, não consegui gerar uma resposta.';
     for (let attempt = 0; attempt < 3; attempt++) {
+      const keyToUse = geminiKeys[attempt % geminiKeys.length];
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keyToUse}`,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(geminiBody) }
       );
 
