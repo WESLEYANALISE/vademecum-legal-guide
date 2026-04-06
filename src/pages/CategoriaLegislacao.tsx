@@ -1760,6 +1760,13 @@ const CategoriaLegislacao = () => {
       </div>
     </div>
     );
+  
+  return (
+    <>
+      {content}
+      <PremiumGate open={showPremiumGate} onClose={() => setShowPremiumGate(false)} description={premiumGateDesc} />
+    </>
+  );
   };
 
 export default CategoriaLegislacao;
