@@ -325,6 +325,8 @@ const Estudar = () => {
         )}
       </div>
     </DesktopPageLayout>
+    <PremiumGate open={showPremiumGate} onClose={() => setShowPremiumGate(false)} description="Você atingiu o limite de 3 artigos/mês para questões. Assine para praticar sem limites." />
+    </>
   );
 };
 
