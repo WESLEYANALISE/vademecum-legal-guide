@@ -5215,6 +5215,30 @@ export type Database = {
         }
         Relationships: []
       }
+      premium_usage: {
+        Row: {
+          feature: string
+          id: string
+          ref_key: string | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          feature: string
+          id?: string
+          ref_key?: string | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          feature?: string
+          id?: string
+          ref_key?: string | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
