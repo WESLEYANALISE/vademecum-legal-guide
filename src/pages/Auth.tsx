@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useIsDesktop } from '@/hooks/use-desktop';
+import { LEIS_CATALOG } from '@/data/leisCatalog';
 import logoVacatio from '@/assets/logo-vacatio.jpeg';
 import themisBg from '@/assets/themis-bg.jpg';
 import authBgLeft from '@/assets/auth-bg-left.jpg';
@@ -444,6 +445,8 @@ const AuthFormScreen = ({ onBack }: { onBack: () => void }) => {
 
   /* ── Desktop: split-screen layout ── */
   if (isDesktop) {
+    const lawItems = LEIS_CATALOG.map(l => ({ sigla: l.sigla, nome: l.nome }));
+
     return (
       <motion.main
         key="auth"
@@ -453,23 +456,87 @@ const AuthFormScreen = ({ onBack }: { onBack: () => void }) => {
         transition={{ duration: 0.3 }}
         className="min-h-screen flex relative overflow-hidden"
       >
-        {/* Left panel — Themis image */}
-        <div className="absolute inset-0 z-0">
-          <div className="flex h-full">
-            <div className="w-1/2 h-full relative">
-              <img src={authBgLeft} alt="" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-background/90" />
-            </div>
-            <div className="w-1/2 h-full relative">
-              <img src={authBgRight} alt="" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-l from-transparent to-background/90" />
+        {/* ── Left panel: animated showcase ── */}
+        <div className="w-1/2 relative flex flex-col items-center justify-center overflow-hidden">
+          {/* Background image + overlay */}
+          <img src={authBgLeft} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-background/85" />
+
+          <div className="relative z-10 flex flex-col items-center px-10 max-w-lg">
+            {/* Logo */}
+            <motion.img
+              src={logoVacatio}
+              alt="Vacatio"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="w-20 h-20 rounded-2xl shadow-xl object-cover border-2 border-primary/30 mb-4"
+            />
+            <motion.h2
+              initial={{ y: 15, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.15 }}
+              className="font-display text-3xl font-bold text-foreground text-center"
+            >
+              Vade Mecum 2026
+            </motion.h2>
+            <motion.p
+              initial={{ y: 15, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="font-body text-base text-muted-foreground text-center mt-2 mb-8"
+            >
+              Toda a legislação brasileira comentada e explicada
+            </motion.p>
+
+            {/* ── Cascading law list ── */}
+            <div
+              className="w-full max-h-[340px] overflow-hidden relative"
+              style={{
+                maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 75%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 75%, transparent 100%)',
+              }}
+            >
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: {},
+                  visible: { transition: { staggerChildren: 0.07 } },
+                }}
+                className="flex flex-col gap-2"
+              >
+                {lawItems.map((law, i) => (
+                  <motion.div
+                    key={law.sigla}
+                    variants={{
+                      hidden: { opacity: 0, y: 18 },
+                      visible: {
+                        opacity: [0, 1, 1, 0.4],
+                        y: 0,
+                        transition: {
+                          duration: 1.2,
+                          ease: 'easeOut',
+                          opacity: { duration: 2.5, times: [0, 0.15, 0.7, 1] },
+                        },
+                      },
+                    }}
+                    className="flex items-center gap-3 px-4 py-2 rounded-xl bg-card/50 backdrop-blur-sm border border-border/40"
+                  >
+                    <span className="font-display text-sm font-bold text-primary min-w-[70px]">{law.sigla}</span>
+                    <span className="font-body text-sm text-foreground/80 truncate">{law.nome}</span>
+                  </motion.div>
+                ))}
+              </motion.div>
             </div>
           </div>
-          <div className="absolute inset-0 bg-background/60" />
         </div>
 
-        {/* Centered form card */}
-        <div className="relative z-10 w-full flex items-center justify-center p-8">
+        {/* ── Right panel: auth form ── */}
+        <div className="w-1/2 relative flex items-center justify-center">
+          <img src={authBgRight} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+
           {/* Back button */}
           <button
             onClick={onBack}
@@ -482,7 +549,7 @@ const AuthFormScreen = ({ onBack }: { onBack: () => void }) => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 24 }}
-            className="w-full max-w-md bg-card/90 backdrop-blur-xl border border-border rounded-2xl p-8 shadow-2xl"
+            className="relative z-10 w-full max-w-md bg-card/90 backdrop-blur-xl border border-border rounded-2xl p-8 shadow-2xl"
           >
             {/* Logo */}
             <div className="flex flex-col items-center mb-6">
@@ -492,18 +559,6 @@ const AuthFormScreen = ({ onBack }: { onBack: () => void }) => {
             </div>
 
             {formContent}
-
-            {/* Scroll hint */}
-            <div className="mt-6 text-center">
-              <p className="text-[10px] font-body text-muted-foreground uppercase tracking-wider">Role para descobrir</p>
-              <motion.div
-                animate={{ y: [0, 4, 0] }}
-                transition={{ repeat: Infinity, duration: 1.5 }}
-                className="mt-1"
-              >
-                <ArrowRight className="w-3.5 h-3.5 text-primary mx-auto rotate-90" />
-              </motion.div>
-            </div>
           </motion.div>
         </div>
       </motion.main>
