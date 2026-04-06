@@ -468,25 +468,8 @@ const AuthFormScreen = ({ onBack }: { onBack: () => void }) => {
           <div className="absolute inset-0 bg-background/60" />
         </div>
 
-        {/* Left side — text overlay */}
-        <div className="relative z-10 w-1/2 flex flex-col justify-end p-12 xl:p-16">
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <h2 className="font-display text-3xl xl:text-4xl font-bold text-foreground leading-snug">
-              Sua jornada jurídica{' '}
-              <span className="text-primary">começa aqui</span>
-            </h2>
-            <p className="text-sm xl:text-base font-body text-muted-foreground mt-3 max-w-md leading-relaxed">
-              Todo o conteúdo que você precisa estudar pra faculdade e prova OAB em um só lugar.
-            </p>
-          </motion.div>
-        </div>
-
-        {/* Right side — form card */}
-        <div className="relative z-10 w-1/2 flex items-center justify-center p-8">
+        {/* Centered form card */}
+        <div className="relative z-10 w-full flex items-center justify-center p-8">
           {/* Back button */}
           <button
             onClick={onBack}
