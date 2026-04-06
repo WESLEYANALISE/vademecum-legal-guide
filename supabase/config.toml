@@ -5,9 +5,9 @@ project_id = "akaeinqkhdwzopfsckgg"
 [functions.scrape-resenha-diaria]
 schedule = "0 7,10,13,16,19,22 * * *"
 
-# Popular texto completo + explicações: 8:30 e 18:30 Brasília
+# Popular texto completo + explicações: 30 min após cada scrape
 [functions.popular-texto-resenha]
-schedule = "30 11,21 * * *"
+schedule = "30 7,10,13,16,19,22 * * *"
 
 # Scraper de notícias: a cada 30 min (já existe)
 [functions.scrape-noticias]
