@@ -1092,7 +1092,13 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
           )}
         </AnimatePresence>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <Tabs value={activeTab} onValueChange={(v) => {
+          if (!isPremium && (v === 'explicacao' || v === 'exemplo' || v === 'termos')) {
+            if (!canUse('explicacao')) { openPremiumGate('Você atingiu o limite de 3 explicações/mês. Assine para desbloquear.'); return; }
+            registerUsage('explicacao', `${tabelaNome}_${artigo?.numero}`);
+          }
+          setActiveTab(v);
+        }} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {modificationInfo ? (
             <TabsList className="mx-5 bg-secondary/60 rounded-xl h-11 grid grid-cols-2 w-auto">
               <TabsTrigger value="artigo" className="rounded-lg text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">Artigo</TabsTrigger>
