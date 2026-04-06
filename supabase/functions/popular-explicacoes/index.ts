@@ -20,36 +20,44 @@ const TABELAS_TOP = [
   "CTB_CODIGO_TRANSITO_BRASILEIRO",
 ];
 
-async function callGemini(apiKey: string, prompt: string, systemPrompt: string): Promise<string | null> {
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
-        }),
-        signal: AbortSignal.timeout(30000),
+async function callGeminiWithFallback(keys: string[], prompt: string, systemPrompt: string): Promise<string | null> {
+  for (const apiKey of keys) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+          }),
+          signal: AbortSignal.timeout(30000),
+        }
+      );
+      if (res.status === 429) {
+        console.warn(`Gemini 429 rate limited, trying fallback key...`);
+        continue;
       }
-    );
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error(`Gemini HTTP ${res.status}: ${errText.slice(0, 200)}`);
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error(`Gemini HTTP ${res.status}: ${errText.slice(0, 200)}`);
+        return null;
+      }
+      const json = await res.json();
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (!text) {
+        console.warn(`Gemini empty candidate: ${JSON.stringify(json).slice(0, 200)}`);
+      }
+      return text || null;
+    } catch (e: any) {
+      console.error(`Gemini fetch error: ${e.message}`);
       return null;
     }
-    const json = await res.json();
-    const text = json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    if (!text) {
-      console.warn(`Gemini empty candidate: ${JSON.stringify(json).slice(0, 200)}`);
-    }
-    return text || null;
-  } catch (e: any) {
-    console.error(`Gemini fetch error: ${e.message}`);
-    return null;
   }
+  console.error("All Gemini API keys exhausted (rate limited)");
+  return null;
 }
 
 function buildPrompt(modo: string, artigo: { numero: string; caput: string; texto: string }, tabela: string): { prompt: string; system: string } {
