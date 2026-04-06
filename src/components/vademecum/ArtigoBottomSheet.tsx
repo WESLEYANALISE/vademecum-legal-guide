@@ -21,6 +21,9 @@ import { buildPlanaltoArticleUrl } from '@/services/legislacaoService';
 import ShareButtons from './ShareButtons';
 import VideoaulaSheet from './VideoaulaSheet';
 import ResumoSelectorSheet from './ResumoSelectorSheet';
+import { useSubscription } from '@/hooks/useSubscription';
+import { usePremiumUsage } from '@/hooks/usePremiumUsage';
+import PremiumGate from '@/components/PremiumGate';
 
 export interface ModificationInfo {
   tipo: string;        // "Incluído", "Alterada", etc.
