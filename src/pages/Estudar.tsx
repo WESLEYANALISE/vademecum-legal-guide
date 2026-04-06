@@ -79,6 +79,13 @@ const Estudar = () => {
   };
 
   const handleSelectArtigo = (numero: string) => {
+    if (!isPremium && selectedMode === 'questoes' && !canUse('questoes')) {
+      setShowPremiumGate(true);
+      return;
+    }
+    if (!isPremium && selectedMode === 'questoes') {
+      registerUsage('questoes', `${selectedLei?.tabela}_${numero}`);
+    }
     setSelectedArtigo(numero);
     setView(selectedMode);
   };
