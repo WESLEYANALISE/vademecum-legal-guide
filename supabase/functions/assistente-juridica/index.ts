@@ -296,7 +296,9 @@ Deno.serve(async (req) => {
 
   try {
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    if (!GEMINI_API_KEY) {
+    const GEMINI_API_KEY2 = Deno.env.get('GEMINI_API_KEY2');
+    const geminiKeys = [GEMINI_API_KEY, GEMINI_API_KEY2].filter(Boolean) as string[];
+    if (!geminiKeys.length) {
       return new Response(JSON.stringify({ error: 'GEMINI_API_KEY not configured' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -485,8 +487,9 @@ Regras:
 
     let reply = mode === 'headline' ? '' : 'Desculpe, não consegui gerar uma resposta.';
     for (let attempt = 0; attempt < 3; attempt++) {
+      const keyToUse = geminiKeys[attempt % geminiKeys.length];
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keyToUse}`,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(geminiBody) }
       );
 

@@ -58,34 +58,38 @@ function buildPrompt(modo: string, artigo: { numero: string; caput: string; text
   }
 }
 
-async function callGemini(apiKey: string, prompt: string, system: string): Promise<{ text: string | null; rateLimited: boolean }> {
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: system }] },
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
-        }),
-        signal: AbortSignal.timeout(30000),
+async function callGemini(keys: string[], prompt: string, system: string): Promise<{ text: string | null; rateLimited: boolean }> {
+  for (const apiKey of keys) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: system }] },
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+          }),
+          signal: AbortSignal.timeout(30000),
+        }
+      );
+      if (res.status === 429) {
+        console.warn(`Gemini 429 on key, trying fallback...`);
+        continue;
       }
-    );
-    if (res.status === 429) {
-      return { text: null, rateLimited: true };
-    }
-    if (!res.ok) {
-      console.error(`Gemini HTTP ${res.status}`);
+      if (!res.ok) {
+        console.error(`Gemini HTTP ${res.status}`);
+        return { text: null, rateLimited: false };
+      }
+      const json = await res.json();
+      return { text: json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null, rateLimited: false };
+    } catch (e: any) {
+      console.error(`Gemini error: ${e.message}`);
       return { text: null, rateLimited: false };
     }
-    const json = await res.json();
-    return { text: json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null, rateLimited: false };
-  } catch (e: any) {
-    console.error(`Gemini error: ${e.message}`);
-    return { text: null, rateLimited: false };
   }
+  return { text: null, rateLimited: true };
 }
 
 Deno.serve(async (req) => {
@@ -94,7 +98,9 @@ Deno.serve(async (req) => {
   }
 
   const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
-  if (!GEMINI_KEY) return new Response(JSON.stringify({ error: "No API key" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  const GEMINI_KEY2 = Deno.env.get("GEMINI_API_KEY2");
+  const geminiKeys = [GEMINI_KEY, GEMINI_KEY2].filter(Boolean) as string[];
+  if (!geminiKeys.length) return new Response(JSON.stringify({ error: "No API key" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const json = (data: any, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -201,7 +207,7 @@ Deno.serve(async (req) => {
         }).not("id", "is", null);
 
         const { prompt, system } = buildPrompt(modo, artigo, tabela);
-        const { text: result, rateLimited } = await callGemini(GEMINI_KEY, prompt, system);
+        const { text: result, rateLimited } = await callGemini(geminiKeys, prompt, system);
 
         if (result) {
           // Success

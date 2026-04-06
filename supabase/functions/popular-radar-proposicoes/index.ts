@@ -108,26 +108,32 @@ async function extractPdfText(pdfUrl: string, mistralKey: string): Promise<strin
   } catch { return null; }
 }
 
-async function callGemini(geminiKey: string, systemPrompt: string, userPrompt: string, opts?: { temp?: number; maxTokens?: number }): Promise<string | null> {
+async function callGemini(geminiKeys: string[], systemPrompt: string, userPrompt: string, opts?: { temp?: number; maxTokens?: number }): Promise<string | null> {
   const body = {
     system_instruction: { parts: [{ text: systemPrompt }] },
     contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
     generationConfig: { temperature: opts?.temp ?? 0.7, maxOutputTokens: opts?.maxTokens ?? 4096 },
   };
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (text) return text;
+  for (const key of geminiKeys) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+        );
+        if (res.status === 429) {
+          console.warn(`Gemini 429 on key, trying next...`);
+          break; // try next key
+        }
+        if (res.ok) {
+          const data = await res.json();
+          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          if (text) return text;
+        }
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+      } catch {
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
       }
-      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
-    } catch {
-      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
     }
   }
   return null;
@@ -176,6 +182,8 @@ Deno.serve(async (req) => {
     )
 
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
+    const GEMINI_API_KEY2 = Deno.env.get('GEMINI_API_KEY2') || '';
+    const geminiKeys = [GEMINI_API_KEY, GEMINI_API_KEY2].filter(Boolean);
     const MISTRAL_API_KEY = Deno.env.get('MISTRAL_API_KEY') || '';
 
     // Check if only_headlines mode (skip API fetch, just generate headlines)
@@ -451,7 +459,7 @@ Deno.serve(async (req) => {
         if (needHeadline) {
           let headline: string | null = null
           for (let attempt = 0; attempt < 2; attempt++) {
-            const raw = await callGemini(GEMINI_API_KEY, SYSTEM_PROMPT_HEADLINE, userPrompt, { temp: 0.6, maxTokens: 150 })
+            const raw = await callGemini(geminiKeys, SYSTEM_PROMPT_HEADLINE, userPrompt, { temp: 0.6, maxTokens: 150 })
             if (raw) {
               const cleaned = raw.replace(/^['"]|['"]$/g, '').trim()
               if (isValidHeadline(cleaned)) { headline = cleaned; break; }
@@ -462,7 +470,7 @@ Deno.serve(async (req) => {
 
         // Generate analysis
         if (needAnalise) {
-          const analise = await callGemini(GEMINI_API_KEY, SYSTEM_PROMPT_ANALISE_PL, userPrompt)
+          const analise = await callGemini(geminiKeys, SYSTEM_PROMPT_ANALISE_PL, userPrompt)
           upsertData.analise = analise || null
         }
 

@@ -95,7 +95,9 @@ Deno.serve(async (req) => {
     }
 
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
+    const GEMINI_API_KEY2 = Deno.env.get("GEMINI_API_KEY2");
+    const geminiKeys = [GEMINI_API_KEY, GEMINI_API_KEY2].filter(Boolean) as string[];
+    if (!geminiKeys.length) {
       return new Response(JSON.stringify({ error: "GEMINI_API_KEY não configurada" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -110,35 +112,49 @@ Deno.serve(async (req) => {
 
     console.log(`Narrando: ${lei_nome} - ${artigo_numero} (${narrationText.length} chars)`);
 
-    // Call Gemini TTS
-    const ttsUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${GEMINI_API_KEY}`;
-    
-    const ttsRes = await fetch(ttsUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: narrationText }] }],
-        generationConfig: {
-          responseModalities: ["AUDIO"],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: "Kore" },
+    let ttsData: any;
+    for (const key of geminiKeys) {
+      const ttsUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${key}`;
+      const ttsRes = await fetch(ttsUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: narrationText }] }],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: "Kore" },
+              },
             },
           },
-        },
-      }),
-    });
+        }),
+      });
 
-    if (!ttsRes.ok) {
-      const errText = await ttsRes.text();
-      console.error("Gemini TTS error:", ttsRes.status, errText);
-      return new Response(JSON.stringify({ error: `Gemini TTS falhou: ${ttsRes.status}` }), {
-        status: 500,
+      if (ttsRes.status === 429) {
+        console.warn("Gemini TTS 429, trying fallback key...");
+        continue;
+      }
+
+      if (!ttsRes.ok) {
+        const errText = await ttsRes.text();
+        console.error("Gemini TTS error:", ttsRes.status, errText);
+        return new Response(JSON.stringify({ error: `Gemini TTS falhou: ${ttsRes.status}` }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      ttsData = await ttsRes.json();
+      break;
+    }
+
+    if (!ttsData) {
+      return new Response(JSON.stringify({ error: "Todas as chaves Gemini foram rate limited" }), {
+        status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const ttsData = await ttsRes.json();
     const audioBase64 = ttsData?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
 
     if (!audioBase64) {

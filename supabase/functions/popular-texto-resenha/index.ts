@@ -192,7 +192,7 @@ async function fetchTextoCompleto(url: string, numeroAto: string): Promise<strin
 
 // ── Gemini explanation generator ──
 
-async function gerarExplicacao(ementa: string, textoCompleto: string, geminiKey: string): Promise<string> {
+async function gerarExplicacao(ementa: string, textoCompleto: string, geminiKeys: string[]): Promise<string> {
   const textoTruncado = textoCompleto.length > 12000 ? textoCompleto.substring(0, 12000) + '...' : textoCompleto;
 
   const prompt = `Você é um professor de Direito brasileiro. Gere uma explicação didática e acessível sobre esta lei/decreto.
@@ -210,26 +210,35 @@ Sua explicação deve conter:
 
 Use linguagem acessível, evite jargão excessivo. Formato em Markdown com títulos ##.`;
 
-  const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 2048, temperature: 0.4 },
-      }),
+  for (const key of geminiKeys) {
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 2048, temperature: 0.4 },
+        }),
+      }
+    );
+
+    if (resp.status === 429) {
+      console.warn("Gemini 429, trying fallback key...");
+      continue;
     }
-  );
 
-  if (!resp.ok) {
-    const err = await resp.text();
-    console.error(`Gemini error ${resp.status}: ${err}`);
-    return '';
+    if (!resp.ok) {
+      const err = await resp.text();
+      console.error(`Gemini error ${resp.status}: ${err}`);
+      return '';
+    }
+
+    const data = await resp.json();
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
   }
-
-  const data = await resp.json();
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  console.error("All Gemini keys rate limited for explicacao");
+  return '';
 }
 
 // Parse articles from the full law text
@@ -402,6 +411,8 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const geminiKey = Deno.env.get("GEMINI_API_KEY") || '';
+    const geminiKey2 = Deno.env.get("GEMINI_API_KEY2") || '';
+    const geminiKeys = [geminiKey, geminiKey2].filter(Boolean);
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json().catch(() => ({}));
@@ -411,7 +422,7 @@ Deno.serve(async (req) => {
 
     // Mode 1: only generate explanations for items that already have texto_completo
     if (onlyExplicacao) {
-      if (!geminiKey) {
+      if (!geminiKeys.length) {
         return new Response(
           JSON.stringify({ error: "GEMINI_API_KEY not configured" }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -438,7 +449,7 @@ Deno.serve(async (req) => {
       let generated = 0;
 
       for (const item of pendingItems) {
-        const explicacao = await gerarExplicacao(item.ementa, item.texto_completo, geminiKey);
+        const explicacao = await gerarExplicacao(item.ementa, item.texto_completo, geminiKeys);
         if (explicacao.length > 50) {
           const { error: uErr } = await supabase
             .from("resenha_diaria")
@@ -490,8 +501,8 @@ Deno.serve(async (req) => {
         const updateData: Record<string, string> = { texto_completo: texto };
 
         // Generate explanation if Gemini key is available
-        if (geminiKey) {
-          const explicacao = await gerarExplicacao(item.ementa, texto, geminiKey);
+        if (geminiKeys.length > 0) {
+          const explicacao = await gerarExplicacao(item.ementa, texto, geminiKeys);
           if (explicacao.length > 50) {
             updateData.explicacao = explicacao;
           }
@@ -510,8 +521,8 @@ Deno.serve(async (req) => {
           await detectarReferencias(item.ementa, texto, item.numero_ato, supabase);
 
           // Pre-generate per-article explanations and cache in artigo_ai_cache
-          if (geminiKey) {
-            await gerarExplicacoesArtigos(item.id, texto, item.ementa, geminiKey, supabase);
+          if (geminiKeys.length > 0) {
+            await gerarExplicacoesArtigos(item.id, texto, item.ementa, geminiKeys[0], supabase);
           }
         } else {
           console.error(`Erro update ${item.numero_ato}:`, updateError);

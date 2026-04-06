@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")!;
+const GEMINI_API_KEY2 = Deno.env.get("GEMINI_API_KEY2") || "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -47,38 +48,47 @@ async function fetchArticleText(tabelaNome: string, artigoNumero: string): Promi
 }
 
 async function callGemini(prompt: string): Promise<string> {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 16384,
-          responseMimeType: "application/json",
-        },
-      }),
+  const keys = [GEMINI_API_KEY, GEMINI_API_KEY2].filter(Boolean);
+  for (const key of keys) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 16384,
+            responseMimeType: "application/json",
+          },
+        }),
+      }
+    );
+
+    if (res.status === 429) {
+      console.warn("Gemini 429, trying fallback key...");
+      continue;
     }
-  );
 
-  const json = await res.json();
+    const json = await res.json();
 
-  if (!res.ok) {
-    throw new Error(`Erro Gemini ${res.status}: ${JSON.stringify(json).slice(0, 1000)}`);
+    if (!res.ok) {
+      throw new Error(`Erro Gemini ${res.status}: ${JSON.stringify(json).slice(0, 1000)}`);
+    }
+
+    const raw = json?.candidates?.[0]?.content?.parts
+      ?.map((part: { text?: string }) => part.text ?? "")
+      .join("")
+      .trim() ?? "";
+
+    if (!raw) {
+      throw new Error(`IA retornou resposta vazia: ${JSON.stringify(json).slice(0, 1000)}`);
+    }
+
+    return raw;
   }
-
-  const raw = json?.candidates?.[0]?.content?.parts
-    ?.map((part: { text?: string }) => part.text ?? "")
-    .join("")
-    .trim() ?? "";
-
-  if (!raw) {
-    throw new Error(`IA retornou resposta vazia: ${JSON.stringify(json).slice(0, 1000)}`);
-  }
-
-  return raw;
+  throw new Error("All Gemini API keys exhausted (rate limited)");
 }
 
 function extractJson(raw: string): unknown {
