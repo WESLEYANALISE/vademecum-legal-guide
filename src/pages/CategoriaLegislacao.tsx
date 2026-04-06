@@ -1758,15 +1758,9 @@ const CategoriaLegislacao = () => {
           </div>
         )}
       </div>
+    <PremiumGate open={showPremiumGate} onClose={() => setShowPremiumGate(false)} description={premiumGateDesc} />
     </div>
     );
-  
-  return (
-    <>
-      {content}
-      <PremiumGate open={showPremiumGate} onClose={() => setShowPremiumGate(false)} description={premiumGateDesc} />
-    </>
-  );
   };
 
 export default CategoriaLegislacao;
