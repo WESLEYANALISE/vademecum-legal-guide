@@ -56,8 +56,8 @@ async function fetchPage(url: string): Promise<string | null> {
       });
       if (resp.ok) {
         const t = await resp.text();
-        if (t.length > MIN_CHARS) { console.log(`Direct OK: ${t.length} chars`); return t; }
-        else { console.log(`Direct too short (${t.length} chars)`); }
+        if (hasContent(t)) { console.log(`Direct OK: ${t.length} chars`); return t; }
+        else { console.log(`Direct no content (${t.length} chars)`); }
       }
     } catch (e) { console.log(`Direct attempt ${attempt} failed: ${e}`); }
   }
