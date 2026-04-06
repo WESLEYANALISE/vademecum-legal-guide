@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useIsDesktop } from '@/hooks/use-desktop';
+import { LEIS_CATALOG } from '@/data/leisCatalog';
 import logoVacatio from '@/assets/logo-vacatio.jpeg';
 import themisBg from '@/assets/themis-bg.jpg';
 import authBgLeft from '@/assets/auth-bg-left.jpg';
