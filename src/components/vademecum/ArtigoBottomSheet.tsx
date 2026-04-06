@@ -223,6 +223,10 @@ const ArtigoBottomSheet = ({ artigo, onClose, isFavorito, onToggleFavorito, show
   const navigate = useNavigate();
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [showGrafo, setShowGrafo] = useState(false);
+  const [showPremiumGate, setShowPremiumGate] = useState(false);
+  const [premiumGateDesc, setPremiumGateDesc] = useState('');
+  const { isPremium } = useSubscription();
+  const { canUse, registerUsage } = usePremiumUsage();
 
   // ─── Grifo Mágico state ───
   interface MagicGrifo {
