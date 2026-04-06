@@ -5,6 +5,8 @@ import { ArrowLeft, Library, ChevronRight, Search, Star, BookOpen, Crown, Coffee
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
+import PremiumGate from '@/components/PremiumGate';
 import DesktopPageLayout from '@/components/layout/DesktopPageLayout';
 import LivroCard, { type LivroUnificado } from '@/components/biblioteca/LivroCard';
 import LivroDetailSheet, { type ReadMode } from '@/components/biblioteca/LivroDetailSheet';
