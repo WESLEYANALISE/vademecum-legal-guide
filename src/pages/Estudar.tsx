@@ -31,7 +31,10 @@ const Estudar = () => {
   const [selectedArtigo, setSelectedArtigo] = useState('');
   const [loadingArtigos, setLoadingArtigos] = useState(false);
   const [searchArtigo, setSearchArtigo] = useState('');
+  const [showPremiumGate, setShowPremiumGate] = useState(false);
 
+  const { isPremium } = useSubscription();
+  const { canUse, registerUsage } = usePremiumUsage();
   const { loading: statsLoading, lawStats, articleStats, totalSessions, totalQuestions, avgPct } = useStudyStats();
 
   useEffect(() => {
