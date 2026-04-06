@@ -97,7 +97,8 @@ Deno.serve(async (req) => {
   try {
     const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
     const GEMINI_KEY2 = Deno.env.get("GEMINI_API_KEY2");
-    if (!GEMINI_KEY && !GEMINI_KEY2) throw new Error("GEMINI_API_KEY not set");
+    const geminiKeys = [GEMINI_KEY, GEMINI_KEY2].filter(Boolean) as string[];
+    if (!geminiKeys.length) throw new Error("GEMINI_API_KEY not set");
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -157,7 +158,7 @@ Deno.serve(async (req) => {
         batch.map(async ({ artigo, modo }) => {
           try {
             const { prompt, system } = buildPrompt(modo, artigo, tabela);
-            const result = await callGemini(GEMINI_KEY, prompt, system);
+            const result = await callGeminiWithFallback(geminiKeys, prompt, system);
 
             if (result) {
               await supabase.from("artigo_ai_cache").upsert(
