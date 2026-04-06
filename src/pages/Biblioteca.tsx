@@ -140,6 +140,8 @@ const Biblioteca = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
+  const { isPremium } = useSubscription();
+  const [showPremiumGate, setShowPremiumGate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [classicos, setClassicos] = useState<LivroUnificado[]>([]);
   const [lideranca, setLideranca] = useState<LivroUnificado[]>([]);
