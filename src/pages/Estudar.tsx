@@ -193,6 +193,7 @@ const Estudar = () => {
   }
 
   return (
+    <>
     <DesktopPageLayout
       activeId="estudar"
       title="Estudar"
