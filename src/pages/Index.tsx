@@ -487,7 +487,7 @@ const Index = () => {
                   {/* Desktop */}
                   <div
                     className="relative flex items-center h-12 cursor-pointer flex-1 rounded-full overflow-hidden shadow-md bg-card border border-border"
-                    onClick={() => window.open('https://vademecum-legal-guide.lovable.app', '_blank')}
+                    onClick={() => navigate('/desktop')}
                   >
                     <div className="absolute inset-0 pointer-events-none z-10">
                       <div
