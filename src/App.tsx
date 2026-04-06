@@ -59,6 +59,7 @@ const CompressaoImagens = lazy(() => import("./pages/CompressaoImagens.tsx"));
 const AdminFuncoes = lazy(() => import("./pages/AdminFuncoes.tsx"));
 const AdminMonitorUsuarios = lazy(() => import("./pages/AdminMonitorUsuarios.tsx"));
 const Assinatura = lazy(() => import("./pages/Assinatura.tsx"));
+const DesktopPromo = lazy(() => import("./pages/DesktopPromo.tsx"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -173,6 +174,7 @@ function AnimatedRoutes() {
           <Route path="/admin-funcoes" element={<ProtectedRoute><PageTransition><AdminFuncoes /></PageTransition></ProtectedRoute>} />
           <Route path="/admin-monitor-usuarios" element={<ProtectedRoute><PageTransition><AdminMonitorUsuarios /></PageTransition></ProtectedRoute>} />
           <Route path="/assinatura" element={<ProtectedRoute><PageTransition><Assinatura /></PageTransition></ProtectedRoute>} />
+          <Route path="/desktop" element={<PageTransition><DesktopPromo /></PageTransition>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
