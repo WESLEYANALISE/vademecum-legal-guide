@@ -8,8 +8,11 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useIsDesktop } from '@/hooks/use-desktop';
 import logoVacatio from '@/assets/logo-vacatio.jpeg';
 import themisBg from '@/assets/themis-bg.jpg';
+import authBgLeft from '@/assets/auth-bg-left.jpg';
+import authBgRight from '@/assets/auth-bg-right.jpg';
 import landingBiblioteca from '@/assets/landing-biblioteca.jpg';
 import landingVademecum from '@/assets/landing-vademecum.jpg';
 import landingVideoaulas from '@/assets/landing-videoaulas.jpg';
@@ -292,6 +295,239 @@ const AuthFormScreen = ({ onBack }: { onBack: () => void }) => {
 
   const inputCls = "w-full pl-4 pr-12 py-3 bg-secondary/50 border border-border rounded-xl text-sm font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all";
 
+  const isDesktop = useIsDesktop();
+
+  /* ── Shared form content ── */
+  const formContent = (
+    <>
+      {/* Tabs */}
+      {mode !== 'forgot' && (
+        <div className="flex mb-5 bg-secondary/50 rounded-xl p-1">
+          {(['login', 'signup'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`flex-1 py-2.5 text-sm font-body font-medium rounded-lg transition-all ${
+                mode === m
+                  ? 'bg-primary text-primary-foreground shadow-md'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {m === 'login' ? 'Entrar' : 'Cadastrar'}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Mode title (desktop) */}
+      {isDesktop && mode !== 'forgot' && (
+        <div className="text-center mb-4">
+          <h2 className="font-display text-xl font-bold text-foreground">
+            {mode === 'login' ? 'Entrar' : 'Criar Conta'}
+          </h2>
+          <p className="text-xs font-body text-muted-foreground mt-1">
+            {mode === 'login' ? 'Entre com suas credenciais para acessar' : 'Preencha os dados para criar sua conta'}
+          </p>
+        </div>
+      )}
+
+      <AnimatePresence mode="wait">
+        <motion.form
+          key={mode + forgotStep}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.2 }}
+          onSubmit={handleSubmit}
+          className="space-y-4"
+        >
+          {mode === 'forgot' && (
+            <div className="text-center mb-4">
+              <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-3">
+                {forgotStep === 'email' && <Mail className="w-6 h-6 text-primary" />}
+                {forgotStep === 'code' && <ShieldCheck className="w-6 h-6 text-primary" />}
+                {forgotStep === 'newpass' && <KeyRound className="w-6 h-6 text-primary" />}
+              </div>
+              <h2 className="font-display text-lg font-bold text-foreground">
+                {forgotStep === 'email' && 'Recuperar Senha'}
+                {forgotStep === 'code' && 'Código de Verificação'}
+                {forgotStep === 'newpass' && 'Nova Senha'}
+              </h2>
+              <p className="text-xs font-body text-muted-foreground mt-1">
+                {forgotStep === 'email' && 'Informe seu email para receber o código'}
+                {forgotStep === 'code' && `Enviamos um código para ${email}`}
+                {forgotStep === 'newpass' && 'Defina sua nova senha abaixo'}
+              </p>
+            </div>
+          )}
+
+          {mode === 'signup' && (
+            <div className="relative">
+              <input type="text" placeholder="Nome de exibição" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className={inputCls} />
+              <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            </div>
+          )}
+
+          {(mode !== 'forgot' || forgotStep === 'email') && (
+            <div className="relative">
+              <input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required className={inputCls} />
+              <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            </div>
+          )}
+
+          {mode === 'forgot' && forgotStep === 'code' && (
+            <div className="relative">
+              <input type="text" placeholder="Código de 6 dígitos" value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))} required maxLength={6} inputMode="numeric" className={`${inputCls} tracking-[0.3em] text-center`} />
+              <ShieldCheck className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            </div>
+          )}
+
+          {mode === 'forgot' && forgotStep === 'newpass' && (
+            <div className="relative">
+              <input type={showPassword ? 'text' : 'password'} placeholder="Nova senha (mínimo 6 caracteres)" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={6} className={inputCls} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          )}
+
+          {mode !== 'forgot' && (
+            <div className="relative">
+              <input type={showPassword ? 'text' : 'password'} placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className={inputCls} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          )}
+
+          {mode === 'signup' && (
+            <div className="relative">
+              <input type={showPassword ? 'text' : 'password'} placeholder="Confirmar senha" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} className={inputCls} />
+              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-body font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50 shadow-lg"
+          >
+            {submitting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                {mode === 'login' && 'Entrar'}
+                {mode === 'signup' && 'Criar Conta'}
+                {mode === 'forgot' && forgotStep === 'email' && 'Enviar Código'}
+                {mode === 'forgot' && forgotStep === 'code' && 'Verificar'}
+                {mode === 'forgot' && forgotStep === 'newpass' && 'Atualizar Senha'}
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+
+          {mode === 'login' && (
+            <button type="button" onClick={() => { setMode('forgot'); setForgotStep('email'); }} className="w-full text-center text-xs font-body text-primary hover:underline">
+              Esqueci minha senha
+            </button>
+          )}
+
+          {mode === 'forgot' && (
+            <button type="button" onClick={() => { setMode('login'); setForgotStep('email'); setOtpCode(''); setNewPassword(''); }} className="w-full text-center text-xs font-body text-primary hover:underline">
+              Voltar ao login
+            </button>
+          )}
+        </motion.form>
+      </AnimatePresence>
+    </>
+  );
+
+  /* ── Desktop: split-screen layout ── */
+  if (isDesktop) {
+    return (
+      <motion.main
+        key="auth"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="min-h-screen flex relative overflow-hidden"
+      >
+        {/* Left panel — Themis image */}
+        <div className="absolute inset-0 z-0">
+          <div className="flex h-full">
+            <div className="w-1/2 h-full relative">
+              <img src={authBgLeft} alt="" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-background/90" />
+            </div>
+            <div className="w-1/2 h-full relative">
+              <img src={authBgRight} alt="" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-l from-transparent to-background/90" />
+            </div>
+          </div>
+          <div className="absolute inset-0 bg-background/60" />
+        </div>
+
+        {/* Left side — text overlay */}
+        <div className="relative z-10 w-1/2 flex flex-col justify-end p-12 xl:p-16">
+          <motion.div
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h2 className="font-display text-3xl xl:text-4xl font-bold text-foreground leading-snug">
+              Sua jornada jurídica{' '}
+              <span className="text-primary">começa aqui</span>
+            </h2>
+            <p className="text-sm xl:text-base font-body text-muted-foreground mt-3 max-w-md leading-relaxed">
+              Todo o conteúdo que você precisa estudar pra faculdade e prova OAB em um só lugar.
+            </p>
+          </motion.div>
+        </div>
+
+        {/* Right side — form card */}
+        <div className="relative z-10 w-1/2 flex items-center justify-center p-8">
+          {/* Back button */}
+          <button
+            onClick={onBack}
+            className="absolute top-6 left-6 z-20 w-10 h-10 rounded-full bg-card/80 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-card transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
+
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 24 }}
+            className="w-full max-w-md bg-card/90 backdrop-blur-xl border border-border rounded-2xl p-8 shadow-2xl"
+          >
+            {/* Logo */}
+            <div className="flex flex-col items-center mb-6">
+              <img src={logoVacatio} alt="Vacatio" className="w-16 h-16 rounded-xl shadow-lg object-cover border-2 border-primary/30" />
+              <h1 className="font-display text-xl font-bold text-foreground mt-3">Vacatio</h1>
+              <p className="text-xs font-body text-muted-foreground">Estudos Jurídicos</p>
+            </div>
+
+            {formContent}
+
+            {/* Scroll hint */}
+            <div className="mt-6 text-center">
+              <p className="text-[10px] font-body text-muted-foreground uppercase tracking-wider">Role para descobrir</p>
+              <motion.div
+                animate={{ y: [0, 4, 0] }}
+                transition={{ repeat: Infinity, duration: 1.5 }}
+                className="mt-1"
+              >
+                <ArrowRight className="w-3.5 h-3.5 text-primary mx-auto rotate-90" />
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </motion.main>
+    );
+  }
+
+  /* ── Mobile: original layout ── */
   return (
     <motion.main
       key="auth"
@@ -324,133 +560,7 @@ const AuthFormScreen = ({ onBack }: { onBack: () => void }) => {
 
       {/* Form area */}
       <div className="flex-1 px-6 pt-6 pb-8">
-        {/* Tabs */}
-        {mode !== 'forgot' && (
-          <div className="flex mb-5 bg-secondary/50 rounded-xl p-1">
-            {(['login', 'signup'] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={`flex-1 py-2.5 text-sm font-body font-medium rounded-lg transition-all ${
-                  mode === m
-                    ? 'bg-primary text-primary-foreground shadow-md'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {m === 'login' ? 'Entrar' : 'Criar Conta'}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <AnimatePresence mode="wait">
-          <motion.form
-            key={mode + forgotStep}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
-            onSubmit={handleSubmit}
-            className="space-y-4"
-          >
-            {mode === 'forgot' && (
-              <div className="text-center mb-4">
-                <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-3">
-                  {forgotStep === 'email' && <Mail className="w-6 h-6 text-primary" />}
-                  {forgotStep === 'code' && <ShieldCheck className="w-6 h-6 text-primary" />}
-                  {forgotStep === 'newpass' && <KeyRound className="w-6 h-6 text-primary" />}
-                </div>
-                <h2 className="font-display text-lg font-bold text-foreground">
-                  {forgotStep === 'email' && 'Recuperar Senha'}
-                  {forgotStep === 'code' && 'Código de Verificação'}
-                  {forgotStep === 'newpass' && 'Nova Senha'}
-                </h2>
-                <p className="text-xs font-body text-muted-foreground mt-1">
-                  {forgotStep === 'email' && 'Informe seu email para receber o código'}
-                  {forgotStep === 'code' && `Enviamos um código para ${email}`}
-                  {forgotStep === 'newpass' && 'Defina sua nova senha abaixo'}
-                </p>
-              </div>
-            )}
-
-            {mode === 'signup' && (
-              <div className="relative">
-                <input type="text" placeholder="Nome de exibição" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className={inputCls} />
-                <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              </div>
-            )}
-
-            {(mode !== 'forgot' || forgotStep === 'email') && (
-              <div className="relative">
-                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required className={inputCls} />
-                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              </div>
-            )}
-
-            {mode === 'forgot' && forgotStep === 'code' && (
-              <div className="relative">
-                <input type="text" placeholder="Código de 6 dígitos" value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))} required maxLength={6} inputMode="numeric" className={`${inputCls} tracking-[0.3em] text-center`} />
-                <ShieldCheck className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              </div>
-            )}
-
-            {mode === 'forgot' && forgotStep === 'newpass' && (
-              <div className="relative">
-                <input type={showPassword ? 'text' : 'password'} placeholder="Nova senha (mínimo 6 caracteres)" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={6} className={inputCls} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            )}
-
-            {mode !== 'forgot' && (
-              <div className="relative">
-                <input type={showPassword ? 'text' : 'password'} placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className={inputCls} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            )}
-
-            {mode === 'signup' && (
-              <div className="relative">
-                <input type={showPassword ? 'text' : 'password'} placeholder="Confirmar senha" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} className={inputCls} />
-                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-body font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50 shadow-lg"
-            >
-              {submitting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  {mode === 'login' && 'Entrar'}
-                  {mode === 'signup' && 'Criar Conta'}
-                  {mode === 'forgot' && forgotStep === 'email' && 'Enviar Código'}
-                  {mode === 'forgot' && forgotStep === 'code' && 'Verificar'}
-                  {mode === 'forgot' && forgotStep === 'newpass' && 'Atualizar Senha'}
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-
-            {mode === 'login' && (
-              <button type="button" onClick={() => { setMode('forgot'); setForgotStep('email'); }} className="w-full text-center text-xs font-body text-primary hover:underline">
-                Esqueci minha senha
-              </button>
-            )}
-
-            {mode === 'forgot' && (
-              <button type="button" onClick={() => { setMode('login'); setForgotStep('email'); setOtpCode(''); setNewPassword(''); }} className="w-full text-center text-xs font-body text-primary hover:underline">
-                Voltar ao login
-              </button>
-            )}
-          </motion.form>
-        </AnimatePresence>
+        {formContent}
       </div>
 
       <p className="text-center text-[10px] font-body text-muted-foreground pb-4">
