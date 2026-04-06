@@ -463,7 +463,7 @@ const AuthFormScreen = ({ onBack }: { onBack: () => void }) => {
 /* ─── Main Auth Page ─── */
 const Auth = () => {
   const { user, loading } = useAuth();
-  const [screen, setScreen] = useState<'landing' | 'auth'>('landing');
+  const [screen, setScreen] = useState<'landing' | 'auth'>('auth');
 
   if (loading) {
     return (
