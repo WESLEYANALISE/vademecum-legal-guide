@@ -2,10 +2,12 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { getPresenceState } from '@/hooks/usePresenceTracker';
-import { ArrowLeft, Wifi, Clock, CalendarDays, Users, Trophy, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Wifi, Clock, CalendarDays, Users, Trophy, BarChart3, UserCheck, UserPlus, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+const ADMIN_EMAIL = 'wn7corporation@gmail.com';
 
 interface PresenceUser {
   user_id: string;
@@ -30,6 +32,18 @@ interface NormalizedUser {
   route: string | null;
   time: string;
   isOnline: boolean;
+}
+
+interface UserDetail {
+  userId: string;
+  email: string;
+  name: string;
+  totalAccesses: number;
+  distinctDays: number;
+  firstSeen: string;
+  lastSeen: string;
+  isRecurrent: boolean;
+  topRoutes: { label: string; count: number }[];
 }
 
 const ROUTE_LABELS: Record<string, string> = {
@@ -118,10 +132,13 @@ const AdminMonitorUsuarios = () => {
   const [realtimeUsers, setRealtimeUsers] = useState<PresenceUser[]>([]);
   const [last5min, setLast5min] = useState<ActivityRow[]>([]);
   const [today, setToday] = useState<ActivityRow[]>([]);
+  const [yesterday, setYesterday] = useState<ActivityRow[]>([]);
   const [weekData, setWeekData] = useState<ActivityRow[]>([]);
   const [monthData, setMonthData] = useState<ActivityRow[]>([]);
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [selectedRank, setSelectedRank] = useState<string | null>(null);
+  const [selectedUserDetail, setSelectedUserDetail] = useState<UserDetail | null>(null);
+  const [loadingUser, setLoadingUser] = useState(false);
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -129,13 +146,14 @@ const AdminMonitorUsuarios = () => {
     return () => clearInterval(t);
   }, []);
 
-  // Poll presence state
+  // Poll presence state (filter admin)
   useEffect(() => {
     const poll = () => {
       const state = getPresenceState();
       const map = new Map<string, PresenceUser>();
       Object.values(state).forEach((presences: any[]) => {
         presences.forEach((p) => {
+          if (p.email === ADMIN_EMAIL) return;
           const existing = map.get(p.user_id);
           if (!existing || new Date(p.online_at) > new Date(existing.online_at)) {
             map.set(p.user_id, {
@@ -155,11 +173,13 @@ const AdminMonitorUsuarios = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch history
+  // Fetch history (filter admin)
   const fetchHistory = useCallback(async () => {
     const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
+    const startOfYesterday = new Date(startOfDay);
+    startOfYesterday.setDate(startOfYesterday.getDate() - 1);
     const startOfWeek = new Date();
     startOfWeek.setDate(startOfWeek.getDate() - 7);
     startOfWeek.setHours(0, 0, 0, 0);
@@ -167,31 +187,43 @@ const AdminMonitorUsuarios = () => {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const [r5, rToday, rWeek, rMonth] = await Promise.all([
+    const [r5, rToday, rYesterday, rWeek, rMonth] = await Promise.all([
       supabase
         .from('user_activity_log')
         .select('*')
         .gte('last_seen_at', fiveMinAgo)
+        .neq('email', ADMIN_EMAIL)
         .order('last_seen_at', { ascending: false }),
       supabase
         .from('user_activity_log')
         .select('*')
         .gte('last_seen_at', startOfDay.toISOString())
+        .neq('email', ADMIN_EMAIL)
+        .order('last_seen_at', { ascending: false }),
+      supabase
+        .from('user_activity_log')
+        .select('*')
+        .gte('last_seen_at', startOfYesterday.toISOString())
+        .lt('last_seen_at', startOfDay.toISOString())
+        .neq('email', ADMIN_EMAIL)
         .order('last_seen_at', { ascending: false }),
       supabase
         .from('user_activity_log')
         .select('*')
         .gte('last_seen_at', startOfWeek.toISOString())
+        .neq('email', ADMIN_EMAIL)
         .order('last_seen_at', { ascending: false }),
       supabase
         .from('user_activity_log')
         .select('*')
         .gte('last_seen_at', startOfMonth.toISOString())
+        .neq('email', ADMIN_EMAIL)
         .order('last_seen_at', { ascending: false }),
     ]);
 
     if (r5.data) setLast5min(r5.data as ActivityRow[]);
     if (rToday.data) setToday(rToday.data as ActivityRow[]);
+    if (rYesterday.data) setYesterday(rYesterday.data as ActivityRow[]);
     if (rWeek.data) setWeekData(rWeek.data as ActivityRow[]);
     if (rMonth.data) setMonthData(rMonth.data as ActivityRow[]);
   }, []);
@@ -201,6 +233,43 @@ const AdminMonitorUsuarios = () => {
     const interval = setInterval(fetchHistory, 15_000);
     return () => clearInterval(interval);
   }, [fetchHistory]);
+
+  // Fetch user detail
+  const fetchUserDetail = useCallback(async (user: NormalizedUser) => {
+    setLoadingUser(true);
+    const { data } = await supabase
+      .from('user_activity_log')
+      .select('current_route, last_seen_at')
+      .eq('user_id', user.id)
+      .neq('email', ADMIN_EMAIL)
+      .order('last_seen_at', { ascending: false });
+
+    if (data && data.length > 0) {
+      const days = new Set(data.map((r) => new Date(r.last_seen_at).toDateString()));
+      const routeMap: Record<string, number> = {};
+      data.forEach((r) => {
+        const label = getRouteLabel(r.current_route);
+        routeMap[label] = (routeMap[label] || 0) + 1;
+      });
+      const topRoutes = Object.entries(routeMap)
+        .map(([label, count]) => ({ label, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      setSelectedUserDetail({
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        totalAccesses: data.length,
+        distinctDays: days.size,
+        firstSeen: data[data.length - 1].last_seen_at,
+        lastSeen: data[0].last_seen_at,
+        isRecurrent: days.size > 1,
+        topRoutes,
+      });
+    }
+    setLoadingUser(false);
+  }, []);
 
   const blocks: BlockData[] = [
     {
@@ -250,6 +319,22 @@ const AdminMonitorUsuarios = () => {
         isOnline: realtimeUsers.some((r) => r.user_id === u.user_id),
       })),
     },
+    {
+      key: 'yesterday',
+      title: 'Ontem',
+      subtitle: `${yesterday.length} usuários`,
+      icon: CalendarDays,
+      gradientFrom: 'from-orange-500/30',
+      gradientTo: 'to-orange-900/20',
+      iconBg: 'bg-orange-500/20',
+      badgeBg: 'bg-orange-500',
+      count: yesterday.length,
+      users: yesterday.map((u) => ({
+        id: u.user_id, email: u.email ?? '', name: u.display_name ?? '',
+        route: u.current_route, time: u.last_seen_at,
+        isOnline: realtimeUsers.some((r) => r.user_id === u.user_id),
+      })),
+    },
   ];
 
   const rankBlocks: RankBlock[] = useMemo(() => [
@@ -288,17 +373,29 @@ const AdminMonitorUsuarios = () => {
   const activeBlock = blocks.find((b) => b.key === selectedBlock);
   const activeRank = rankBlocks.find((b) => b.key === selectedRank);
 
-  const isDetail = !!selectedBlock || !!selectedRank;
-  const detailTitle = selectedBlock
-    ? activeBlock?.title
-    : selectedRank
-      ? `Rank — ${activeRank?.title}`
-      : '';
+  const isDetail = !!selectedBlock || !!selectedRank || !!selectedUserDetail;
+  const detailTitle = selectedUserDetail
+    ? 'Detalhe do Usuário'
+    : selectedBlock
+      ? activeBlock?.title
+      : selectedRank
+        ? `Rank — ${activeRank?.title}`
+        : '';
 
   const goBack = () => {
-    if (selectedBlock) setSelectedBlock(null);
-    else if (selectedRank) setSelectedRank(null);
-    else navigate(-1);
+    if (selectedUserDetail) {
+      setSelectedUserDetail(null);
+    } else if (selectedBlock) {
+      setSelectedBlock(null);
+    } else if (selectedRank) {
+      setSelectedRank(null);
+    } else {
+      navigate(-1);
+    }
+  };
+
+  const handleUserClick = (user: NormalizedUser) => {
+    fetchUserDetail(user);
   };
 
   return (
@@ -317,7 +414,87 @@ const AdminMonitorUsuarios = () => {
       </div>
 
       <AnimatePresence mode="wait">
-        {!isDetail ? (
+        {selectedUserDetail ? (
+          /* ── User Detail Panel ── */
+          <motion.div
+            key="user-detail-panel"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 30 }}
+            className="p-4 max-w-3xl mx-auto space-y-4"
+          >
+            {/* User header */}
+            <div className="rounded-2xl bg-secondary/40 border border-border/30 p-4 flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-foreground uppercase">
+                {(selectedUserDetail.email || selectedUserDetail.name)?.[0] ?? '?'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-foreground truncate">{selectedUserDetail.email || selectedUserDetail.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{selectedUserDetail.name}</p>
+                <span className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  selectedUserDetail.isRecurrent
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-blue-500/20 text-blue-400'
+                }`}>
+                  {selectedUserDetail.isRecurrent ? (
+                    <><UserCheck className="w-3 h-3" /> Recorrente</>
+                  ) : (
+                    <><UserPlus className="w-3 h-3" /> Novo</>
+                  )}
+                </span>
+              </div>
+            </div>
+
+            {/* Stats grid */}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'Total de acessos', value: String(selectedUserDetail.totalAccesses), color: 'text-primary' },
+                { label: 'Dias distintos', value: String(selectedUserDetail.distinctDays), color: 'text-emerald-400' },
+                { label: 'Primeiro acesso', value: format(new Date(selectedUserDetail.firstSeen), 'dd/MM/yy HH:mm', { locale: ptBR }), color: 'text-blue-400' },
+                { label: 'Último acesso', value: formatPreciseTime(selectedUserDetail.lastSeen), color: 'text-amber-400' },
+              ].map((stat) => (
+                <div key={stat.label} className="rounded-xl bg-secondary/40 border border-border/30 p-3 text-center">
+                  <p className={`text-lg font-bold ${stat.color}`}>{stat.value}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Top routes */}
+            <div className="rounded-2xl bg-secondary/40 border border-border/30 p-4">
+              <p className="text-xs font-bold text-foreground mb-3 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-primary" />
+                Rotas mais visitadas
+              </p>
+              {selectedUserDetail.topRoutes.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">Sem dados</p>
+              ) : (
+                <div className="space-y-2">
+                  {selectedUserDetail.topRoutes.map((r, i) => {
+                    const maxCount = selectedUserDetail.topRoutes[0]?.count || 1;
+                    const pct = Math.round((r.count / maxCount) * 100);
+                    return (
+                      <div key={r.label}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs text-foreground truncate flex-1">{r.label}</span>
+                          <span className="text-xs font-bold text-primary ml-2">{r.count}</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-muted/50 overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ delay: i * 0.06, duration: 0.5 }}
+                            className="h-full rounded-full bg-primary"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ) : !selectedBlock && !selectedRank ? (
           <motion.div
             key="home"
             initial={{ opacity: 0 }}
@@ -326,7 +503,7 @@ const AdminMonitorUsuarios = () => {
             className="p-4 max-w-3xl mx-auto space-y-6"
           >
             {/* ── User cards row ── */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {blocks.map((block, bi) => {
                 const Icon = block.icon;
                 return (
@@ -451,12 +628,13 @@ const AdminMonitorUsuarios = () => {
               </div>
             ) : (
               activeBlock.users.map((u, i) => (
-                <motion.div
+                <motion.button
                   key={u.id}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04 }}
-                  className="rounded-xl bg-secondary/40 border border-border/30 p-3 flex items-center gap-3"
+                  onClick={() => handleUserClick(u)}
+                  className="w-full text-left rounded-xl bg-secondary/40 border border-border/30 p-3 flex items-center gap-3 hover:bg-secondary/60 transition-colors active:scale-[0.98]"
                 >
                   <div className="relative shrink-0">
                     <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-bold text-foreground uppercase">
@@ -476,7 +654,7 @@ const AdminMonitorUsuarios = () => {
                     </p>
                     <p className="text-[10px] text-muted-foreground">{formatPreciseTime(u.time)}</p>
                   </div>
-                </motion.div>
+                </motion.button>
               ))
             )}
           </motion.div>
@@ -528,6 +706,13 @@ const AdminMonitorUsuarios = () => {
           </motion.div>
         ) : null}
       </AnimatePresence>
+
+      {/* Loading overlay */}
+      {loadingUser && (
+        <div className="fixed inset-0 z-50 bg-background/60 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
     </div>
   );
 };
