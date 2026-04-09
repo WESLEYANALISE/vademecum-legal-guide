@@ -40,7 +40,11 @@ function normalizeDateToISO(dateStr: string): string {
 
 async function fetchPage(url: string): Promise<string | null> {
   const MIN_CHARS = 3000;
-  const hasContent = (html: string) => html.length > MIN_CHARS && /planalto\.gov\.br\/ccivil_03/i.test(html);
+  const hasContent = (html: string) => html.length > MIN_CHARS && (
+    /planalto\.gov\.br\/ccivil_03/i.test(html) || 
+    /pResenhaDiaria/i.test(html) || 
+    /visaoQuadrosTabela/i.test(html)
+  );
 
   // Strategy 1: Direct fetch with retries
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -59,8 +63,25 @@ async function fetchPage(url: string): Promise<string | null> {
         if (hasContent(t)) { console.log(`Direct OK: ${t.length} chars`); return t; }
         else { console.log(`Direct no content (${t.length} chars)`); }
       }
-    } catch (e) { console.log(`Direct attempt ${attempt} failed: ${e}`); }
+  } catch (e) { console.log(`Direct attempt ${attempt} failed: ${e}`); }
   }
+
+  // Strategy 1.5: Jina Reader (renders JS)
+  try {
+    const jinaUrl = `https://r.jina.ai/${url}`;
+    console.log(`Trying Jina Reader...`);
+    const resp = await fetch(jinaUrl, {
+      headers: { "Accept": "text/html", "X-Return-Format": "html" },
+    });
+    if (resp.ok) {
+      const t = await resp.text();
+      console.log(`Jina response: ${t.length} chars`);
+      if (hasContent(t)) { console.log(`Jina OK`); return t; }
+      else { console.log(`Jina no content`); }
+    } else {
+      console.log(`Jina ${resp.status}`);
+    }
+  } catch (e) { console.log(`Jina failed: ${e}`); }
 
   // Strategy 2: CORS proxies (render full page)
   const proxies = [
@@ -82,36 +103,45 @@ async function fetchPage(url: string): Promise<string | null> {
     } catch (e) { console.log(`Proxy failed: ${e}`); }
   }
 
-  // Strategy 3: Browserless v2 API
+  // Strategy 3: Browserless v2 API (using /scrape endpoint)
   const key = Deno.env.get("BROWSERLESS_API_KEY");
   if (key) {
-    const endpoints = [
-      `https://production-sfo.browserless.io/content?token=${key}`,
-      `https://chrome.browserless.io/content?token=${key}`,
-    ];
-    for (const baseUrl of endpoints) {
-      try {
-        console.log(`Trying Browserless: ${baseUrl.split('?')[0]}`);
-        const resp = await fetch(baseUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            url,
-            gotoOptions: { waitUntil: "domcontentloaded", timeout: 30000 },
-            waitForTimeout: 8000,
-          }),
-        });
-        if (resp.ok) {
-          const t = await resp.text();
-          console.log(`Browserless response: ${t.length} chars`);
-          if (hasContent(t)) return t;
-          else console.log(`Browserless no content: ${t.length}`);
-        } else {
-          console.log(`Browserless ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
-        }
-      } catch (e) { console.log(`Browserless failed: ${e}`); }
-    }
+    try {
+      const baseUrl = `https://production-sfo.browserless.io/scrape?token=${key}`;
+      console.log(`Trying Browserless /scrape...`);
+      const resp = await fetch(baseUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url,
+          gotoOptions: { waitUntil: "networkidle2", timeout: 30000 },
+          elements: [{ selector: "body" }],
+        }),
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        const bodyHtml = json?.data?.[0]?.results?.[0]?.html || "";
+        console.log(`Browserless /scrape response: ${bodyHtml.length} chars`);
+        if (hasContent(bodyHtml)) return bodyHtml;
+      } else {
+        console.log(`Browserless ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
+      }
+    } catch (e) { console.log(`Browserless failed: ${e}`); }
   }
+
+  // Strategy 3.5: Google Webcache
+  try {
+    const cacheUrl = `https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}&strip=0`;
+    console.log(`Trying Google Webcache...`);
+    const resp = await fetch(cacheUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" },
+    });
+    if (resp.ok) {
+      const t = await resp.text();
+      console.log(`Google Webcache response: ${t.length} chars`);
+      if (hasContent(t)) { console.log(`Google Webcache OK`); return t; }
+    }
+  } catch (e) { console.log(`Google Webcache failed: ${e}`); }
 
   // Strategy 4: Archive.org as last resort
   try {
