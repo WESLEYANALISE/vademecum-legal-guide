@@ -129,6 +129,20 @@ async function fetchPage(url: string): Promise<string | null> {
     } catch (e) { console.log(`Browserless failed: ${e}`); }
   }
 
+  // Strategy 3.5: Google Webcache
+  try {
+    const cacheUrl = `https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}&strip=0`;
+    console.log(`Trying Google Webcache...`);
+    const resp = await fetch(cacheUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" },
+    });
+    if (resp.ok) {
+      const t = await resp.text();
+      console.log(`Google Webcache response: ${t.length} chars`);
+      if (hasContent(t)) { console.log(`Google Webcache OK`); return t; }
+    }
+  } catch (e) { console.log(`Google Webcache failed: ${e}`); }
+
   // Strategy 4: Archive.org as last resort
   try {
     const archiveUrl = `https://web.archive.org/web/2026/${url}`;
