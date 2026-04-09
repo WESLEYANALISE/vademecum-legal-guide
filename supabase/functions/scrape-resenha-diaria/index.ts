@@ -40,7 +40,11 @@ function normalizeDateToISO(dateStr: string): string {
 
 async function fetchPage(url: string): Promise<string | null> {
   const MIN_CHARS = 3000;
-  const hasContent = (html: string) => html.length > MIN_CHARS && /planalto\.gov\.br\/ccivil_03/i.test(html);
+  const hasContent = (html: string) => html.length > MIN_CHARS && (
+    /planalto\.gov\.br\/ccivil_03/i.test(html) || 
+    /pResenhaDiaria/i.test(html) || 
+    /visaoQuadrosTabela/i.test(html)
+  );
 
   // Strategy 1: Direct fetch with retries
   for (let attempt = 0; attempt < 2; attempt++) {
