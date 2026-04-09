@@ -1,34 +1,41 @@
 
 
-## Diagnóstico: Só veio a ementa
+## Plano: Melhorias no Monitor de Usuários
 
-O pipeline tem **duas etapas**:
-1. `scrape-resenha-diaria` — raspa a página do Planalto e insere os registros com **ementa, URL e data** apenas
-2. `popular-texto-resenha` — pega cada registro sem `texto_completo`, acessa a URL da lei, extrai o texto integral e gera a explicação via Gemini
+### O que muda
 
-**O problema**: só a etapa 1 está no cron. A etapa 2 (`popular-texto-resenha`) nunca é chamada automaticamente. As 4 leis do dia 6 estão no banco mas com `texto_completo = NULL` e `explicacao = NULL`.
+1. **Filtrar admin**: O e-mail `wn7corporation@gmail.com` será excluído de todas as listas (realtime, últimos 5 min, hoje, ontem, rank). O admin não aparecerá como "online".
 
-## Plano
+2. **Novo card "Ontem"**: Adicionar um 4º card na linha superior mostrando usuários que acessaram ontem (das 00:00 às 23:59 do dia anterior). Layout passa de `grid-cols-3` para `grid-cols-2 grid-cols-4` responsivo (2 colunas em 2 linhas, ou 4 em uma linha no desktop).
 
-### 1. Encadear as duas etapas no cron
+3. **Tela de detalhe do usuário**: Ao clicar em um usuário dentro de qualquer card expandido, abrir um painel com:
+   - Total de acessos (contagem de registros na `user_activity_log`)
+   - Primeiro acesso (data mais antiga)
+   - Último acesso
+   - Se é **recorrente** (acessou em mais de 1 dia distinto)
+   - Quantos dias distintos acessou
+   - Rotas mais visitadas (top 5)
 
-Modificar `scrape-resenha-diaria` para, ao final do scraping bem-sucedido, chamar automaticamente `popular-texto-resenha` via fetch interno (self-call para a edge function). Assim, toda vez que o cron roda e encontra novos atos, o texto completo e explicação são gerados na sequência.
+### Detalhes técnicos
 
-### 2. Adicionar cron dedicado para `popular-texto-resenha`
+**Filtragem admin**: Constante `ADMIN_EMAIL = 'wn7corporation@gmail.com'` no topo. Filtrar em:
+- `realtimeUsers` (excluir do array de presença)
+- Cada query de `user_activity_log` via `.neq('email', ADMIN_EMAIL)`
 
-Como backup, criar um segundo cron job que roda 30 minutos após cada execução do scraper, garantindo que registros pendentes sejam processados mesmo se o encadeamento falhar.
+**Card "Ontem"**: Nova query com `.gte('last_seen_at', startOfYesterday)` e `.lt('last_seen_at', startOfToday)`. Ícone `CalendarDays`, gradiente laranja.
 
-Schedule: `30 7,10,13,16,19,22 * * *` (30 min após cada scrape)
-
-### 3. Executar `popular-texto-resenha` agora
-
-Chamar manualmente para preencher texto_completo e explicação das 4 leis do dia 6 que já estão no banco.
+**Detalhe do usuário**: Novo estado `selectedUser: string | null` (user_id). Ao selecionar, faz 1 query:
+```sql
+SELECT current_route, last_seen_at 
+FROM user_activity_log 
+WHERE user_id = '<id>' 
+ORDER BY last_seen_at DESC
+```
+Calcula no frontend: total de registros, dias distintos, primeiro/último acesso, top rotas. Exibe badge "Recorrente" (>1 dia) ou "Novo" (1 dia só).
 
 ### Arquivos
 
 | Arquivo | Ação |
 |---------|------|
-| `supabase/functions/scrape-resenha-diaria/index.ts` | Adicionar chamada a `popular-texto-resenha` ao final |
-| SQL (via insert) | Criar cron job para `popular-texto-resenha` a cada 3h (offset 30min) |
-| Manual | Executar `popular-texto-resenha` agora via curl |
+| `src/pages/AdminMonitorUsuarios.tsx` | Filtrar admin, adicionar card Ontem, adicionar tela de detalhe por usuário |
 
