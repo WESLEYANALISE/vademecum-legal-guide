@@ -1,41 +1,49 @@
 
 
-## Plano: Melhorias no Monitor de Usuários
+## Diagnóstico: Por que só tem leis do dia 6
 
-### O que muda
+### Causa raiz
 
-1. **Filtrar admin**: O e-mail `wn7corporation@gmail.com` será excluído de todas as listas (realtime, últimos 5 min, hoje, ontem, rank). O admin não aparecerá como "online".
+O cron **está rodando** a cada 3 horas, mas **todas as estratégias de fetch falham**:
 
-2. **Novo card "Ontem"**: Adicionar um 4º card na linha superior mostrando usuários que acessaram ontem (das 00:00 às 23:59 do dia anterior). Layout passa de `grid-cols-3` para `grid-cols-2 grid-cols-4` responsivo (2 colunas em 2 linhas, ou 4 em uma linha no desktop).
+1. **Fetch direto**: retorna apenas 6282 chars (shell HTML sem conteúdo — a página do Planalto é renderizada via JavaScript)
+2. **Proxies CORS** (allorigins, corsproxy): retornam o mesmo shell vazio
+3. **Browserless**: retorna erro 500 — `"Attempted to use detached Frame"` — bug do Browserless com a página do Planalto
 
-3. **Tela de detalhe do usuário**: Ao clicar em um usuário dentro de qualquer card expandido, abrir um painel com:
-   - Total de acessos (contagem de registros na `user_activity_log`)
-   - Primeiro acesso (data mais antiga)
-   - Último acesso
-   - Se é **recorrente** (acessou em mais de 1 dia distinto)
-   - Quantos dias distintos acessou
-   - Rotas mais visitadas (top 5)
+O dia 6 entrou no banco porque nesse dia o scraper foi executado manualmente com sucesso (provavelmente via chamada direta quando o Browserless ainda funcionava). Desde então, nenhuma execução conseguiu buscar o conteúdo da página.
 
-### Detalhes técnicos
+A página do Planalto (abril-resenha-diaria) **já tem dados dos dias 7, 8 e 9**, mas o scraper não consegue lê-los.
 
-**Filtragem admin**: Constante `ADMIN_EMAIL = 'wn7corporation@gmail.com'` no topo. Filtrar em:
-- `realtimeUsers` (excluir do array de presença)
-- Cada query de `user_activity_log` via `.neq('email', ADMIN_EMAIL)`
+### Solução
 
-**Card "Ontem"**: Nova query com `.gte('last_seen_at', startOfYesterday)` e `.lt('last_seen_at', startOfToday)`. Ícone `CalendarDays`, gradiente laranja.
+Usar a **API do Google Cache/Webcache** ou, mais confiável, usar o **Browserless `/scrape` endpoint** (em vez do `/content`) que é mais estável. Mas a solução mais robusta: **usar fetch com o Google Translate como proxy** (técnica clássica para páginas JS-rendered) OU simplesmente usar a **API do Jina Reader** (`https://r.jina.ai/URL`) que renderiza JS e retorna texto limpo.
 
-**Detalhe do usuário**: Novo estado `selectedUser: string | null` (user_id). Ao selecionar, faz 1 query:
-```sql
-SELECT current_route, last_seen_at 
-FROM user_activity_log 
-WHERE user_id = '<id>' 
-ORDER BY last_seen_at DESC
-```
-Calcula no frontend: total de registros, dias distintos, primeiro/último acesso, top rotas. Exibe badge "Recorrente" (>1 dia) ou "Novo" (1 dia só).
+A abordagem mais simples e confiável: adicionar o **Jina Reader** como estratégia prioritária. É gratuito, renderiza JS, e retorna HTML limpo.
 
-### Arquivos
+### Plano
 
 | Arquivo | Ação |
 |---------|------|
-| `src/pages/AdminMonitorUsuarios.tsx` | Filtrar admin, adicionar card Ontem, adicionar tela de detalhe por usuário |
+| `supabase/functions/scrape-resenha-diaria/index.ts` | Adicionar Jina Reader como estratégia 1.5 (após fetch direto, antes dos proxies CORS). URL: `https://r.jina.ai/{url}` com header `Accept: text/html`. Também corrigir Browserless para usar endpoint `/scrape` em vez de `/content` |
+
+### Detalhes técnicos
+
+**Nova estratégia Jina Reader** (inserir após o fetch direto):
+```typescript
+// Strategy 1.5: Jina Reader (renders JS)
+try {
+  const jinaUrl = `https://r.jina.ai/${url}`;
+  const resp = await fetch(jinaUrl, {
+    headers: { "Accept": "text/html", "X-Return-Format": "html" }
+  });
+  if (resp.ok) {
+    const t = await resp.text();
+    if (hasContent(t)) return t;
+  }
+} catch (e) { console.log(`Jina failed: ${e}`); }
+```
+
+**Corrigir Browserless**: mudar de `/content` para `/scrape` endpoint com seletores CSS específicos para a tabela de resenha, evitando o erro de "detached frame".
+
+**Executar manualmente** após o deploy para trazer os dias 7, 8 e 9 imediatamente.
 
